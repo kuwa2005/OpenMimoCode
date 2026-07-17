@@ -8,13 +8,16 @@ import { Provider, ProviderTransform } from "@/provider"
 import type { ProviderID, ModelID } from "@/provider/schema"
 import { Auth } from "@/auth"
 import { Config } from "@/config"
+import * as ConfigAutonomy from "@/config/autonomy"
 import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
+import { Session } from "@/session"
 import { SessionID } from "./schema"
 import { MessageV2 } from "./message-v2"
+import { goalRef, type GoalPhase } from "./goal-ref"
 
 /**
- * Per-session stop-condition goal. `/goal`: once a goal
+ * Per-session stop-condition goal. `/goal` or autonomy mode: once a goal
  * is set, the main runLoop refuses to stop until an independent judge model
  * decides the condition is satisfied (or genuinely impossible). The judge is a
  * separate model call that only reads the transcript — it does not do the work,
@@ -24,10 +27,33 @@ import { MessageV2 } from "./message-v2"
  * is cleared on instance teardown. See run-state.ts for the sibling pattern.
  */
 
+export type { GoalPhase }
+
+export type GoalStopReason =
+  | "completed"
+  | "impossible"
+  | "cancelled"
+  | "budget_turns"
+  | "budget_duration"
+  | "budget_cost"
+  | "judge_failed"
+
 export type Goal = {
   condition: string
-  /** Number of judge-driven re-entries so far; bounded by MAX_GOAL_REACT in prompt.ts. */
+  /** Number of judge-driven re-entries so far. */
   react: number
+  startedAt: number
+  startMessageID?: string
+  costUsd: number
+  maxTurns: number
+  maxDurationMs: number
+  maxCostUsd: number
+  judgeMaxRetries: number
+  judgeFailures: number
+  autonomous: boolean
+  /** hearing = clarify with user; execute = never-ask non-stop delivery. */
+  phase: GoalPhase
+  stopReason?: GoalStopReason
 }
 
 export const Verdict = z.object({
@@ -36,6 +62,18 @@ export const Verdict = z.object({
   reason: z.string(),
 })
 export type Verdict = z.infer<typeof Verdict>
+
+const GoalView = z.object({
+  condition: z.string(),
+  react: z.number().optional(),
+  startedAt: z.number().optional(),
+  costUsd: z.number().optional(),
+  maxTurns: z.number().optional(),
+  maxDurationMs: z.number().optional(),
+  maxCostUsd: z.number().optional(),
+  autonomous: z.boolean().optional(),
+  phase: z.enum(["hearing", "execute"]).optional(),
+})
 
 /**
  * Broadcast whenever a session's goal changes — set, judged, or cleared. The
@@ -48,7 +86,8 @@ export const Event = {
     "session.goal",
     z.object({
       sessionID: SessionID.zod,
-      goal: z.object({ condition: z.string() }).optional(),
+      goal: GoalView.optional(),
+      stopReason: z.string().optional(),
       lastVerdict: Verdict.extend({
         attempt: z.number(),
         /** The assistant message the judge evaluated — anchors the verdict to a turn. */
@@ -78,12 +117,34 @@ const judgeUser = (condition: string) =>
 
 Condition: ${condition}`
 
+export type SetGoalInput = {
+  condition: string
+  startMessageID?: string
+  autonomous?: boolean
+  phase?: GoalPhase
+  limits?: ConfigAutonomy.Limits
+}
+
 export interface Interface {
-  readonly set: (sessionID: SessionID, condition: string) => Effect.Effect<void>
+  readonly set: (sessionID: SessionID, input: SetGoalInput) => Effect.Effect<void>
   readonly get: (sessionID: SessionID) => Effect.Effect<Goal | undefined>
-  readonly clear: (sessionID: SessionID) => Effect.Effect<void>
+  readonly clear: (sessionID: SessionID, stopReason?: GoalStopReason) => Effect.Effect<void>
+  /** Move hearing → execute after Requirements Lock approval. */
+  readonly setPhase: (sessionID: SessionID, phase: GoalPhase) => Effect.Effect<GoalPhase | undefined>
   /** Increment the re-entry counter, returning the new count. */
   readonly bumpReact: (sessionID: SessionID) => Effect.Effect<number>
+  readonly addCost: (sessionID: SessionID, deltaUsd: number) => Effect.Effect<void>
+  readonly syncCostFromTranscript: (input: {
+    sessionID: SessionID
+    msgs: MessageV2.WithParts[]
+  }) => Effect.Effect<void>
+  readonly checkBudget: (sessionID: SessionID) => Effect.Effect<{ ok: true } | { ok: false; reason: GoalStopReason }>
+  readonly recordJudgeFailure: (sessionID: SessionID) => Effect.Effect<number>
+  readonly stopWithReason: (input: {
+    sessionID: SessionID
+    reason: GoalStopReason
+    lastVerdict?: Verdict & { attempt?: number; messageID?: string; error?: boolean }
+  }) => Effect.Effect<void>
   /**
    * Run the judge over the conversation against the active goal's condition.
    * `msgs` is the main thread's message list; it is converted to native model
@@ -94,10 +155,25 @@ export interface Interface {
     condition: string
     msgs: MessageV2.WithParts[]
     model: { providerID: ProviderID; modelID: ModelID }
+    sessionID: SessionID
   }) => Effect.Effect<Verdict>
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/SessionGoal") {}
+
+function goalView(goal: Goal) {
+  return {
+    condition: goal.condition,
+    react: goal.react,
+    startedAt: goal.startedAt,
+    costUsd: goal.costUsd,
+    maxTurns: goal.maxTurns,
+    maxDurationMs: goal.maxDurationMs,
+    maxCostUsd: goal.maxCostUsd,
+    autonomous: goal.autonomous,
+    phase: goal.phase,
+  }
+}
 
 export const layer = Layer.effect(
   Service,
@@ -114,11 +190,49 @@ export const layer = Layer.effect(
       }),
     )
 
-    const set = Effect.fn("SessionGoal.set")(function* (sessionID: SessionID, condition: string) {
+    const publish = Effect.fn("SessionGoal.publish")(function* (input: {
+      sessionID: SessionID
+      goal?: Goal
+      stopReason?: GoalStopReason
+      lastVerdict?: Verdict & { attempt: number; messageID?: string; error?: boolean }
+    }) {
+      yield* bus.publish(Event.Updated, {
+        sessionID: input.sessionID,
+        goal: input.goal ? goalView(input.goal) : undefined,
+        stopReason: input.stopReason,
+        lastVerdict: input.lastVerdict,
+      })
+    })
+
+    const set = Effect.fn("SessionGoal.set")(function* (sessionID: SessionID, input: SetGoalInput) {
+      const cfg = yield* config.get()
+      const limits = input.limits ?? ConfigAutonomy.limits(cfg.autonomy)
+      const autonomous = input.autonomous ?? false
+      const phase =
+        input.phase ?? (autonomous && ConfigAutonomy.hearingFirst(cfg.autonomy) ? "hearing" : "execute")
       const data = yield* InstanceState.get(state)
-      data.goals.set(sessionID, { condition, react: 0 })
-      yield* elog.info("goal set", { sessionID, condition })
-      yield* bus.publish(Event.Updated, { sessionID, goal: { condition } })
+      const goal: Goal = {
+        condition: input.condition,
+        react: 0,
+        startedAt: Date.now(),
+        startMessageID: input.startMessageID,
+        costUsd: 0,
+        maxTurns: limits.maxTurns,
+        maxDurationMs: limits.maxDurationMs,
+        maxCostUsd: limits.maxCostUsd,
+        judgeMaxRetries: limits.judgeMaxRetries,
+        judgeFailures: 0,
+        autonomous,
+        phase,
+      }
+      data.goals.set(sessionID, goal)
+      yield* elog.info("goal set", {
+        sessionID,
+        condition: input.condition,
+        autonomous: goal.autonomous,
+        phase: goal.phase,
+      })
+      yield* publish({ sessionID, goal })
     })
 
     const get = Effect.fn("SessionGoal.get")(function* (sessionID: SessionID) {
@@ -126,11 +240,54 @@ export const layer = Layer.effect(
       return data.goals.get(sessionID)
     })
 
-    const clear = Effect.fn("SessionGoal.clear")(function* (sessionID: SessionID) {
+    const clear = Effect.fn("SessionGoal.clear")(function* (sessionID: SessionID, stopReason?: GoalStopReason) {
       const data = yield* InstanceState.get(state)
       data.goals.delete(sessionID)
-      yield* elog.info("goal cleared", { sessionID })
-      yield* bus.publish(Event.Updated, { sessionID, goal: undefined })
+      yield* elog.info("goal cleared", { sessionID, stopReason })
+      yield* publish({ sessionID, stopReason })
+    })
+
+    const setPhase = Effect.fn("SessionGoal.setPhase")(function* (sessionID: SessionID, phase: GoalPhase) {
+      const data = yield* InstanceState.get(state)
+      const goal = data.goals.get(sessionID)
+      if (!goal) return undefined
+      if (goal.phase === phase) return phase
+      goal.phase = phase
+      yield* elog.info("goal phase", { sessionID, phase })
+      yield* publish({ sessionID, goal })
+      return phase
+    })
+
+    // Bridge for question-tool Requirements Lock without a ToolRegistry↔Goal cycle.
+    goalRef.register((sessionID, phase) => {
+      Effect.runFork(setPhase(sessionID, phase))
+    })
+
+    const stopWithReason = Effect.fn("SessionGoal.stopWithReason")(function* (input: {
+      sessionID: SessionID
+      reason: GoalStopReason
+      lastVerdict?: Verdict & { attempt?: number; messageID?: string; error?: boolean }
+    }) {
+      const data = yield* InstanceState.get(state)
+      const goal = data.goals.get(input.sessionID)
+      if (!goal) return
+      goal.stopReason = input.reason
+      yield* publish({
+        sessionID: input.sessionID,
+        stopReason: input.reason,
+        lastVerdict: input.lastVerdict
+          ? {
+              ok: input.lastVerdict.ok,
+              impossible: input.lastVerdict.impossible,
+              reason: input.lastVerdict.reason,
+              attempt: input.lastVerdict.attempt ?? goal.react,
+              messageID: input.lastVerdict.messageID,
+              error: input.lastVerdict.error,
+            }
+          : undefined,
+      })
+      data.goals.delete(input.sessionID)
+      yield* elog.info("goal stopped", { sessionID: input.sessionID, reason: input.reason })
     })
 
     const bumpReact = Effect.fn("SessionGoal.bumpReact")(function* (sessionID: SessionID) {
@@ -138,13 +295,62 @@ export const layer = Layer.effect(
       const goal = data.goals.get(sessionID)
       if (!goal) return 0
       goal.react += 1
+      yield* publish({ sessionID, goal })
       return goal.react
+    })
+
+    const addCost = Effect.fn("SessionGoal.addCost")(function* (sessionID: SessionID, deltaUsd: number) {
+      if (!deltaUsd || deltaUsd <= 0) return
+      const data = yield* InstanceState.get(state)
+      const goal = data.goals.get(sessionID)
+      if (!goal) return
+      goal.costUsd += deltaUsd
+      yield* publish({ sessionID, goal })
+    })
+
+    const syncCostFromTranscript = Effect.fn("SessionGoal.syncCostFromTranscript")(function* (input: {
+      sessionID: SessionID
+      msgs: MessageV2.WithParts[]
+    }) {
+      const data = yield* InstanceState.get(state)
+      const goal = data.goals.get(input.sessionID)
+      if (!goal) return
+      let total = 0
+      for (const m of input.msgs) {
+        if (m.info.role !== "assistant") continue
+        if (goal.startMessageID && m.info.id <= goal.startMessageID) continue
+        total += m.info.cost ?? 0
+      }
+      if (total === goal.costUsd) return
+      goal.costUsd = total
+      yield* publish({ sessionID: input.sessionID, goal })
+    })
+
+    const checkBudget = Effect.fn("SessionGoal.checkBudget")(function* (sessionID: SessionID) {
+      const data = yield* InstanceState.get(state)
+      const goal = data.goals.get(sessionID)
+      if (!goal) return { ok: true as const }
+      if (goal.react >= goal.maxTurns) return { ok: false as const, reason: "budget_turns" as const }
+      if (Date.now() - goal.startedAt >= goal.maxDurationMs)
+        return { ok: false as const, reason: "budget_duration" as const }
+      if (goal.costUsd >= goal.maxCostUsd) return { ok: false as const, reason: "budget_cost" as const }
+      return { ok: true as const }
+    })
+
+    const recordJudgeFailure = Effect.fn("SessionGoal.recordJudgeFailure")(function* (sessionID: SessionID) {
+      const data = yield* InstanceState.get(state)
+      const goal = data.goals.get(sessionID)
+      if (!goal) return 0
+      goal.judgeFailures += 1
+      yield* publish({ sessionID, goal })
+      return goal.judgeFailures
     })
 
     const evaluate = Effect.fn("SessionGoal.evaluate")(function* (input: {
       condition: string
       msgs: MessageV2.WithParts[]
       model: { providerID: ProviderID; modelID: ModelID }
+      sessionID: SessionID
     }) {
       const cfg = yield* config.get()
       const resolved = yield* provider.getModel(input.model.providerID, input.model.modelID)
@@ -169,10 +375,6 @@ export const layer = Layer.effect(
         yield* MessageV2.toModelMessagesEffect(input.msgs, resolved),
       )
 
-      // Diagnostic: dump the FULL message array sent to the judge. Long strings
-      // (e.g. base64 image data) are clipped with a length marker so the log
-      // stays readable. Debug-level — it dumps the whole transcript on every
-      // judge call, so it stays out of production info logs.
       const clip = (_key: string, value: unknown) =>
         typeof value === "string" && value.length > 500
           ? `«${value.length} chars: ${value.slice(0, 200)}…»`
@@ -214,8 +416,8 @@ export const layer = Layer.effect(
         providerOptions: structuredOutput && ProviderTransform.providerOptions(resolved, structuredOutput),
       } satisfies Parameters<typeof generateObject>[0]
 
-      if (isOpenaiOauth) {
-        return yield* Effect.promise(async () => {
+      const verdict = yield* Effect.promise(async () => {
+        if (isOpenaiOauth) {
           const result = streamObject({
             ...params,
             providerOptions: ProviderTransform.providerOptions(resolved, {
@@ -228,14 +430,34 @@ export const layer = Layer.effect(
           for await (const part of result.fullStream) {
             if (part.type === "error") throw part.error
           }
-          return Verdict.parse(await result.object)
-        })
-      }
+          const parsed = Verdict.parse(await result.object)
+          const usage = await result.usage
+          return { parsed, usage }
+        }
+        const result = await generateObject(params)
+        return { parsed: Verdict.parse(result.object), usage: result.usage }
+      })
 
-      return yield* Effect.promise(() => generateObject(params).then((r) => Verdict.parse(r.object)))
+      const u = Session.getUsage({ model: resolved, usage: verdict.usage, metadata: undefined })
+      const judgeCost = u.cost
+      if (judgeCost > 0) yield* addCost(input.sessionID, judgeCost)
+
+      return verdict.parsed
     })
 
-    return Service.of({ set, get, clear, bumpReact, evaluate })
+    return Service.of({
+      set,
+      get,
+      clear,
+      setPhase,
+      bumpReact,
+      addCost,
+      syncCostFromTranscript,
+      checkBudget,
+      recordJudgeFailure,
+      stopWithReason,
+      evaluate,
+    })
   }),
 )
 

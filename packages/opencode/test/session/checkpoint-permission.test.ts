@@ -1,12 +1,12 @@
 import { afterEach, describe, expect } from "bun:test"
-import { Effect, Layer } from "effect"
+import { Effect } from "effect"
 import path from "path"
 import { Bus } from "../../src/bus"
-import * as CrossSpawnSpawner from "../../src/effect/cross-spawn-spawner"
 import { Permission } from "../../src/permission"
 import { Global } from "../../src/global"
 import { Instance } from "../../src/project/instance"
 import { provideTmpdirInstance } from "../fixture/fixture"
+import { permissionEnv } from "../fixture/permission-env"
 import { testEffect } from "../lib/effect"
 import { askEditUnlessMemory } from "../../src/tool/external-directory"
 import type * as Tool from "../../src/tool/tool"
@@ -19,8 +19,7 @@ afterEach(async () => {
   await Instance.disposeAll()
 })
 
-const bus = Bus.layer
-const env = Layer.mergeAll(Permission.layer.pipe(Layer.provide(bus)), bus, CrossSpawnSpawner.defaultLayer)
+const env = permissionEnv()
 const it = testEffect(env)
 
 // Recording Tool.Context whose ask() pushes the permission name onto a log so

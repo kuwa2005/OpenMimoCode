@@ -1,26 +1,22 @@
 import { afterEach, describe, expect, test } from "bun:test"
-import { Effect, Fiber, Layer } from "effect"
+import { Effect, Fiber } from "effect"
 import type { Permission as PermissionType } from "../../src/permission"
 
 // Read lazily by the permission service at ask() time. Short timeout so the
 // real-clock test resolves quickly.
 process.env.MIMOCODE_SKIP_ALL_FORCED_ASK_TIMEOUT_MS = "300"
 
-const { Bus } = await import("../../src/bus")
-const CrossSpawnSpawner = await import("../../src/effect/cross-spawn-spawner")
 const { Permission } = await import("../../src/permission")
 const { Instance } = await import("../../src/project/instance")
 const { tmpdir } = await import("../fixture/fixture")
+const { permissionEnv, permissionEnvWithAutonomy } = await import("../fixture/permission-env")
 
 afterEach(async () => {
   await Instance.disposeAll()
 })
 
-const env = Layer.mergeAll(
-  Permission.layer.pipe(Layer.provide(Bus.layer)),
-  Bus.layer,
-  CrossSpawnSpawner.defaultLayer,
-)
+const env = permissionEnv()
+const autonomyEnv = permissionEnvWithAutonomy()
 
 function buildRequest(extra?: Partial<Parameters<PermissionType.Interface["ask"]>[0]>) {
   return {
@@ -74,6 +70,24 @@ describe("skip-all forced-ask timeout (real clock)", () => {
           // Interrupt the still-blocked ask so the scope can close cleanly.
           yield* Fiber.interrupt(fiber)
         }).pipe(Effect.provide(env), Effect.scoped, Effect.runPromise),
+    })
+  }, 10000)
+
+  test("autonomy mode keeps forced-ask pending past skip-all timeout", async () => {
+    await using tmp = await tmpdir()
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () =>
+        Effect.gen(function* () {
+          const perm = yield* Permission.Service
+          yield* perm.setSkipAll(true)
+
+          const fiber = yield* perm.ask(buildRequest()).pipe(Effect.exit, Effect.forkScoped)
+          yield* Effect.promise(() => Bun.sleep(600))
+          const pending = yield* perm.list()
+          expect(pending.length).toBe(1)
+          yield* Fiber.interrupt(fiber)
+        }).pipe(Effect.provide(autonomyEnv), Effect.scoped, Effect.runPromise),
     })
   }, 10000)
 })

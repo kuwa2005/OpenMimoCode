@@ -16,6 +16,7 @@ import {
 } from "solid-js"
 import { win32DisableProcessedInput, win32InstallCtrlCGuard } from "./win32"
 import { Flag } from "@/flag/flag"
+import * as ConfigAutonomy from "@/config/autonomy"
 import { isSystemSession } from "@/session/auto-dream"
 import semver from "semver"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
@@ -565,13 +566,27 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
 
   const connected = useConnected()
 
-  // Seed never-ask from the launch flag once connected (the server starts with
-  // it off; this mirrors --never-ask to the question service).
-  let seededNeverAsk = false
+  // Seed skip-permissions when autonomy is active. never-ask waits until
+  // Requirements Lock (goal.phase === "execute") when hearing_first is on.
+  let seededAutonomy = false
   createEffect(() => {
-    if (seededNeverAsk || !args.neverAsk || !connected()) return
-    seededNeverAsk = true
-    local.neverAsk.set(true)
+    if (seededAutonomy || !connected()) return
+    const cfg = sync.data.config
+    if (!args.neverAsk && !args.autonomy && !ConfigAutonomy.enabled(cfg)) return
+    seededAutonomy = true
+    const hearing = ConfigAutonomy.hearingFirst(cfg.autonomy) && !args.neverAsk
+    if (!hearing) local.neverAsk.set(true)
+    if (ConfigAutonomy.enabled(cfg) || args.autonomy) local.skipPermissions.set(true)
+  })
+
+  // When hearing completes (Requirements Lock), enable never-ask for non-stop delivery.
+  createEffect(() => {
+    if (!connected()) return
+    if (route.data.type !== "session") return
+    const phase = sync.data.session_goal[route.data.sessionID]?.phase
+    if (phase !== "execute") return
+    if (!local.neverAsk.current()) local.neverAsk.set(true)
+    if (!local.skipPermissions.current()) local.skipPermissions.set(true)
   })
 
   command.register(() => [
@@ -1192,6 +1207,37 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     ])
     if (lastTryBestDialog?.key === key && Date.now() - lastTryBestDialog.time < 2000) return
     lastTryBestDialog = { key, time: Date.now() }
+    const modelDetail =
+      detection.reason === "edit_repeat"
+        ? `Near-identical edits repeated ${detection.evidence.count} times${detection.evidence.path ? ` in ${detection.evidence.path}` : ""}.`
+        : detection.reason === "bash_retry"
+          ? `The same failing command was retried ${detection.evidence.count} times without a successful edit.`
+          : `${detection.evidence.count} consecutive ${detection.evidence.action ?? "same-kind"} actions made no observable progress.`
+    if (
+      ConfigAutonomy.enabled(sync.data.config) &&
+      route.data.type === "session" &&
+      route.data.sessionID === detection.sessionID
+    ) {
+      void sdk.client.session
+        .promptAsync({
+          sessionID: detection.sessionID,
+          model: { providerID: detection.providerID, modelID: detection.modelID },
+          parts: [
+            {
+              type: "text",
+              synthetic: true,
+              text: `The previous turn was paused by try-best loop detection: ${modelDetail} Abandon that approach. Inspect the current workspace state, explain why the attempt stalled, and continue with a materially different strategy. Do not repeat the same edit or command unchanged.`,
+            },
+          ],
+        })
+        .catch((error) =>
+          toast.show({
+            variant: "error",
+            message: error instanceof Error ? error.message : t("tui.toast.try_best.continue_failed"),
+          }),
+        )
+      return
+    }
     if (route.data.type !== "session" || route.data.sessionID !== detection.sessionID) {
       toast.show({
         variant: "warning",
@@ -1214,12 +1260,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
               count: detection.evidence.count,
               action: t(`tui.dialog.try_best.action.${detection.evidence.action ?? "same_kind"}`),
             })
-    const modelDetail =
-      detection.reason === "edit_repeat"
-        ? `Near-identical edits repeated ${detection.evidence.count} times${detection.evidence.path ? ` in ${detection.evidence.path}` : ""}.`
-        : detection.reason === "bash_retry"
-          ? `The same failing command was retried ${detection.evidence.count} times without a successful edit.`
-          : `${detection.evidence.count} consecutive ${detection.evidence.action ?? "same-kind"} actions made no observable progress.`
     const handoff = (target: HandoffTarget, current: { clear(): void }) => {
       current.clear()
       void sdk.client.session

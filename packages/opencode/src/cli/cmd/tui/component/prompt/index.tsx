@@ -4,6 +4,7 @@ import "opentui-spinner/solid"
 import path from "path"
 import { fileURLToPath } from "url"
 import { Filesystem } from "@/util"
+import * as ConfigAutonomy from "@/config/autonomy"
 import { useLocal } from "@tui/context/local"
 import { tint, useTheme } from "@tui/context/theme"
 import { EmptyBorder, SplitBorder } from "@tui/component/border"
@@ -414,6 +415,8 @@ export function Prompt(props: PromptProps) {
     if (!props.disabled) input.cursorColor = theme.text
   })
 
+  const sessionGoal = createMemo(() => (props.sessionID ? sync.data.session_goal[props.sessionID] : undefined))
+  const autonomyActive = createMemo(() => ConfigAutonomy.enabled(sync.data.config))
   const lastUserMessage = createMemo(() => {
     if (!props.sessionID) return undefined
     const messages = sync.data.message[props.sessionID]?.["main"]
@@ -426,6 +429,7 @@ export function Prompt(props: PromptProps) {
   // an idle transition while the input is empty so it never clobbers typing.
   let ghostRequest = 0
   async function fetchGhost(sessionID: string) {
+    if (ConfigAutonomy.enabled(sync.data.config)) return
     if (props.showPlaceholder === false) return
     const token = ++ghostRequest
     const userMessageID = lastUserMessage()?.id
@@ -1826,6 +1830,20 @@ export function Prompt(props: PromptProps) {
                 <Show when={local.neverAsk.current()}>
                   <text>
                     <span style={{ fg: theme.error, bold: true }}>«never-ask»</span>
+                  </text>
+                </Show>
+                <Show when={autonomyActive() && sessionGoal()?.condition}>
+                  <text>
+                    <span style={{ fg: theme.warning, bold: true }}>
+                      «autonomy:{sessionGoal()?.phase ?? "?"}» {sessionGoal()?.react ?? 0}/
+                      {sessionGoal()?.maxTurns ?? "?"} · ${(sessionGoal()?.costUsd ?? 0).toFixed(2)}/$
+                      {sessionGoal()?.maxCostUsd ?? "?"}
+                    </span>
+                  </text>
+                </Show>
+                <Show when={sessionGoal()?.stopReason}>
+                  <text>
+                    <span style={{ fg: theme.error }}>stopped: {sessionGoal()?.stopReason}</span>
                   </text>
                 </Show>
               </box>

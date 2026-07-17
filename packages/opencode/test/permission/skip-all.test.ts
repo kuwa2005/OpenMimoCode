@@ -1,10 +1,10 @@
 import { afterEach, describe, expect } from "bun:test"
-import { Effect, Fiber, Layer } from "effect"
+import { Effect, Fiber } from "effect"
 import { Bus } from "../../src/bus"
-import * as CrossSpawnSpawner from "../../src/effect/cross-spawn-spawner"
 import { Permission } from "../../src/permission"
 import { Instance } from "../../src/project/instance"
 import { provideTmpdirInstance } from "../fixture/fixture"
+import { permissionEnv } from "../fixture/permission-env"
 import { testEffect } from "../lib/effect"
 import { Log } from "../../src/util"
 
@@ -14,8 +14,7 @@ afterEach(async () => {
   await Instance.disposeAll()
 })
 
-const bus = Bus.layer
-const env = Layer.mergeAll(Permission.layer.pipe(Layer.provide(bus)), bus, CrossSpawnSpawner.defaultLayer)
+const env = permissionEnv()
 const it = testEffect(env)
 
 function buildRequest(extra?: Partial<Parameters<Permission.Interface["ask"]>[0]>) {

@@ -488,6 +488,82 @@ describe("tool.bash permissions", () => {
     })
   })
 
+  each("asks for bash_delete on terraform destroy", async () => {
+    await using tmp = await tmpdir()
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const bash = await initBash()
+        const err = new Error("stop after permission")
+        const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []
+        await expect(
+          Effect.runPromise(
+            bash.execute(
+              {
+                command: "terraform destroy -auto-approve",
+                description: "Destroy infra",
+              },
+              capture(requests, err),
+            ),
+          ),
+        ).rejects.toThrow(err.message)
+        expect(requests.find((r) => r.permission === "bash_delete")).toBeDefined()
+      },
+    })
+  })
+
+  each("asks for bash_delete on kubectl delete", async () => {
+    await using tmp = await tmpdir()
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const bash = await initBash()
+        const err = new Error("stop after permission")
+        const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []
+        await expect(
+          Effect.runPromise(
+            bash.execute(
+              {
+                command: "kubectl delete pod my-pod",
+                description: "Delete pod",
+              },
+              capture(requests, err),
+            ),
+          ),
+        ).rejects.toThrow(err.message)
+        expect(requests.find((r) => r.permission === "bash_delete")).toBeDefined()
+      },
+    })
+  })
+
+  each("asks for bash_delete on sudo rm", async () => {
+    await using tmp = await tmpdir({
+      init: async (dir) => {
+        await Bun.write(path.join(dir, "victim.txt"), "x")
+      },
+    })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const bash = await initBash()
+        const err = new Error("stop after permission")
+        const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []
+        await expect(
+          Effect.runPromise(
+            bash.execute(
+              {
+                command: "sudo rm victim.txt",
+                description: "Privileged delete",
+              },
+              capture(requests, err),
+            ),
+          ),
+        ).rejects.toThrow(err.message)
+        expect(requests.find((r) => r.permission === "bash_delete")).toBeDefined()
+      },
+    })
+  })
+
   if (process.platform === "win32") {
     if (bash) {
       test(
