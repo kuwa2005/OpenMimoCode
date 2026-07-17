@@ -2,6 +2,8 @@ import z from "zod"
 import { Effect } from "effect"
 import * as Tool from "./tool"
 import { Question } from "../question"
+import * as ConfigAutonomy from "@/config/autonomy"
+import { goalRef } from "../session/goal-ref"
 import DESCRIPTION from "./question.txt"
 
 const parameters = z.object({
@@ -10,6 +12,7 @@ const parameters = z.object({
 
 type Metadata = {
   answers: ReadonlyArray<Question.Answer>
+  requirementsLocked?: boolean
 }
 
 export const QuestionTool = Tool.define<typeof parameters, Metadata, Question.Service>(
@@ -54,11 +57,21 @@ export const QuestionTool = Tool.define<typeof parameters, Metadata, Question.Se
             .map((q, i) => `"${q.question}"="${answers[i]?.length ? answers[i].join(", ") : "Unanswered"}"`)
             .join(", ")
 
+          // Requirements Lock gate: affirmative answer advances autonomy hearing → execute.
+          const lockAsked = params.questions.some((q) => ConfigAutonomy.isRequirementsLockHeader(q.header))
+          const locked = lockAsked && ConfigAutonomy.isLockApproval(answers)
+          if (locked) {
+            goalRef.setPhase(ctx.sessionID, "execute")
+          }
+
           return {
             title: `Asked ${params.questions.length} question${params.questions.length > 1 ? "s" : ""}`,
-            output: `User has answered your questions: ${formatted}. You can now continue with the user's answers in mind.`,
+            output: locked
+              ? `User has answered your questions: ${formatted}. Requirements Lock approved — hearing phase is complete. Enable non-stop execution: implement, verify, and finish. Do not ask further product-scope questions unless blocked.`
+              : `User has answered your questions: ${formatted}. You can now continue with the user's answers in mind. Record each Q&A (why / background / result) in the hearing log before proceeding.`,
             metadata: {
               answers,
+              requirementsLocked: locked || undefined,
             },
           }
         }).pipe(Effect.orDie),

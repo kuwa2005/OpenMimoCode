@@ -113,6 +113,15 @@ export type GoalVerdict = {
 
 export type SessionGoal = {
   condition?: string
+  react?: number
+  startedAt?: number
+  costUsd?: number
+  maxTurns?: number
+  maxDurationMs?: number
+  maxCostUsd?: number
+  autonomous?: boolean
+  phase?: "hearing" | "execute"
+  stopReason?: string
   verdicts: { [messageID: string]: GoalVerdict }
   lastMessageID?: string
 }
@@ -473,8 +482,18 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               }
               lastMessageID = v.messageID
             }
+            const g = event.properties.goal
             return {
-              condition: event.properties.goal?.condition,
+              condition: g?.condition,
+              react: g?.react ?? prev?.react,
+              startedAt: g?.startedAt ?? prev?.startedAt,
+              costUsd: g?.costUsd ?? prev?.costUsd,
+              maxTurns: g?.maxTurns ?? prev?.maxTurns,
+              maxDurationMs: g?.maxDurationMs ?? prev?.maxDurationMs,
+              maxCostUsd: g?.maxCostUsd ?? prev?.maxCostUsd,
+              autonomous: g?.autonomous ?? prev?.autonomous,
+              phase: g?.phase ?? prev?.phase,
+              stopReason: event.properties.stopReason ?? (g ? undefined : prev?.stopReason),
               verdicts,
               lastMessageID,
             }

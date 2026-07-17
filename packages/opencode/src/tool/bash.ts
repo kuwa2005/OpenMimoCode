@@ -186,6 +186,24 @@ function isDelete(tokens: string[], ps: boolean) {
   return false
 }
 
+function isHighRiskDelete(tokens: string[], ps: boolean, sourceText: string) {
+  if (isDelete(tokens, ps)) return true
+  const lower = sourceText.toLowerCase()
+  const fragments = [
+    "terraform destroy",
+    "kubectl delete",
+    "drop database",
+    "drop table",
+    "aws s3 rb",
+    "gcloud compute instances delete",
+    "az group delete",
+  ]
+  if (fragments.some((frag) => lower.includes(frag))) return true
+  const head = ps ? tokens[0]?.toLowerCase() : tokens[0]
+  if (head === "sudo" && tokens.length > 1 && isDelete(tokens.slice(1), ps)) return true
+  return false
+}
+
 function unquote(text: string) {
   if (text.length < 2) return text
   const first = text[0]
@@ -491,7 +509,7 @@ export const BashTool = Tool.define(
           scan.always.add(BashArity.prefix(tokens).join(" ") + " *")
         }
 
-        if (isDelete(tokens, ps)) scan.deletes.add(source(node))
+        if (isHighRiskDelete(tokens, ps, source(node))) scan.deletes.add(source(node))
       }
 
       return scan

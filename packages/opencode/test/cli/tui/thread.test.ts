@@ -62,6 +62,7 @@ describe("tui thread", () => {
       fork: false,
       "never-ask": false,
       neverAsk: false,
+      autonomy: false,
       trust: true,
       "dangerously-skip-permissions": false,
       dangerouslySkipPermissions: false,

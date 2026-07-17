@@ -35,6 +35,16 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
             <b>Goal</b>
           </text>
         </box>
+        <Show when={goal()?.phase}>
+          {(phase) => (
+            <box flexDirection="row" gap={1}>
+              <text flexShrink={0} fg={theme().primary}>
+                •
+              </text>
+              <text fg={theme().textMuted}>phase: {phase()}</text>
+            </box>
+          )}
+        </Show>
         <Show when={goal()?.condition}>
           {(condition) => (
             <box flexDirection="row" gap={1}>

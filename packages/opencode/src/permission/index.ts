@@ -1,6 +1,8 @@
 import { Bus } from "@/bus"
 import { BusEvent } from "@/bus/bus-event"
 import { ConfigPermission } from "@/config/permission"
+import { Config } from "@/config"
+import * as ConfigAutonomy from "@/config/autonomy"
 import { InstanceState } from "@/effect"
 import { ProjectID } from "@/project/schema"
 import { MessageID, SessionID } from "@/session/schema"
@@ -200,6 +202,7 @@ export const layer = Layer.effect(
   Service,
   Effect.gen(function* () {
     const bus = yield* Bus.Service
+    const config = yield* Config.Service
     const state = yield* InstanceState.make<State>(
       Effect.fn("Permission.state")(function* (ctx) {
         const row = Database.use((db) =>
@@ -417,34 +420,33 @@ export const layer = Layer.effect(
           )
         : main
 
-      // Skip-all mode: the user opted into unattended execution, so a forced-ask
-      // (the only ask that still blocks here) must not hang the run forever.
-      // Bound it with a timeout; CorrectedError (not RejectedError) so the
-      // processor does NOT set ctx.blocked — the model sees an error result with
-      // actionable feedback and the session loop continues to the next step.
-      // NOTE: Effect.race with a permanently-blocked Deferred hangs under the
-      // current Effect v4 beta, so use Effect.timeoutOrElse instead.
+      // Skip-all mode: forced-ask permissions still require a human. In
+      // autonomy mode, wait indefinitely (no auto-reject). Otherwise bound
+      // with a timeout and fail closed with actionable feedback.
       if (s.skipAll && forced) {
-        const timeoutMs = skipAllForcedAskTimeoutMs()
-        guarded = Effect.timeoutOrElse(guarded, {
-          duration: `${timeoutMs} millis`,
-          orElse: () =>
-            bus
-              .publish(Event.Replied, {
-                sessionID: info.sessionID,
-                requestID: info.id,
-                reply: "reject",
-              })
-              .pipe(
-                Effect.andThen(() =>
-                  Effect.fail(
-                    new CorrectedError({
-                      feedback: `No user response within ${Math.round(timeoutMs / 1000)}s (skip-permissions mode is on, user likely away). This destructive action was auto-rejected as a safety measure — NOT an explicit user denial. Skip this operation and continue with the rest of the task; leave the cleanup/deletion for the user to do manually.`,
-                    }),
+        const cfg = yield* config.get()
+        if (!ConfigAutonomy.enabled(cfg)) {
+          const timeoutMs = skipAllForcedAskTimeoutMs()
+          guarded = Effect.timeoutOrElse(guarded, {
+            duration: `${timeoutMs} millis`,
+            orElse: () =>
+              bus
+                .publish(Event.Replied, {
+                  sessionID: info.sessionID,
+                  requestID: info.id,
+                  reply: "reject",
+                })
+                .pipe(
+                  Effect.andThen(() =>
+                    Effect.fail(
+                      new CorrectedError({
+                        feedback: `No user response within ${Math.round(timeoutMs / 1000)}s (skip-permissions mode is on, user likely away). This destructive action was auto-rejected as a safety measure — NOT an explicit user denial. Skip this operation and continue with the rest of the task; leave the cleanup/deletion for the user to do manually.`,
+                      }),
+                    ),
                   ),
                 ),
-              ),
-        })
+          })
+        }
       }
 
       return yield* Effect.ensuring(
@@ -610,6 +612,6 @@ export function disabled(tools: string[], ruleset: Ruleset): Set<string> {
   return result
 }
 
-export const defaultLayer = layer.pipe(Layer.provide(Bus.layer))
+export const defaultLayer = layer.pipe(Layer.provide(Bus.layer), Layer.provide(Config.defaultLayer))
 
 export * as Permission from "."

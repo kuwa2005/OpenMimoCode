@@ -137,6 +137,22 @@ As context fills, MiMoCode auto-checkpoints (a background writer distills the co
 | `workflow.maxConcurrentAgents` | Process-wide subagent concurrency ceiling (default min(16, 2×cores)) |
 | `workflow.maxDepth` | Max workflow nesting depth (default 8) |
 
+### Autonomy (AI-driven SE delivery)
+| Key | Purpose |
+|-----|---------|
+| `autonomy.enabled` | Enable SE-style mode: hearing-first clarification, then non-stop delivery until judge confirms completion |
+| `autonomy.hearing_first` | Ask the user and lock requirements before never-ask (default true) |
+| `autonomy.docs_evidence` | Require documentary evidence (hearing log, specs incl. test criteria, verification) in the stop condition (default true) |
+| `autonomy.max_turns` | Max judge re-entries per task (default 50) |
+| `autonomy.max_duration_ms` | Wall-clock budget per task in ms (default 7_200_000) |
+| `autonomy.max_cost_usd` | Soft cost ceiling per task in USD (default 10) |
+| `autonomy.judge_max_retries` | Judge retries before `judge_failed` stop (default 2) |
+| `experimental.auto_continue` | **Deprecated** — alias for `autonomy.enabled` (does not auto-submit predicted prompts) |
+
+CLI: `mimo --autonomy` or `mimo --se` starts this mode (compose agent, hearing-first). After a `Requirements Lock` approval, never-ask engages for non-stop implementation.
+
+High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) still require explicit user approval even in autonomy mode.
+
 ### Experimental
 | Key | Purpose |
 |-----|---------|

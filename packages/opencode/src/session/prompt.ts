@@ -31,6 +31,7 @@ import { SessionCompaction } from "./compaction"
 import { computeLastMessageInfo } from "./last-message-info"
 import { pressureLevel, isOverflow as overflowCheck } from "./overflow"
 import { Config } from "@/config"
+import * as ConfigAutonomy from "@/config/autonomy"
 import { Global } from "@/global"
 import { Bus } from "../bus"
 import { ProviderTransform } from "../provider"
@@ -41,6 +42,7 @@ import { Plugin } from "../plugin"
 import BUILD_SWITCH from "../session/prompt/build-switch.txt"
 import MAX_STEPS from "../session/prompt/max-steps.txt"
 import PROMPT_COMPOSE from "../session/prompt/compose.txt"
+import PROMPT_AUTONOMY_SE from "../session/prompt/autonomy-se.txt"
 import {
   RECOVERY_PROMPT_MILD,
   RECOVERY_PROMPT_STRONG,
@@ -147,14 +149,6 @@ export function stableRootTitle(input: { agent: string | undefined; parentID: st
   if (input.agent === "orchestrator") return ORCHESTRATOR_TITLE
   return undefined
 }
-
-/**
- * Cap on goal-driven main-loop re-entries per turn — the safety valve against
- * a never-satisfiable condition burning tokens forever. Higher than spawned
- * actors' MAX_PRE_REACT (=3) because main-session goals are usually larger.
- * TODO: lift to mimocode.json config (e.g. session.maxGoalReact).
- */
-const MAX_GOAL_REACT = 12
 
 /**
  * Number of consecutive finished assistant steps with an identical action
@@ -660,6 +654,25 @@ export const layer = Layer.effect(
           text,
           synthetic: true,
         })
+      }
+
+      const cfg = yield* config.get()
+      if (ConfigAutonomy.enabled(cfg)) {
+        const activeGoal = yield* goal.get(input.session.id)
+        if (activeGoal?.autonomous) {
+          const phaseHint =
+            activeGoal.phase === "hearing"
+              ? "\nCurrent phase: HEARING — clarify and lock requirements before implementation."
+              : "\nCurrent phase: EXECUTE — requirements are locked; deliver non-stop with documentary evidence."
+          userMessage.parts.unshift({
+            id: PartID.ascending(),
+            messageID: userMessage.info.id,
+            sessionID: userMessage.info.sessionID,
+            type: "text",
+            text: PROMPT_AUTONOMY_SE + phaseHint,
+            synthetic: true,
+          })
+        }
       }
 
       const assistantMessage = input.messages.findLast((msg) => msg.info.role === "assistant")
@@ -2077,6 +2090,31 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         const message = yield* createUserMessage(input)
         yield* sessions.touch(input.sessionID)
 
+        if (input.noReply !== true && input.source !== "spawn" && input.source !== "hook") {
+          const cfg = yield* config.get()
+          if (ConfigAutonomy.enabled(cfg)) {
+            const existing = yield* goal.get(input.sessionID)
+            // Do not reset an in-flight hearing/execute goal on follow-up messages.
+            if (!existing) {
+              const userText = message.parts
+                .filter((p): p is MessageV2.TextPart => p.type === "text" && !("synthetic" in p && p.synthetic))
+                .map((p) => p.text)
+                .join("\n")
+                .trim()
+              if (userText && !userText.startsWith("/goal")) {
+                yield* goal.set(input.sessionID, {
+                  condition: ConfigAutonomy.buildGoalCondition(userText, {
+                    docsEvidence: ConfigAutonomy.docsEvidence(cfg.autonomy),
+                    hearingFirst: ConfigAutonomy.hearingFirst(cfg.autonomy),
+                  }),
+                  startMessageID: message.info.id,
+                  autonomous: true,
+                })
+              }
+            }
+          }
+        }
+
         const permissions: Permission.Ruleset = []
         for (const [t, enabled] of Object.entries(input.tools ?? {})) {
           permissions.push({ permission: t, action: enabled ? "allow" : "deny", pattern: "*" })
@@ -2322,21 +2360,71 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           const active = yield* goal.get(sessionID)
           if (!active) return false
 
+          const cfg = yield* config.get()
+          const autonomous = ConfigAutonomy.enabled(cfg) || active.autonomous
+
           const transcriptMsgs = yield* MessageV2.filterCompactedEffect(sessionID, {
             contextFrom: session.contextFrom,
             contextWatermark: session.contextWatermark,
             agentID: "main",
           })
-          // Anchor the verdict to the assistant turn the judge just evaluated, so
-          // the TUI can render a per-turn marker the user can trace back to.
           const judgedMessageID = transcriptMsgs.findLast((m) => m.info.role === "assistant")?.info.id
-          const verdict = yield* goal
-            .evaluate({
+
+          yield* goal.syncCostFromTranscript({ sessionID, msgs: transcriptMsgs })
+          const budget = yield* goal.checkBudget(sessionID)
+          if (!budget.ok) {
+            yield* goal.stopWithReason({
+              sessionID,
+              reason: budget.reason,
+              lastVerdict: {
+                ok: false,
+                reason: `Autonomy budget exhausted (${budget.reason}).`,
+                attempt: active.react,
+                messageID: judgedMessageID,
+              },
+            })
+            return false
+          }
+
+          const runJudge = () =>
+            goal.evaluate({
               condition: active.condition,
               msgs: transcriptMsgs,
               model: lastUser.model,
+              sessionID,
             })
-            .pipe(
+
+          let verdict: Goal.Verdict & { judgeFailed?: boolean }
+          if (autonomous) {
+            let resolved: Goal.Verdict | undefined
+            for (let attempt = 0; attempt <= active.judgeMaxRetries; attempt++) {
+              const judged = yield* runJudge().pipe(Effect.option)
+              if (Option.isSome(judged)) {
+                resolved = judged.value
+                break
+              }
+              yield* slog.warn("goal judge failed; retrying", { sessionID, attempt })
+              const failures = yield* goal.recordJudgeFailure(sessionID)
+              const refreshed = yield* goal.get(sessionID)
+              if (!refreshed || failures >= refreshed.judgeMaxRetries) {
+                yield* goal.stopWithReason({
+                  sessionID,
+                  reason: "judge_failed",
+                  lastVerdict: {
+                    ok: false,
+                    reason: `Judge unavailable after ${failures} attempts.`,
+                    attempt: active.react,
+                    messageID: judgedMessageID,
+                    error: true,
+                  },
+                })
+                return false
+              }
+            }
+            if (!resolved) return false
+            verdict = resolved
+          } else {
+            verdict = yield* runJudge().pipe(
               Effect.catch((err) =>
                 Effect.gen(function* () {
                   yield* slog.warn("goal judge failed; allowing stop", { error: String(err) })
@@ -2346,18 +2434,16 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 }),
               ),
             )
+          }
 
           if (verdict.ok || verdict.impossible) {
             yield* slog.info("goal satisfied; allowing stop", {
               sessionID,
               impossible: verdict.impossible === true,
             })
-            // Publish the final verdict (goal cleared) so the TUI can render the
-            // ✓/⊘ result line before the indicator disappears. goal.clear also
-            // publishes goal:undefined, but the TUI keeps lastVerdict sticky.
-            yield* bus.publish(Goal.Event.Updated, {
+            yield* goal.stopWithReason({
               sessionID,
-              goal: undefined,
+              reason: verdict.impossible ? "impossible" : "completed",
               lastVerdict: {
                 ...verdict,
                 attempt: active.react,
@@ -2365,30 +2451,38 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 error: "judgeFailed" in verdict ? true : undefined,
               },
             })
-            yield* goal.clear(sessionID)
             return false
           }
 
           const count = yield* goal.bumpReact(sessionID)
-          if (count > MAX_GOAL_REACT) {
-            yield* slog.warn("goal hit MAX_GOAL_REACT cap; allowing stop", {
+          const refreshed = yield* goal.get(sessionID)
+          if (!refreshed || count >= refreshed.maxTurns) {
+            yield* slog.warn("goal hit max turns cap; stopping", {
               sessionID,
               condition: active.condition,
               count,
             })
-            yield* bus.publish(Goal.Event.Updated, {
+            yield* goal.stopWithReason({
               sessionID,
-              goal: undefined,
+              reason: "budget_turns",
               lastVerdict: { ...verdict, attempt: count, messageID: judgedMessageID },
             })
-            yield* goal.clear(sessionID)
             return false
           }
 
           yield* slog.info("goal not satisfied; re-entering", { sessionID, attempt: count })
           yield* bus.publish(Goal.Event.Updated, {
             sessionID,
-            goal: { condition: active.condition },
+            goal: {
+              condition: refreshed.condition,
+              react: refreshed.react,
+              startedAt: refreshed.startedAt,
+              costUsd: refreshed.costUsd,
+              maxTurns: refreshed.maxTurns,
+              maxDurationMs: refreshed.maxDurationMs,
+              maxCostUsd: refreshed.maxCostUsd,
+              autonomous: refreshed.autonomous,
+            },
             lastVerdict: { ...verdict, attempt: count, messageID: judgedMessageID },
           })
           const reentry = yield* sessions.updateMessage({
@@ -3917,7 +4011,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       if (input.command === Command.Default.GOAL) {
         const condition = input.arguments.trim()
         if (condition === "" || condition === "clear" || condition === "reset") {
-          yield* goal.clear(input.sessionID)
+          yield* goal.clear(input.sessionID, "cancelled")
           return yield* prompt({
             sessionID: input.sessionID,
             messageID: input.messageID,
@@ -3926,7 +4020,10 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             noReply: true,
           })
         }
-        yield* goal.set(input.sessionID, condition)
+        yield* goal.set(input.sessionID, {
+          condition,
+          autonomous: ConfigAutonomy.enabled(yield* config.get()),
+        })
       }
 
       // /rebuild — manually rebuild the conversation context now, from the

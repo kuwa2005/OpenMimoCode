@@ -8,6 +8,8 @@ export interface Args {
   sessionID?: string
   fork?: boolean
   neverAsk?: boolean
+  /** SE-style autonomy (hearing-first). Implies compose agent when unset. */
+  autonomy?: boolean
 }
 
 export const { use: useArgs, provider: ArgsProvider } = createSimpleContext({

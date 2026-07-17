@@ -862,7 +862,16 @@ export type EventSessionGoal = {
     sessionID: string
     goal?: {
       condition: string
+      react?: number
+      startedAt?: number
+      costUsd?: number
+      maxTurns?: number
+      maxDurationMs?: number
+      maxCostUsd?: number
+      autonomous?: boolean
+      phase?: "hearing" | "execute"
     }
+    stopReason?: string
     lastVerdict?: {
       ok: boolean
       impossible?: boolean
@@ -2002,6 +2011,39 @@ export type Config = {
      */
     docs_absolute?: boolean
   }
+  /**
+   * AI-driven autonomous execution: auto-resolve decisions, auto-approve safe permissions, and continue until task completion or budget limits.
+   */
+  autonomy?: {
+    /**
+     * AI-driven autonomous mode: hear requirements first (when hearing_first), then auto-approve safe permissions and continue until an independent judge confirms documentary completion or a budget limit is reached.
+     */
+    enabled?: boolean
+    /**
+     * When true (default), start in a hearing phase: ask the user clarifying questions and lock requirements before enabling never-ask / non-stop execution.
+     */
+    hearing_first?: boolean
+    /**
+     * When true (default), the stop-condition requires documentary evidence (hearing log, requirements/specs including test criteria, verification) before the judge may allow stop.
+     */
+    docs_evidence?: boolean
+    /**
+     * Maximum judge-driven re-entries per task (default 50).
+     */
+    max_turns?: number
+    /**
+     * Wall-clock budget per task in milliseconds (default 7_200_000 = 2h).
+     */
+    max_duration_ms?: number
+    /**
+     * Soft cumulative cost ceiling per task in USD (default 10). Checked before each model call.
+     */
+    max_cost_usd?: number
+    /**
+     * Judge evaluation retries before stopping with judge_failed (default 2).
+     */
+    judge_max_retries?: number
+  }
   watcher?: {
     ignore?: Array<string>
   }
@@ -2372,6 +2414,10 @@ export type Config = {
      * Predict the user's likely next prompt after each turn and show it as inline ghost text (Tab to accept). Enabled by default; set to false to disable.
      */
     predict_next_prompt?: boolean
+    /**
+     * @deprecated Use autonomy.enabled instead. When true, enables autonomous mode (never-ask, safe permission auto-approve, goal-driven continuation). Does not auto-submit predicted prompts.
+     */
+    auto_continue?: boolean
     /**
      * Max mode (experimental): the 'max' agent runs N parallel reasoning candidates each step, picks the best via a judge call, and executes only the winner.
      */

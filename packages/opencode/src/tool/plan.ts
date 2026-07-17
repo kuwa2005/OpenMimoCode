@@ -6,6 +6,8 @@ import { Question } from "../question"
 import { Session } from "../session"
 import { MessageV2 } from "../session/message-v2"
 import { Provider } from "../provider"
+import { Config } from "../config"
+import * as ConfigAutonomy from "../config/autonomy"
 import { Instance } from "../project/instance"
 import { type SessionID, MessageID, PartID } from "../session/schema"
 import ENTER_DESCRIPTION from "./plan-enter.txt"
@@ -18,12 +20,22 @@ function getLastModel(sessionID: SessionID) {
   return undefined
 }
 
+const skipSwitchConfirm = Effect.fn("Plan.skipSwitchConfirm")(function* (
+  question: Question.Interface,
+  config: Config.Interface,
+) {
+  if (yield* question.neverAsk()) return true
+  const cfg = yield* config.get()
+  return ConfigAutonomy.enabled(cfg)
+})
+
 export const PlanEnterTool = Tool.define(
   "plan_enter",
   Effect.gen(function* () {
     const session = yield* Session.Service
     const question = yield* Question.Service
     const provider = yield* Provider.Service
+    const config = yield* Config.Service
 
     return {
       description: ENTER_DESCRIPTION,
@@ -40,31 +52,34 @@ export const PlanEnterTool = Tool.define(
 
           const info = yield* session.get(ctx.sessionID)
           const plan = path.relative(Instance.worktree, Session.plan(info))
-          const answers = yield* question.ask({
-            sessionID: ctx.sessionID,
-            questions: [
-              {
-                key: "plan_enter",
-                params: { plan },
-                question: `Would you like to switch to plan mode for structured planning?`,
-                header: "Plan",
-                options: [
-                  { label: "Yes", description: "Switch to plan agent for read-only planning" },
-                  { label: "No", description: "Stay in current mode" },
-                ],
-              },
-            ],
-            tool: ctx.callID ? { messageID: ctx.messageID, callID: ctx.callID } : undefined,
-          })
 
-          const answer = answers[0]?.[0]
-          if (answer === "No") return yield* new Question.RejectedError()
+          if (!(yield* skipSwitchConfirm(question, config))) {
+            const answers = yield* question.ask({
+              sessionID: ctx.sessionID,
+              questions: [
+                {
+                  key: "plan_enter",
+                  params: { plan },
+                  question: `Would you like to switch to plan mode for structured planning?`,
+                  header: "Plan",
+                  options: [
+                    { label: "Yes", description: "Switch to plan agent for read-only planning" },
+                    { label: "No", description: "Stay in current mode" },
+                  ],
+                },
+              ],
+              tool: ctx.callID ? { messageID: ctx.messageID, callID: ctx.callID } : undefined,
+            })
 
-          if (answer !== "Yes") {
-            return {
-              title: "User provided feedback",
-              output: `User chose not to switch yet and provided feedback: ${answer}`,
-              metadata: { switched: false, feedback: answer },
+            const answer = answers[0]?.[0]
+            if (answer === "No") return yield* new Question.RejectedError()
+
+            if (answer !== "Yes") {
+              return {
+                title: "User provided feedback",
+                output: `User chose not to switch yet and provided feedback: ${answer}`,
+                metadata: { switched: false, feedback: answer },
+              }
             }
           }
 
@@ -90,7 +105,7 @@ export const PlanEnterTool = Tool.define(
 
           return {
             title: "Switching to plan agent",
-            output: "User approved switching to plan agent. Wait for further instructions.",
+            output: "Switched to plan agent. Wait for further instructions.",
             metadata: { switched: true, feedback: "" },
           }
         }).pipe(Effect.orDie),
@@ -104,6 +119,7 @@ export const PlanExitTool = Tool.define(
     const session = yield* Session.Service
     const question = yield* Question.Service
     const provider = yield* Provider.Service
+    const config = yield* Config.Service
 
     return {
       description: EXIT_DESCRIPTION,
@@ -120,31 +136,34 @@ export const PlanExitTool = Tool.define(
 
           const info = yield* session.get(ctx.sessionID)
           const plan = path.relative(Instance.worktree, Session.plan(info))
-          const answers = yield* question.ask({
-            sessionID: ctx.sessionID,
-            questions: [
-              {
-                key: "plan_exit",
-                params: { plan },
-                question: `Plan at ${plan} is complete. Would you like to switch to the build agent and start implementing?`,
-                header: "Plan",
-                options: [
-                  { label: "Yes", description: "Switch to build agent and start implementing the plan" },
-                  { label: "No", description: "Stay with plan agent to continue refining the plan" },
-                ],
-              },
-            ],
-            tool: ctx.callID ? { messageID: ctx.messageID, callID: ctx.callID } : undefined,
-          })
 
-          const answer = answers[0]?.[0]
-          if (answer === "No") return yield* new Question.RejectedError()
+          if (!(yield* skipSwitchConfirm(question, config))) {
+            const answers = yield* question.ask({
+              sessionID: ctx.sessionID,
+              questions: [
+                {
+                  key: "plan_exit",
+                  params: { plan },
+                  question: `Plan at ${plan} is complete. Would you like to switch to the build agent and start implementing?`,
+                  header: "Plan",
+                  options: [
+                    { label: "Yes", description: "Switch to build agent and start implementing the plan" },
+                    { label: "No", description: "Stay with plan agent to continue refining the plan" },
+                  ],
+                },
+              ],
+              tool: ctx.callID ? { messageID: ctx.messageID, callID: ctx.callID } : undefined,
+            })
 
-          if (answer !== "Yes") {
-            return {
-              title: "User provided feedback",
-              output: `User chose not to switch yet and provided feedback: ${answer}`,
-              metadata: { switched: false, feedback: answer },
+            const answer = answers[0]?.[0]
+            if (answer === "No") return yield* new Question.RejectedError()
+
+            if (answer !== "Yes") {
+              return {
+                title: "User provided feedback",
+                output: `User chose not to switch yet and provided feedback: ${answer}`,
+                metadata: { switched: false, feedback: answer },
+              }
             }
           }
 
@@ -170,7 +189,7 @@ export const PlanExitTool = Tool.define(
 
           return {
             title: "Switching to build agent",
-            output: "User approved switching to build agent. Wait for further instructions.",
+            output: "Switched to build agent. Wait for further instructions.",
             metadata: { switched: true, feedback: "" },
           }
         }).pipe(Effect.orDie),

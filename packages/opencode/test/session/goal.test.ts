@@ -1,11 +1,5 @@
 /**
  * Unit tests for the per-session goal stop-condition service (session/goal.ts).
- *
- * Covers the state machine (set / get / clear / bumpReact) — the deterministic
- * logic that drives the main runLoop's goal gate. The judge model call
- * (Goal.evaluate) is exercised by the integration path in prompt.ts and the live
- * headless harness; it converts the conversation to native model messages (tool
- * calls/results/images preserved) rather than flattening to text.
  */
 
 import { afterEach, describe, expect, test } from "bun:test"
@@ -42,12 +36,14 @@ describe("Goal state machine", () => {
     await using tmp = await tmpdir({})
     const got = await runGoal(tmp.path, (goal) =>
       Effect.gen(function* () {
-        yield* goal.set(ses, "tests pass")
+        yield* goal.set(ses, { condition: "tests pass", autonomous: true })
         return yield* goal.get(ses)
       }),
     )
     expect(got?.condition).toBe("tests pass")
     expect(got?.react).toBe(0)
+    expect(got?.autonomous).toBe(true)
+    expect(got?.maxTurns).toBeGreaterThan(0)
   })
 
   test("get with no goal returns undefined", async () => {
@@ -60,8 +56,8 @@ describe("Goal state machine", () => {
     await using tmp = await tmpdir({})
     const got = await runGoal(tmp.path, (goal) =>
       Effect.gen(function* () {
-        yield* goal.set(ses, "build green")
-        yield* goal.clear(ses)
+        yield* goal.set(ses, { condition: "build green" })
+        yield* goal.clear(ses, "cancelled")
         return yield* goal.get(ses)
       }),
     )
@@ -72,7 +68,7 @@ describe("Goal state machine", () => {
     await using tmp = await tmpdir({})
     const result = await runGoal(tmp.path, (goal) =>
       Effect.gen(function* () {
-        yield* goal.set(ses, "x")
+        yield* goal.set(ses, { condition: "x" })
         const first = yield* goal.bumpReact(ses)
         const second = yield* goal.bumpReact(ses)
         const current = yield* goal.get(ses)
@@ -84,19 +80,55 @@ describe("Goal state machine", () => {
     expect(result.current).toBe(2)
   })
 
-  test("bumpReact with no active goal returns 0", async () => {
+  test("checkBudget stops at max turns", async () => {
     await using tmp = await tmpdir({})
-    const n = await runGoal(tmp.path, (goal) => goal.bumpReact(ses))
-    expect(n).toBe(0)
+    const result = await runGoal(tmp.path, (goal) =>
+      Effect.gen(function* () {
+        yield* goal.set(ses, {
+          condition: "x",
+          limits: { maxTurns: 2, maxDurationMs: 60_000, maxCostUsd: 10, judgeMaxRetries: 2 },
+        })
+        yield* goal.bumpReact(ses)
+        yield* goal.bumpReact(ses)
+        return yield* goal.checkBudget(ses)
+      }),
+    )
+    expect(result.ok).toBe(false)
+    if (!result.ok) expect(result.reason).toBe("budget_turns")
+  })
+
+  test("autonomous hearing_first starts in hearing phase", async () => {
+    await using tmp = await tmpdir({})
+    const got = await runGoal(tmp.path, (goal) =>
+      Effect.gen(function* () {
+        yield* goal.set(ses, { condition: "build calc", autonomous: true, phase: "hearing" })
+        return yield* goal.get(ses)
+      }),
+    )
+    expect(got?.phase).toBe("hearing")
+  })
+
+  test("setPhase advances hearing to execute", async () => {
+    await using tmp = await tmpdir({})
+    const result = await runGoal(tmp.path, (goal) =>
+      Effect.gen(function* () {
+        yield* goal.set(ses, { condition: "x", autonomous: true, phase: "hearing" })
+        const next = yield* goal.setPhase(ses, "execute")
+        const current = yield* goal.get(ses)
+        return { next, phase: current?.phase }
+      }),
+    )
+    expect(result.next).toBe("execute")
+    expect(result.phase).toBe("execute")
   })
 
   test("set resets react back to 0", async () => {
     await using tmp = await tmpdir({})
     const got = await runGoal(tmp.path, (goal) =>
       Effect.gen(function* () {
-        yield* goal.set(ses, "a")
+        yield* goal.set(ses, { condition: "a" })
         yield* goal.bumpReact(ses)
-        yield* goal.set(ses, "b")
+        yield* goal.set(ses, { condition: "b" })
         return yield* goal.get(ses)
       }),
     )

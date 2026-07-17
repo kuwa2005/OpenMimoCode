@@ -28,6 +28,7 @@ import { zod, ZodOverride } from "@/util/effect-zod"
 import { ConfigAgent } from "./agent"
 import { ConfigCommand } from "./command"
 import { ConfigCompose } from "./compose"
+import * as ConfigAutonomy from "./autonomy"
 import { ConfigFormatter } from "./formatter"
 import { MIMOCODE_GITIGNORE_ENTRIES } from "./gitignore"
 import { ConfigHistory } from "./history"
@@ -107,6 +108,10 @@ const InfoSchema = Schema.Struct({
   }),
   skills: Schema.optional(ConfigSkills.Info).annotate({ description: "Additional skill folder paths" }),
   compose: Schema.optional(ConfigCompose.Info).annotate({ description: "Compose mode configuration" }),
+  autonomy: Schema.optional(ConfigAutonomy.Info).annotate({
+    description:
+      "AI-driven autonomous execution: auto-resolve decisions, auto-approve safe permissions, and continue until task completion or budget limits.",
+  }),
   watcher: Schema.optional(
     Schema.Struct({
       ignore: Schema.optional(Schema.mutable(Schema.Array(Schema.String))),
@@ -413,6 +418,10 @@ const InfoSchema = Schema.Struct({
       predict_next_prompt: Schema.optional(Schema.Boolean).annotate({
         description:
           "Predict the user's likely next prompt after each turn and show it as inline ghost text (Tab to accept). Enabled by default; set to false to disable.",
+      }),
+      auto_continue: Schema.optional(Schema.Boolean).annotate({
+        description:
+          "@deprecated Use autonomy.enabled instead. When true, enables autonomous mode (never-ask, safe permission auto-approve, goal-driven continuation). Does not auto-submit predicted prompts.",
       }),
       maxMode: Schema.optional(
         Schema.Struct({
@@ -944,10 +953,15 @@ export const layer = Layer.effect(
           })
         }
 
-        if (Flag.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS) {
+        if (Flag.MIMOCODE_AUTONOMY) {
+          result.autonomy = { ...result.autonomy, enabled: true }
+        }
+
+        if (Flag.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS || ConfigAutonomy.enabled(result)) {
           // Allow-all base, merged UNDER user config so an explicit deny still
           // wins. Matches `mimo run --dangerously-skip-permissions`: auto-approve
-          // everything not explicitly denied.
+          // everything not explicitly denied. Autonomy mode uses the same layer
+          // so routine read/edit/bash asks never block; forced-ask stays human-only.
           result.permission = mergeDeep({ "*": "allow" } as ConfigPermission.Info, result.permission ?? {})
         }
 

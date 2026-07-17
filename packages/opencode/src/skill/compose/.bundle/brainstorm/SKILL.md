@@ -12,7 +12,9 @@ Start by understanding the current project context, then ask questions one at a 
 <HARD-GATE>
 Do NOT invoke any implementation skill, write any code, scaffold any project, or take any implementation action until you have presented a design and the user has approved it. This applies to EVERY project regardless of perceived simplicity.
 
-**Autonomous override:** When no user is available to approve, this HARD-GATE does not apply: skip design presentation and approval, proceed directly to implementation, treating every approval gate as auto-approved.
+**Autonomous override:** When no user is available to approve (never-ask / headless execute phase), this HARD-GATE does not apply: skip design presentation and approval, proceed directly to implementation, treating every approval gate as auto-approved.
+
+**SE hearing-first autonomy:** When the system reminder says phase is HEARING, this HARD-GATE applies fully — ask the user, document Q&A (why / background / result) in the hearing log, and do not implement until `Requirements Lock` is Approved.
 </HARD-GATE>
 
 ## Anti-Pattern: "This Is Too Simple To Need A Design"
@@ -61,9 +63,14 @@ You MUST create a task for each of these items and complete them in order:
 - For appropriately-scoped projects, ask questions one at a time to refine the idea
 - When the question has a known set of likely answers, use `compose:ask` with those answers as options
 - For open-ended questions, use `compose:ask` with 2-3 suggested answers as options — the user can always type their own answer
-- If no user is available, make reasonable assumptions from project context and proceed
+- **Hearing evidence (required in SE / autonomy hearing):** After each answered question, append to the hearing log under compose `specs/` (e.g. `YYYY-MM-DD-<topic>-hearing.md`) a section with:
+  - **Question**
+  - **Why asked** (what unstated risk/assumption you were probing)
+  - **Background** (context that motivated the question)
+  - **Result** (user answer and how it changes the design)
+- If no user is available (execute phase / never-ask), make reasonable assumptions from project context, still record them as self-answered Q&A in the hearing log, and proceed
 - Only one question per tool call — if a topic needs more exploration, break it into multiple questions
-- Focus on understanding: purpose, constraints, success criteria
+- Focus on understanding: purpose, constraints, success criteria, platforms, visual modes, non-goals
 
 **Exploring approaches:**
 
@@ -123,13 +130,13 @@ Fix any issues inline. No need to re-review — just fix and move on.
 
 **User Review Gate (if doc written):**
 After spec self-review passes, use `compose:ask`:
-- header: `Spec Review`
-- question: `Spec written and committed to <path>. Ready to proceed?`
+- header: `Requirements Lock` (exact — required for SE autonomy to enter execute phase)
+- question: `Specs written and reviewed. Lock requirements and proceed to implementation?`
 - options:
-  - label: `Approved`, description: `Proceed to compose:plan`
+  - label: `Approved`, description: `Proceed to compose:plan / implementation`
   - label: `Changes needed`, description: `I have revisions`
 
-If no user is available, treat as approved and invoke compose:plan.
+If no user is available (execute phase), treat as approved and invoke compose:plan.
 
 If "Changes needed" or custom feedback, apply changes and re-run spec review. Only proceed on approval.
 

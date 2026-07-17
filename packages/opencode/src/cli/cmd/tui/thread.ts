@@ -196,6 +196,13 @@ export const TuiThreadCommand = cmd({
           "start in never-ask mode — auto-decide without asking (permissions excluded), toggle at runtime with /never-ask",
         default: false,
       })
+      .option("autonomy", {
+        alias: ["se"],
+        type: "boolean",
+        describe:
+          "SE-style AI-driven mode: hear & lock requirements first, then non-stop delivery with documentary evidence (implies compose agent)",
+        default: false,
+      })
       .option("trust", {
         type: "boolean",
         describe: "skip workspace trust prompt and trust the directory",
@@ -261,6 +268,12 @@ export const TuiThreadCommand = cmd({
         // Propagate to the worker (which loads config) via the env it inherits
         // from sanitizedProcessEnv. Config injects an allow-all base under the
         // user's permission rules so denies still win.
+        process.env.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS = "1"
+      }
+
+      if (args.autonomy) {
+        process.env.MIMOCODE_AUTONOMY = "1"
+        // Safe permission auto-approve base (forced-ask still human-gated).
         process.env.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS = "1"
       }
 
@@ -340,6 +353,7 @@ export const TuiThreadCommand = cmd({
         client.call("checkUpgrade", { directory: cwd }).catch(() => {})
       }, 1000).unref?.()
 
+      const autonomy = args.autonomy === true
       try {
         await tui({
           url: transport.url,
@@ -355,11 +369,12 @@ export const TuiThreadCommand = cmd({
           args: {
             continue: args.continue,
             sessionID: args.session,
-            agent: args.agent,
+            agent: args.agent ?? (autonomy ? "compose" : undefined),
             model: args.model,
             prompt,
             fork: args.fork,
             neverAsk: args["never-ask"],
+            autonomy,
           },
         })
       } finally {
