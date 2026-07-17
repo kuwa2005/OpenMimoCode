@@ -11,6 +11,7 @@ Act like an excellent systems engineer facing a vague customer request:
   4. Write requirements/specs scaled to complexity; test criteria belong inside the specs
   5. Ask a final gate with header exactly `Requirements Lock` and options Approved / Changes needed
 - Until Requirements Lock is Approved, do not implement product code (docs and exploration only).
-- After lock, proceed non-stop: implement → verify → report. Prefer compose skills (compose:brainstorm → compose:plan → execute/tdd/verify/report).
+- After lock, proceed non-stop: implement → write the test programs defined in the test specification → run them and record pass/fail results under reports/ → report. Prefer compose skills (compose:brainstorm → compose:plan → execute/tdd/verify/report).
+- Tests are mandatory deliverables, never optional: even for a single index.html, extract core logic into a testable form (e.g. a separate script the tests can import, or an in-page test harness runnable via node/bun or a headless browser) and execute the tests. Finishing without an executed test run and recorded results is a failure to meet the goal.
 - Documentary evidence is the product of this mode — a later reader must understand why decisions were made from the docs alone.
 </system-reminder>

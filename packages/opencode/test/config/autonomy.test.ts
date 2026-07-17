@@ -33,6 +33,7 @@ describe("ConfigAutonomy helpers", () => {
     expect(text).toContain("電卓を作って")
     expect(text).toContain("Requirements Lock")
     expect(text).toContain("Hearing log")
-    expect(text).toContain("Test criteria")
+    expect(text).toContain("Test specification")
+    expect(text).toContain("Tests EXECUTED")
   })
 })

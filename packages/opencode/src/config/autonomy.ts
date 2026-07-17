@@ -102,18 +102,19 @@ export function buildGoalCondition(userText: string, opts: { docsEvidence: boole
   if (opts.docsEvidence) {
     lines.push(
       "",
-      "Documentary evidence (required before stop; scale depth to complexity, never skip hearing transparency):",
-      "- Hearing log: each Q with why / background / result",
-      "- Requirements / overview / functional specs as needed for the scope",
-      "- Test criteria are PART OF the specs (acceptance, unit/integration/smoke/e2e as appropriate) — not an afterthought",
-      "- Detailed/module design when the work warrants it",
-      "- Verification evidence: commands run and pass (or honest blockers)",
+      "Documentary evidence — ALL numbered items below are MANDATORY before stop. Judge: verify each item against the transcript individually; if ANY item lacks evidence, the condition is NOT satisfied:",
+      "1. Hearing log: every question asked, each with why / background / result",
+      "2. Requirements + functional specification covering the delivered scope",
+      "3. Test specification written as part of the specs: concrete test cases with inputs and expected results (unit / integration / smoke / e2e as applicable — at minimum unit cases for core logic plus an acceptance checklist)",
+      "4. Tests EXECUTED, not merely written: an automated test program was created and run (preferred), or a manual test run is documented case-by-case; actual pass/fail results recorded in a report",
+      "5. Verification evidence: commands run and their output (or honest blockers)",
+      "Document length may scale with complexity, but no item may be skipped — even a single-file project gets a short test spec and an executed test run, never zero.",
       "Save under the compose docs dir (`specs/`, `plans/`, `reports/`). AI-driven delivery means the trail of decisions is obvious from the docs alone.",
     )
   }
   lines.push(
     "",
-    "Phase B — After Requirements Lock: implement, verify, and finish non-stop. Do not stop until the request is done with verifiable evidence in the transcript and docs.",
+    "Phase B — After Requirements Lock: implement, then write and RUN the tests defined in the test specification, record results, and finish non-stop. Do not stop until the request is done with verifiable evidence in the transcript and docs.",
   )
   return lines.join("\n")
 }
