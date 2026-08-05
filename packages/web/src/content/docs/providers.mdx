@@ -1928,6 +1928,30 @@ Some useful routing options:
 
 ### xAI
 
+Two ways to authenticate: a SuperGrok subscription via device-code OAuth or a pay-as-you-go API key from the xAI console.
+
+#### Option A — SuperGrok subscription
+
+1. Run the `/connect` command and search for **xAI**.
+
+   ```txt
+   /connect
+   ```
+
+2. Select **SuperGrok Subscription**. Oimo opens xAI's verification link with the user code pre-populated when supported.
+
+3. Approve the consent screen. If xAI asks for a code, enter the user code displayed by Oimo. Oimo polls xAI's token endpoint and stores the resulting OAuth tokens once you approve.
+
+4. Run the `/models` command to select a Grok model.
+
+   ```txt
+   /models
+   ```
+
+Oimo refreshes the OAuth access token automatically. Any Grok or X Premium plan that includes Grok API access works; you do not need a separate `XAI_API_KEY`.
+
+#### Option B — API key
+
 1. Head over to the [xAI console](https://console.x.ai/), create an account, and generate an API key.
 
 2. Run the `/connect` command and search for **xAI**.
