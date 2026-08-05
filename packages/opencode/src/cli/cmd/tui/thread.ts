@@ -351,7 +351,7 @@ export const TuiThreadCommand = cmd({
         client.call("checkUpgrade", { directory: cwd }).catch(() => {})
       }, 1000).unref?.()
 
-      const autonomy = args.autonomy === true
+      const autonomy = args.autonomy
       try {
         await tui({
           url: transport.url,

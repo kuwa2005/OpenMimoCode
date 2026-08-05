@@ -1899,7 +1899,14 @@ const layer: Layer.Layer<
       }
 
       const mimo = s.providers[ProviderID.make("mimo")]
-      if (mimo?.models[ModelID.make("mimo-auto")]) {
+      // Only prefer the free mimo-auto channel when the user hasn't configured
+      // their own provider. "mimo" and "xiaomi" are plugin-injected defaults
+      // (free channel + MiMo auth), so they don't count as a user choice —
+      // mirror the TUI's Model.initial behavior.
+      const userConfigured = cfg.provider
+        ? Object.keys(cfg.provider).filter((id) => id !== "mimo" && id !== "xiaomi")
+        : []
+      if (mimo?.models[ModelID.make("mimo-auto")] && userConfigured.length === 0) {
         return { providerID: mimo.id, modelID: ModelID.make("mimo-auto") }
       }
 

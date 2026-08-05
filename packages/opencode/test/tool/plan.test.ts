@@ -7,6 +7,7 @@ import { Provider } from "../../src/provider"
 import { Question } from "../../src/question"
 import { Session } from "../../src/session"
 import { MessageID, SessionID } from "../../src/session/schema"
+import { Config } from "../../src/config"
 import { Truncate } from "../../src/tool"
 import { PlanExitTool } from "../../src/tool/plan"
 import { provideTmpdirInstance } from "../fixture/fixture"
@@ -23,6 +24,7 @@ const it = testEffect(
     Provider.defaultLayer,
     Truncate.defaultLayer,
     Agent.defaultLayer,
+    Config.defaultLayer,
     CrossSpawnSpawner.defaultLayer,
   ),
 )
