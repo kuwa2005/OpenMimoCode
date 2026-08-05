@@ -303,17 +303,19 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         Boolean(yield* dep.auth(input.id)) ||
         Boolean((yield* dep.config()).provider?.["opencode"]?.options?.apiKey)
 
-      // Never surface the free/public tier (cost.input === 0). Without a
-      // subscription/key, hide the remaining (paid) models too — they can't be
-      // used unauthenticated. So: authenticated -> subscription models only,
-      // unauthenticated -> nothing.
-      for (const [key, value] of Object.entries(input.models)) {
-        if (!ok || value.cost.input === 0) delete input.models[key]
+      // OpenCode Zen free/public tier (cost.input === 0) stays available
+      // unauthenticated. Without a subscription/key, hide the paid models —
+      // they can't be used unauthenticated.
+      if (!ok) {
+        for (const [key, value] of Object.entries(input.models)) {
+          if (value.cost.input === 0) continue
+          delete input.models[key]
+        }
       }
 
       return {
         autoload: Object.keys(input.models).length > 0,
-        options: {},
+        options: ok ? {} : { apiKey: "public" },
       }
     }),
     openai: () =>
@@ -1898,16 +1900,23 @@ const layer: Layer.Layer<
         return { providerID: entry.providerID, modelID: entry.modelID }
       }
 
-      const mimo = s.providers[ProviderID.make("mimo")]
-      // Only prefer the free mimo-auto channel when the user hasn't configured
-      // their own provider. "mimo" and "xiaomi" are plugin-injected defaults
-      // (free channel + MiMo auth), so they don't count as a user choice —
+      // Prefer the free OpenCode Zen default (opencode/big-pickle), falling
+      // back to the free mimo-auto channel when Zen isn't available. Only when
+      // the user hasn't configured their own provider — "mimo" and "xiaomi"
+      // are plugin-injected defaults, so they don't count as a user choice;
       // mirror the TUI's Model.initial behavior.
       const userConfigured = cfg.provider
         ? Object.keys(cfg.provider).filter((id) => id !== "mimo" && id !== "xiaomi")
         : []
-      if (mimo?.models[ModelID.make("mimo-auto")] && userConfigured.length === 0) {
-        return { providerID: mimo.id, modelID: ModelID.make("mimo-auto") }
+      if (userConfigured.length === 0) {
+        const opencode = s.providers[ProviderID.make("opencode")]
+        if (opencode?.models[ModelID.make("big-pickle")]) {
+          return { providerID: opencode.id, modelID: ModelID.make("big-pickle") }
+        }
+        const mimo = s.providers[ProviderID.make("mimo")]
+        if (mimo?.models[ModelID.make("mimo-auto")]) {
+          return { providerID: mimo.id, modelID: ModelID.make("mimo-auto") }
+        }
       }
 
       const provider = Object.values(s.providers).find((p) => !cfg.provider || Object.keys(cfg.provider).includes(p.id))
