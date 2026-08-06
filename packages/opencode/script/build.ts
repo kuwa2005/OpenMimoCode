@@ -309,7 +309,11 @@ if (Script.release) {
       await $`zip -r ../../${key}.zip *`.cwd(`dist/${key}/bin`)
     }
   }
-  await $`gh release upload v${Script.version} ./dist/*.zip ./dist/*.tar.gz --clobber --repo ${process.env.GH_REPO}`
+  const archives = fs
+    .readdirSync("dist")
+    .filter((f) => f.endsWith(".zip") || f.endsWith(".tar.gz"))
+    .map((f) => `dist/${f}`)
+  await $`gh release upload v${Script.version} ${archives} --clobber --repo ${process.env.GH_REPO}`
 
   // Also publish to Xiaomi FDS (fast download in mainland China; the install
   // script reads from there). Skipped when credentials are absent so local
