@@ -543,13 +543,4 @@ export const dict = {
   "trust.dangerous.advice_root": "明確な理由がない限り、ファイルシステムのルートを信頼しないでください。",
   "trust.dangerous.option.yes": "リスクを理解した上で、今回のみ信頼する",
   "trust.dangerous.option.no": "終了（推奨）",
-  "skip_permissions.title": "警告: パーミッションスキップモード",
-  "skip_permissions.body":
-    "--dangerously-skip-permissions を指定して起動しました。Open Mimo Code は承認を求めずにファイルの読み取り・編集・実行やシェルコマンドの実行を行います。設定で明示的に拒否（deny）したルールのみが引き続き適用されます。発生したいかなる結果についてもあなた自身が全責任を負います。",
-  "skip_permissions.plugin_warn":
-    "このモードでは、悪意のあるプロンプト・ファイル・プラグインが一切の確認なしに任意のコマンドを実行し、データを改ざんまたは持ち出す可能性があります。",
-  "skip_permissions.root_warn":
-    "root で実行しています。root でパーミッションをスキップすると、モデルがこのマシンを無制限に制御できるようになります。",
-  "skip_permissions.option.no": "いいえ、終了する（推奨）",
-  "skip_permissions.option.yes": "はい、リスクを理解した上でパーミッションをスキップする",
 } satisfies Partial<Record<Keys, string>>

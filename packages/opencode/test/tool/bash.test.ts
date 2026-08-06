@@ -440,6 +440,43 @@ describe("tool.bash permissions", () => {
     })
   })
 
+  each("does not ask for bash_delete when deletes are auto-approved (as --auto sets)", async () => {
+    await using tmp = await tmpdir({
+      init: async (dir) => {
+        await Bun.write(path.join(dir, "victim.txt"), "x")
+      },
+    })
+    await Instance.provide({
+      directory: tmp.path,
+      fn: async () => {
+        const bash = await initBash()
+        const requests: Array<Omit<Permission.Request, "id" | "sessionID" | "tool">> = []
+        const prev = process.env.MIMOCODE_AUTO_APPROVE_DELETE
+        process.env.MIMOCODE_AUTO_APPROVE_DELETE = "1"
+        try {
+          const result = await Effect.runPromise(
+            bash.execute(
+              {
+                command: "rm victim.txt",
+                description: "Remove victim.txt",
+              },
+              capture(requests),
+            ),
+          )
+          // The forced-ask bash_delete prompt is bypassed, so an --auto run
+          // never stops for a human on a delete; the regular bash ask still
+          // fires (auto-allowed by the injected allow-all base).
+          expect(requests.find((r) => r.permission === "bash_delete")).toBeUndefined()
+          expect(requests.find((r) => r.permission === "bash")).toBeDefined()
+          expect(result.metadata.exit).toBe(0)
+        } finally {
+          if (prev === undefined) delete process.env.MIMOCODE_AUTO_APPROVE_DELETE
+          else process.env.MIMOCODE_AUTO_APPROVE_DELETE = prev
+        }
+      },
+    })
+  })
+
   each("asks for bash_delete on destructive git subcommands", async () => {
     await using tmp = await tmpdir()
     await Instance.provide({

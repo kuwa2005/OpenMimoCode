@@ -604,13 +604,4 @@ export const dict = {
   "trust.dangerous.advice_root": "Sauf raison très spécifique, NE faites PAS confiance à la racine du système de fichiers.",
   "trust.dangerous.option.yes": "Je comprends les risques, faire confiance pour cette session",
   "trust.dangerous.option.no": "Quitter (recommandé)",
-  "skip_permissions.title": "AVERTISSEMENT : mode contournement des permissions",
-  "skip_permissions.body":
-    "Vous avez démarré avec --dangerously-skip-permissions. Open Mimo Code va lire, modifier et exécuter des fichiers et lancer des commandes shell SANS demander d'approbation. Seules les règles que vous avez explicitement refusées (deny) dans la configuration restent appliquées. Vous êtes seul responsable de tout ce qu'il fait.",
-  "skip_permissions.plugin_warn":
-    "Dans ce mode, une invite, un fichier ou un plugin malveillant peut exécuter des commandes arbitraires et modifier ou exfiltrer vos données sans aucune confirmation.",
-  "skip_permissions.root_warn":
-    "Vous êtes en root. Contourner les permissions en root donne au modèle un contrôle illimité sur cette machine.",
-  "skip_permissions.option.no": "Non, quitter (recommandé)",
-  "skip_permissions.option.yes": "Oui, j'accepte les risques et veux ignorer les permissions",
 } satisfies Partial<Record<Keys, string>>

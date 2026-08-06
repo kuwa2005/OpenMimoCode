@@ -579,13 +579,4 @@ export const dict: Record<string, string> = {
   "trust.dangerous.advice_root": "Unless you have a very specific reason, DO NOT trust the filesystem root.",
   "trust.dangerous.option.yes": "I understand the risks, trust for this session",
   "trust.dangerous.option.no": "Exit (recommended)",
-  "skip_permissions.title": "WARNING: Bypass Permissions mode",
-  "skip_permissions.body":
-    "You started with --dangerously-skip-permissions. Open Mimo Code will read, edit, and execute files and run shell commands WITHOUT asking for approval. Only rules you have explicitly denied in config are still enforced. You are solely responsible for anything it does.",
-  "skip_permissions.plugin_warn":
-    "In this mode a malicious prompt, file, or plugin can run arbitrary commands, and modify or exfiltrate your data without any confirmation.",
-  "skip_permissions.root_warn":
-    "You are running as root. Bypassing permissions as root gives the model unrestricted control over this machine.",
-  "skip_permissions.option.no": "No, exit (recommended)",
-  "skip_permissions.option.yes": "Yes, I accept the risks and want to skip permissions",
 }

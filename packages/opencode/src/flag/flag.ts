@@ -101,8 +101,12 @@ export const Flag = {
   // extra permission prompt with permission="bash_delete" — separate from the
   // normal bash-permission ask so it can't be silently pre-approved by a broad
   // `bash: allow` rule. Set MIMOCODE_AUTO_APPROVE_DELETE=true to trust the
-  // model with deletes and skip the second confirmation.
-  MIMOCODE_AUTO_APPROVE_DELETE: truthy("MIMOCODE_AUTO_APPROVE_DELETE"),
+  // model with deletes and skip the second confirmation. Read dynamically so
+  // the TUI's --auto / --dangerously-skip-permissions can set it at parse time
+  // before workers read it.
+  get MIMOCODE_AUTO_APPROVE_DELETE() {
+    return truthy("MIMOCODE_AUTO_APPROVE_DELETE")
+  },
   // Set by the TUI's --dangerously-skip-permissions flag. When truthy, an
   // allow-all base ruleset is injected UNDER the user's config permission so
   // every tool auto-approves unless the user explicitly denied it.

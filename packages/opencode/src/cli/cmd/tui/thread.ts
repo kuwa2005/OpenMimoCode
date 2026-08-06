@@ -124,36 +124,6 @@ async function promptWorkspaceTrust(directory: string, level: "untrusted" | "dan
   return result
 }
 
-// Startup gate for --dangerously-skip-permissions. Mirrors Claude Code's
-// bypass-permissions warning: an explicit, red-highlighted accept is required
-// before every permission check is auto-approved. Returns false to abort.
-async function promptDangerousPermissions(): Promise<boolean> {
-  const prompts = await import("@clack/prompts")
-  const { EOL } = await import("os")
-
-  const asRoot = typeof process.getuid === "function" && process.getuid() === 0
-
-  prompts.log.warning(
-    [
-      UI.Style.TEXT_DANGER + t("skip_permissions.title") + UI.Style.TEXT_NORMAL,
-      "",
-      t("skip_permissions.body"),
-      "",
-      UI.Style.TEXT_DANGER + t("skip_permissions.plugin_warn") + UI.Style.TEXT_NORMAL,
-      ...(asRoot ? ["", UI.Style.TEXT_DANGER + t("skip_permissions.root_warn") + UI.Style.TEXT_NORMAL] : []),
-    ].join(EOL),
-  )
-  const result = await prompts.select({
-    message: "",
-    options: [
-      { label: t("skip_permissions.option.no"), value: false },
-      { label: t("skip_permissions.option.yes"), value: true },
-    ],
-  })
-  if (prompts.isCancel(result)) return false
-  return result
-}
-
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
   describe: "start oimo tui",
@@ -215,7 +185,8 @@ export const TuiThreadCommand = cmd({
       })
       .option("auto", {
         type: "boolean",
-        describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
+        describe:
+          "auto-approve permissions that are not explicitly denied (dangerous!); also skips the workspace trust prompt",
         default: false,
       }),
   handler: async (args) => {
@@ -248,7 +219,7 @@ export const TuiThreadCommand = cmd({
       }
       const cwd = Filesystem.resolve(process.cwd())
 
-      if (!args.trust) {
+      if (!args.trust && !args.auto && !args["dangerously-skip-permissions"]) {
         const trustLevel = await checkTrust(cwd)
         if (trustLevel !== "trusted") {
           const accepted = await promptWorkspaceTrust(cwd, trustLevel)
@@ -260,18 +231,15 @@ export const TuiThreadCommand = cmd({
       }
 
       if (args.auto || args["dangerously-skip-permissions"]) {
-        // Require an explicit accept when interactive; skip the gate with no TTY
-        // (CI / piped stdin) so automation still works.
-        if (process.stdin.isTTY) {
-          const accepted = await promptDangerousPermissions()
-          if (!accepted) {
-            return
-          }
-        }
         // Propagate to the worker (which loads config) via the env it inherits
         // from sanitizedProcessEnv. Config injects an allow-all base under the
         // user's permission rules so denies still win.
         process.env.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS = "1"
+        // Forced-ask (bash_delete) is the only ask that still blocks under
+        // --auto, so a `rm -rf /tmp/...` would halt the run waiting for a
+        // human. Route deletes through the regular (auto-allow) ask instead:
+        // --auto must never stop mid-run.
+        process.env.MIMOCODE_AUTO_APPROVE_DELETE = "1"
       }
 
       if (args.autonomy) {

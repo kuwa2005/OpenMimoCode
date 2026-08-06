@@ -600,13 +600,4 @@ export const dict = {
   "trust.dangerous.advice_root": "除非有明确的理由，否则不要信任文件系统根目录。",
   "trust.dangerous.option.yes": "我了解风险，仅本次信任",
   "trust.dangerous.option.no": "退出（推荐）",
-  "skip_permissions.title": "警告：跳过权限确认模式",
-  "skip_permissions.body":
-    "你使用 --dangerously-skip-permissions 启动。Open Mimo Code 将在不征求同意的情况下读取、修改、执行文件并运行 Shell 命令。只有你在配置中明确拒绝（deny）的规则仍然生效。由此产生的一切后果由你自行承担。",
-  "skip_permissions.plugin_warn":
-    "在此模式下，恶意的提示词、文件或插件可以在无任何确认的情况下执行任意命令，并修改或窃取你的数据。",
-  "skip_permissions.root_warn":
-    "你正在以 root 身份运行。以 root 跳过权限确认会让模型对本机拥有不受限制的控制权。",
-  "skip_permissions.option.no": "否，退出（推荐）",
-  "skip_permissions.option.yes": "是，我已知晓风险并希望跳过权限确认",
 } satisfies Partial<Record<Keys, string>>
