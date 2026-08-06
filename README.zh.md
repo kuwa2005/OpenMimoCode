@@ -24,17 +24,27 @@ MiMoCode 是一个终端原生的 AI 编程助手。它能读写代码、执行�
 
 ## 快速开始
 
+**macOS / Linux**（一键安装）:
+
 ```bash
-# 一键安装（macOS / Linux）
 curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
+```
 
-# 一键安装（Windows PowerShell）
+**Windows PowerShell**（一键安装）:
+
+```powershell
 powershell -ep Bypass -c "irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex"
+```
 
-# 或通过 npm 安装（全平台）
+**npm**（全平台）:
+
+```bash
 npm install -g @mimo-ai/cli
+```
 
-# 运行
+**运行**:
+
+```bash
 omimo
 ```
 

@@ -24,17 +24,27 @@ MiMo Auto は期間限定で無料のチャネルとして組み込まれてお�
 
 ## クイックスタート
 
+**macOS / Linux**（ワンラインインストール）:
+
 ```bash
-# ワンラインインストール（macOS / Linux）
 curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
+```
 
-# ワンラインインストール（Windows PowerShell）
+**Windows PowerShell**（ワンラインインストール）:
+
+```powershell
 powershell -ep Bypass -c "irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex"
+```
 
-# または npm でインストール（全プラットフォーム）
+**npm**（全プラットフォーム）:
+
+```bash
 npm install -g @mimo-ai/cli
+```
 
-# 実行
+**実行**:
+
+```bash
 omimo
 ```
 

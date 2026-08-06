@@ -24,17 +24,27 @@ MiMo Auto is built in as a free-for-limited-time channel, so you can start with 
 
 ## Quick Start
 
+**macOS / Linux** (one-line install):
+
 ```bash
-# One-line install (macOS / Linux)
 curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
+```
 
-# One-line install (Windows PowerShell)
+**Windows PowerShell** (one-line install):
+
+```powershell
 powershell -ep Bypass -c "irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex"
+```
 
-# Or install via npm (all platforms)
+**npm** (all platforms):
+
+```bash
 npm install -g @mimo-ai/cli
+```
 
-# Run
+**Run**:
+
+```bash
 omimo
 ```
 
