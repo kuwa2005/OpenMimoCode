@@ -6,40 +6,11 @@ import { SessionID } from "../../session/schema"
 import { bootstrap } from "../bootstrap"
 import { UI } from "../ui"
 import { Locale, Log } from "../../util"
-import { Flag } from "../../flag/flag"
-import { Filesystem } from "../../util"
 import { Process } from "../../util"
+import { Installation } from "../../installation"
+import * as prompts from "@clack/prompts"
 import { EOL } from "os"
-import path from "path"
-import { which } from "../../util/which"
 import { AppRuntime } from "@/effect/app-runtime"
-
-function pagerCmd(): string[] {
-  const lessOptions = ["-R", "-S"]
-  if (process.platform !== "win32") {
-    return ["less", ...lessOptions]
-  }
-
-  // user could have less installed via other options
-  const lessOnPath = which("less")
-  if (lessOnPath) {
-    if (Filesystem.stat(lessOnPath)?.size) return [lessOnPath, ...lessOptions]
-  }
-
-  if (Flag.MIMOCODE_GIT_BASH_PATH) {
-    const less = path.join(Flag.MIMOCODE_GIT_BASH_PATH, "..", "..", "usr", "bin", "less.exe")
-    if (Filesystem.stat(less)?.size) return [less, ...lessOptions]
-  }
-
-  const git = which("git")
-  if (git) {
-    const less = path.join(git, "..", "..", "usr", "bin", "less.exe")
-    if (Filesystem.stat(less)?.size) return [less, ...lessOptions]
-  }
-
-  // Fall back to Windows built-in more (via cmd.exe)
-  return ["cmd", "/c", "more"]
-}
 
 export const SessionCommand = cmd({
   command: "session",
@@ -115,39 +86,47 @@ export const SessionListCommand = cmd({
       const sessions = [...Session.list({ roots: true, limit: args.maxCount })]
 
       if (sessions.length === 0) {
+        if (process.stdout.isTTY) UI.println("No sessions found.")
         return
       }
 
-      let output: string
       if (args.format === "json") {
-        output = formatSessionJSON(sessions)
-      } else {
-        output = formatSessionTable(sessions)
+        console.log(formatSessionJSON(sessions))
+        return
       }
 
-      const shouldPaginate = process.stdout.isTTY && !args.maxCount && args.format === "table"
-
-      if (shouldPaginate) {
-        const proc = Process.spawn(pagerCmd(), {
-          stdin: "pipe",
-          stdout: "inherit",
-          stderr: "inherit",
-        })
-
-        if (!proc.stdin) {
-          console.log(output)
-          return
-        }
-
-        proc.stdin.write(output)
-        proc.stdin.end()
-        await proc.exited
-      } else {
-        console.log(output)
+      if (process.stdout.isTTY) {
+        await pickAndLaunch(sessions)
+        return
       }
+
+      console.log(formatSessionTable(sessions))
     })
   },
 })
+
+async function pickAndLaunch(sessions: Session.Info[]) {
+  const options = [
+    { label: "＋ New session", value: "new" },
+    ...sessions.map((s) => ({
+      label: `${Locale.truncate(s.title, 60)}  ${Locale.todayTimeOrDateTime(s.time.updated)}`,
+      value: s.id,
+    })),
+  ]
+  const result = await prompts.select({
+    message: "Select a session to continue",
+    options,
+  })
+  if (prompts.isCancel(result)) return
+  await launchTui(result === "new" ? [] : ["--session", String(result)])
+}
+
+async function launchTui(args: string[]) {
+  const bin = process.execPath
+  const argv = Installation.isLocal() ? [process.argv[1] ?? "", ...args] : args
+  const proc = Process.spawn([bin, ...argv], { stdin: "inherit", stdout: "inherit", stderr: "inherit" })
+  process.exitCode = await proc.exited
+}
 
 function formatSessionTable(sessions: Session.Info[]): string {
   const lines: string[] = []
