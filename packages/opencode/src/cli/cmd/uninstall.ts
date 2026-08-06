@@ -25,7 +25,7 @@ interface RemovalTargets {
 
 export const UninstallCommand = {
   command: "uninstall",
-  describe: "uninstall mimocode and remove all related files",
+  describe: "uninstall oimo and remove all related files",
   builder: (yargs: Argv) =>
     yargs
       .option("keep-config", {
@@ -56,7 +56,7 @@ export const UninstallCommand = {
     UI.empty()
     UI.println(UI.logo("  "))
     UI.empty()
-    prompts.intro("Uninstall MiMoCode")
+    prompts.intro("Uninstall Open Mimo Code")
 
     const method = await AppRuntime.runPromise(Installation.Service.use((svc) => svc.method()))
     prompts.log.info(`Installation method: ${method}`)
@@ -137,10 +137,10 @@ async function showRemovalSummary(targets: RemovalTargets, method: Installation.
       npm: "npm uninstall -g @mimo-ai/cli",
       pnpm: "pnpm uninstall -g @mimo-ai/cli",
       bun: "bun remove -g @mimo-ai/cli",
-      // TODO(mimocode): uncomment when published to these channels
-      // brew: "brew uninstall mimocode",
-      // choco: "choco uninstall mimocode",
-      // scoop: "scoop uninstall mimocode",
+      // TODO(oimo): uncomment when published to these channels
+      // brew: "brew uninstall oimo",
+      // choco: "choco uninstall oimo",
+      // scoop: "scoop uninstall oimo",
     }
     prompts.log.info(`  ✓ Package: ${cmds[method] || method}`)
   }
@@ -199,10 +199,10 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
       npm: ["npm", "uninstall", "-g", "@mimo-ai/cli"],
       pnpm: ["pnpm", "uninstall", "-g", "@mimo-ai/cli"],
       bun: ["bun", "remove", "-g", "@mimo-ai/cli"],
-      // TODO(mimocode): uncomment when published to these channels
-      // brew: ["brew", "uninstall", "mimocode"],
-      // choco: ["choco", "uninstall", "mimocode"],
-      // scoop: ["scoop", "uninstall", "mimocode"],
+      // TODO(oimo): uncomment when published to these channels
+      // brew: ["brew", "uninstall", "oimo"],
+      // choco: ["choco", "uninstall", "oimo"],
+      // scoop: ["scoop", "uninstall", "oimo"],
     }
 
     const cmd = cmds[method]
@@ -228,7 +228,7 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
     prompts.log.info(`  rm "${targets.binary}"`)
 
     const binDir = path.dirname(targets.binary)
-    if (binDir.includes(".mimocode")) {
+    if (binDir.includes(".oimo")) {
       prompts.log.info(`  rmdir "${binDir}" 2>/dev/null`)
     }
   }
@@ -242,7 +242,7 @@ async function executeUninstall(method: Installation.Method, targets: RemovalTar
   }
 
   UI.empty()
-  prompts.log.success("Thank you for using MiMoCode!")
+  prompts.log.success("Thank you for using Open Mimo Code!")
 }
 
 async function getShellConfigFile(): Promise<string | null> {
@@ -279,7 +279,7 @@ async function getShellConfigFile(): Promise<string | null> {
     if (!exists) continue
 
     const content = await Filesystem.readText(file).catch(() => "")
-    if (content.includes("# mimocode") || content.includes(".mimocode/bin")) {
+    if (content.includes("# oimo") || content.includes(".oimo/bin")) {
       return file
     }
   }
@@ -297,21 +297,21 @@ async function cleanShellConfig(file: string) {
   for (const line of lines) {
     const trimmed = line.trim()
 
-    if (trimmed === "# mimocode") {
+    if (trimmed === "# oimo") {
       skip = true
       continue
     }
 
     if (skip) {
       skip = false
-      if (trimmed.includes(".mimocode/bin") || trimmed.includes("fish_add_path")) {
+      if (trimmed.includes(".oimo/bin") || trimmed.includes("fish_add_path")) {
         continue
       }
     }
 
     if (
-      (trimmed.startsWith("export PATH=") && trimmed.includes(".mimocode/bin")) ||
-      (trimmed.startsWith("fish_add_path") && trimmed.includes(".mimocode"))
+      (trimmed.startsWith("export PATH=") && trimmed.includes(".oimo/bin")) ||
+      (trimmed.startsWith("fish_add_path") && trimmed.includes(".oimo"))
     ) {
       continue
     }
@@ -366,7 +366,7 @@ function shortenPath(p: string): string {
 }
 
 async function cleanWindowsPath() {
-  const installDir = path.join(os.homedir(), ".mimocode", "bin")
+  const installDir = path.join(os.homedir(), ".oimo", "bin")
   const script = `
     $installDir = $env:MIMOCODE_UNINSTALL_DIR
     $userPath = [Environment]::GetEnvironmentVariable('PATH', 'User')

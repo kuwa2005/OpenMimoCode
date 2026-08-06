@@ -321,7 +321,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: [providerID],
@@ -408,7 +408,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: [providerID],
@@ -498,7 +498,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: [providerID],
@@ -605,7 +605,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: ["openai"],
@@ -714,7 +714,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             enabled_providers: ["openai"],
             provider: {
@@ -809,7 +809,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: ["openai"],
@@ -919,7 +919,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: ["openai"],
@@ -1045,7 +1045,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: [providerID],
@@ -1157,7 +1157,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: ["anthropic"],
@@ -1422,7 +1422,7 @@ describe("session.llm.stream", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             enabled_providers: [providerID],

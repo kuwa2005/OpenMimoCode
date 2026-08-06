@@ -80,7 +80,7 @@ export const TURN_LIFECYCLE_NOTIFICATION_TIMEOUT = 1_000
 export const TURN_LIFECYCLE_STUCK_TIMEOUT = TURN_LIFECYCLE_NOTIFICATION_TIMEOUT
 
 /**
- * Capabilities MiMoCode declares in `initialize`. Exported so tests assert on the
+ * Capabilities Open Mimo Code declares in `initialize`. Exported so tests assert on the
  * SAME object the client is constructed with rather than a copy that could drift.
  */
 export const CLIENT_OPTIONS = {
@@ -440,7 +440,7 @@ export const layer = Layer.effect(
     const auth = yield* McpAuth.Service
     const bus = yield* Bus.Service
     const createClient = () =>
-      new Client({ name: "mimocode", version: InstallationVersion }, CLIENT_OPTIONS)
+      new Client({ name: "oimo", version: InstallationVersion }, CLIENT_OPTIONS)
 
     type Transport = StdioClientTransport | StreamableHTTPClientTransport | SSEClientTransport
 

@@ -1,8 +1,8 @@
 # MCP Client-Side Sampling
 
-MiMoCode implements the MCP client `sampling` capability
+Open Mimo Code implements the MCP client `sampling` capability
 ([spec](https://modelcontextprotocol.io/specification/2025-11-25/client/sampling)).
-An MCP server can ask MiMoCode to run a model call on its behalf via
+An MCP server can ask Open Mimo Code to run a model call on its behalf via
 `sampling/createMessage`, so **the server never needs its own API key** — it
 borrows the model connection the user already configured.
 
@@ -10,7 +10,7 @@ borrows the model connection the user already configured.
 
 The MiMo Cut MCP server extracts a video's audio track to a 16 kHz mono WAV and
 needs a transcript. Instead of shipping its own provider credentials, it sends
-the WAV to MiMoCode as MCP `AudioContent` and asks for a completion:
+the WAV to Open Mimo Code as MCP `AudioContent` and asks for a completion:
 
 ```json
 {
@@ -29,18 +29,18 @@ the WAV to MiMoCode as MCP `AudioContent` and asks for a completion:
 }
 ```
 
-MiMoCode picks a configured, audio-capable model (preferring the hinted
+Open Mimo Code picks a configured, audio-capable model (preferring the hinted
 `mimo-v2.5`), asks the user to approve, runs the call, and returns the model's
 text unchanged. `MIMO_API_KEY` is never read or needed by the server.
 
 ## Capability negotiation
 
-MiMoCode declares `capabilities.sampling = {}` during `initialize`.
+Open Mimo Code declares `capabilities.sampling = {}` during `initialize`.
 
 `sampling.tools` and `sampling.context` are deliberately **not** declared,
 because they are not implemented. Per the spec a client must error when a server
 sends `tools`/`toolChoice` without the `sampling.tools` declaration, and
-MiMoCode does exactly that. `includeContext` defaults to `none`: MiMoCode never
+Open Mimo Code does exactly that. `includeContext` defaults to `none`: Open Mimo Code never
 ships your session history to an MCP server.
 
 ## Model selection
@@ -65,7 +65,7 @@ A hint is a *preference*, never an authorization: it can reorder eligible models
 but can never make an ineligible one eligible. A server also cannot supply an
 API key, base URL, or any other provider credential.
 
-When nothing is eligible, MiMoCode returns a **structured error** naming every
+When nothing is eligible, Open Mimo Code returns a **structured error** naming every
 configured model and why it was rejected. It never drops the audio, never
 downgrades it to a text description, and never sends it to a model that cannot
 accept it.
@@ -158,7 +158,7 @@ MCP client closes.
 
 The model call **streams**, so "has this hung?" is answerable from evidence rather
 than guessed: no output at all is a symptom, not a policy choice about how patient
-MiMoCode is. It fails with `sampling stalled: the model produced no output` and
+Open Mimo Code is. It fails with `sampling stalled: the model produced no output` and
 `data.phase: "stall"`. Its clock covers both the wait for the first chunk and every
 gap between later chunks, and **every arriving chunk resets it** — a stream that
 produces slowly for ten minutes never stalls, while one that goes quiet does.
@@ -169,7 +169,7 @@ the provider never produced anything, and a non-zero count means it started and
 then died.
 
 **Its value is the provider layer's `chunkTimeout`, not a sampling-specific
-number.** Set `chunkTimeout` for a provider in `mimocode.json` and it governs
+number.** Set `chunkTimeout` for a provider in `oimo.json` and it governs
 sampling exactly as it governs ordinary chat; leave it unset and both get the 8
 minute default. Sampling used to carry its own 45 s bound for the same question,
 which disagreed with the provider layer by 10× — and in the wrong direction, since
@@ -182,7 +182,7 @@ stretch before the model call (model selection, provider initialisation). Both a
 unbounded here — and both are equally unbounded on the main chat path, which is the
 basis for accepting them rather than inventing a number to cover them.
 
-Reaching this bound aborts the provider call as well as MiMoCode's wait
+Reaching this bound aborts the provider call as well as Open Mimo Code's wait
 for it. That is not automatic: interrupting the Effect fiber does not cancel an
 HTTP request already in flight inside it, so the handler hands the provider the
 union of its own fiber's abort signal and the MCP request signal. Both a timeout
@@ -190,17 +190,17 @@ and a client teardown therefore reach the provider.
 
 ### Keeping a server's own timer alive
 
-While the model call is in flight MiMoCode emits periodic
+While the model call is in flight Open Mimo Code emits periodic
 `notifications/progress` — every 15 s — so a server that asked for progress does
 not abandon a request that is still being worked on. Without them a server on the
-SDK's 60 s default gives up at 60 s while MiMoCode is still working, since
-MiMoCode imposes no deadline of its own on the model call.
+SDK's 60 s default gives up at 60 s while Open Mimo Code is still working, since
+Open Mimo Code imposes no deadline of its own on the model call.
 
 What it does and does not claim:
 
 - **It reports observed output, but it is still not a fraction.** The model call
   streams, so the notification says how many chunks and characters the provider has
-  actually produced — which is what lets a server tell "MiMoCode is alive" from
+  actually produced — which is what lets a server tell "Open Mimo Code is alive" from
   "the model is producing", a distinction a timer-driven tick cannot make. `total`
   is still deliberately omitted, because streaming does not reveal how much output
   is coming either, so no percentage can be read out of it. `progress` remains a
@@ -211,19 +211,19 @@ What it does and does not claim:
   so streaming a prefix over the progress channel would disclose in the failure case
   precisely what the response contract says was never delivered. `onprogress` is
   also how a peer asks to be told a request is alive — MCP has no partial-result
-  channel, and treating `message` as one would be MiMoCode deciding that on the
+  channel, and treating `message` as one would be Open Mimo Code deciding that on the
   server's behalf. The running length is metadata and is disclosed; the text is not.
 - **It is necessary, not sufficient.** Resetting the timer is the *requester's*
   choice: the SDK's `resetTimeoutOnProgress` defaults to `false`, so a server
   that did not pass it ignores these notifications entirely and still times out at
-  its own deadline. MiMoCode cannot make that decision for it.
-- **It cannot extend MiMoCode's own bounds.** The notifications reset the peer's
+  its own deadline. Open Mimo Code cannot make that decision for it.
+- **It cannot extend Open Mimo Code's own bounds.** The notifications reset the peer's
   timer only. The model call is still cut off at its own bound no matter how many
   went out, so a hung provider cannot be kept alive by its own keepalive.
 
 Nothing is sent unless the server asked for it. The progress token belongs to the
 requester — the SDK mints one only when its caller passed `onprogress`, and
-MiMoCode reads it back off the request's `_meta`. No token means no notifications
+Open Mimo Code reads it back off the request's `_meta`. No token means no notifications
 at all.
 
 The media cap is a **client-side safety limit**, not a claim about any
@@ -233,14 +233,14 @@ unbounded payload through the sampling path. For scale: 30 s of 16 kHz mono
 
 ## Concurrency, cancellation and cleanup
 
-A sampling request normally arrives **while MiMoCode is still waiting for that
+A sampling request normally arrives **while Open Mimo Code is still waiting for that
 same server's `tools/call` to return**. This does not deadlock, for two
 independent reasons:
 
 1. The MCP SDK dispatches inbound requests from the transport's `onmessage`
    without awaiting the handler, so serving a sampling request never blocks the
    read loop that must later deliver the tool result.
-2. MiMoCode runs the work on a fresh root Effect fiber, which shares no fiber,
+2. Open Mimo Code runs the work on a fresh root Effect fiber, which shares no fiber,
    lock, or scope with the fiber parked on `callTool`.
 
 Requests are served concurrently. A cancelled request unwinds through the
@@ -258,7 +258,7 @@ call, so an orphaned model call cannot outlive its transport.
 > is not gated on the server having asked for progress. Because it aborts the
 > provider call it ends the model call rather than merely stopping us waiting for it.
 >
-> MiMoCode does not work around this, because it cannot: the id at risk belongs to
+> Open Mimo Code does not work around this, because it cannot: the id at risk belongs to
 > the **server's** outgoing request counter, which only the server can advance.
 > Spending an id from the client side — a ping at connection setup, say — advances
 > the client's own counter and leaves the server's at `0`, so the server's
@@ -267,8 +267,8 @@ call, so an orphaned model call cannot outlive its transport.
 > changes this behaviour.
 >
 > The residual, stated plainly: **when a server abandons the first sampling request
-> it issues on a connection, MiMoCode does not learn of it, so that request keeps a
-> model call running — and a paid one — until one of MiMoCode's own bounds aborts
+> it issues on a connection, Open Mimo Code does not learn of it, so that request keeps a
+> model call running — and a paid one — until one of Open Mimo Code's own bounds aborts
 > it — which happens once the provider goes quiet for its `chunkTimeout`. If the
 > provider instead keeps trickling output indefinitely, nothing here stops it; that
 > is the same exposure ordinary chat carries, and it is accepted on the same terms.**
@@ -281,7 +281,7 @@ call, so an orphaned model call cannot outlive its transport.
 - Logs record only the server, model, content types, sizes, duration, and result
   status. Never the audio bytes, and never a full prompt — prompt previews are
   whitespace-collapsed and truncated.
-- The model's text is returned **verbatim**. MiMoCode does not summarise or
+- The model's text is returned **verbatim**. Open Mimo Code does not summarise or
   rewrite it.
 - Session context is never forwarded to an MCP server.
 
@@ -303,7 +303,7 @@ SDK's request timeout raises too, with a `data.timeout` our bound also sets. Onl
 our errors carry `data.server`, so that field is what says whose deadline fired.
 
 Once it is ours, `data.phase` has exactly one possible value — `"stall"` — because
-that is now the only deadline MiMoCode imposes; the `"approval"`, `"model"` and
+that is now the only deadline Open Mimo Code imposes; the `"approval"`, `"model"` and
 `"total"` phases went away with the bounds that produced them. A `"stall"` carries
 `data.chunks` and `data.characters`, so a server can tell a provider that never
 produced anything from one that stopped part way. A cancellation carries

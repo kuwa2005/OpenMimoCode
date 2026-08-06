@@ -17,7 +17,7 @@ await import("./generate.ts")
 import { Script } from "@mimo-ai/script"
 import pkg from "../package.json"
 
-const BINARY_PREFIX = "mimocode"
+const BINARY_PREFIX = "oimo"
 
 // Load migrations from migration directories
 const migrationDirs = (
@@ -244,8 +244,8 @@ for (const item of targets) {
       autoloadTsconfig: true,
       autoloadPackageJson: true,
       target: name.replace(BINARY_PREFIX, "bun") as any,
-      outfile: `dist/${name}/bin/omimo`,
-      execArgv: [`--user-agent=mimocode/${Script.version}`, "--use-system-ca", "--"],
+      outfile: `dist/${name}/bin/oimo`,
+      execArgv: [`--user-agent=oimo/${Script.version}`, "--use-system-ca", "--"],
       windows: {},
     },
     files: embeddedFileMap ? { "opencode-web-ui.gen.ts": embeddedFileMap } : {},
@@ -262,7 +262,7 @@ for (const item of targets) {
 
   // Smoke test: only run if binary is for current platform
   if (item.os === process.platform && item.arch === process.arch && !item.abi) {
-    const binaryPath = `dist/${name}/bin/omimo`
+    const binaryPath = `dist/${name}/bin/oimo`
     console.log(`Running smoke test: ${binaryPath} --version`)
     try {
       const versionOutput = await $`${binaryPath} --version`.text()
@@ -284,11 +284,11 @@ for (const item of targets) {
         version: Script.version,
         description: "Platform-specific binary for @mimo-ai/cli.",
         license: "MIT",
-        author: "Xiaomi MiMo Team",
-        homepage: "https://mimo.xiaomi.com/coder",
+        author: "Open Open Mimo Code Team",
+        homepage: "https://github.com/kuwa2005/OpenMimoCode",
         repository: {
           type: "git",
-          url: "git+https://github.com/XiaomiMiMo/MiMo-Code.git",
+          url: "git+https://github.com/kuwa2005/OpenMimoCode.git",
         },
         keywords: ["ai", "coding", "agent", "cli", "mimo"],
         os: [item.os],

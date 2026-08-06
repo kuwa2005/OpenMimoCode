@@ -81,7 +81,7 @@ Finally, give the user a 5-10 line summary of key conclusions and the report pat
 
 ## Alternative: scripted workflow (unattended runs)
 
-The same pipeline exists as a deterministic workflow script at `/Users/mi/claude-workspace/.mimocode/workflows/deep-research-pro.js` — use it instead of the manual phases above when the run should be fully autonomous, resumable, or batch-invoked. It is convergent: re-running with the same `dir` skips completed phases (brief.md / plan.json / findings/F*.md / reflect.json / REPORT.md act as checkpoints).
+The same pipeline exists as a deterministic workflow script at `/Users/mi/claude-workspace/.oimo/workflows/deep-research-pro.js` — use it instead of the manual phases above when the run should be fully autonomous, resumable, or batch-invoked. It is convergent: re-running with the same `dir` skips completed phases (brief.md / plan.json / findings/F*.md / reflect.json / REPORT.md act as checkpoints).
 
 Invocation (workflow tool; custom scripts must be passed inline via `script`, not `name`):
 

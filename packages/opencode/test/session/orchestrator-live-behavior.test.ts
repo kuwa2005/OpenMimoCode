@@ -81,7 +81,7 @@ if (!ENABLED || offline) {
 }
 
 /**
- * The live provider/model is declared INLINE in the fixture's mimocode.json.
+ * The live provider/model is declared INLINE in the fixture's oimo.json.
  * test/preload.ts pins MIMOCODE_MODELS_PATH at test/tool/fixtures/models-api.json,
  * which carries no entry for this model, and sets MIMOCODE_DISABLE_DEFAULT_PLUGINS
  * so no plugin can inject one. A config-declared provider is merged over the

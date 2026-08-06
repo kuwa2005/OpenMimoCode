@@ -72,4 +72,4 @@ export const Script = {
     return !!env.MIMOCODE_RELEASE
   },
 }
-console.log(`mimocode script`, JSON.stringify(Script, null, 2))
+console.log(`oimo script`, JSON.stringify(Script, null, 2))

@@ -9,12 +9,12 @@ const TRUNCATION_MARKER =
 export type LoopFileResult = { path: string; content: string }
 
 /**
- * Read loop.md from project (.mimocode/loop.md) or home (~/loop.md). Project
+ * Read loop.md from project (.oimo/loop.md) or home (~/loop.md). Project
  * takes precedence. Content > 25 KB is truncated with a warning marker.
  * Returns null when neither path exists or can be read.
  */
 export const readLoopFile = async (workspaceRoot: string): Promise<LoopFileResult | null> => {
-  const candidates = [join(workspaceRoot, ".mimocode", "loop.md"), join(homedir(), "loop.md")]
+  const candidates = [join(workspaceRoot, ".oimo", "loop.md"), join(homedir(), "loop.md")]
   for (const path of candidates) {
     const raw = await readFile(path, "utf-8").catch(() => null)
     if (raw === null) continue

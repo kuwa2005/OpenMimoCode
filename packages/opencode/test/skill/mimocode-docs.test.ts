@@ -22,7 +22,7 @@ describe("mimocode-docs provider guidance", () => {
     expect(providers).toContain("Do not substitute `@ai-sdk/compatible-openai`")
     expect(providers).toContain("If the endpoint matches but the supplied credential differs, create a distinct provider ID")
     expect(providers).toContain("Do not guess `limit.context`, `limit.output`")
-    expect(providers).toContain("mimo models PROVIDER_ID")
+    expect(providers).toContain("oimo models PROVIDER_ID")
   })
 
   test("documents native Anthropic Messages API configuration", async () => {
@@ -38,8 +38,8 @@ describe("mimocode-docs provider guidance", () => {
   test("documents the effective global config precedence", async () => {
     const providers = await Bun.file(path.join(root, "reference/providers.md")).text()
 
-    expect(providers).toContain("`config.json`, `mimocode.json`, then `mimocode.jsonc`; later files win")
-    expect(providers).toContain("create `mimocode.jsonc` when none exists")
+    expect(providers).toContain("`config.json`, `oimo.json`, then `oimo.jsonc`; later files win")
+    expect(providers).toContain("create `oimo.jsonc` when none exists")
   })
 
   test("keeps a newly configured API model in TUI recents without clobbering state", async () => {
@@ -54,7 +54,7 @@ describe("mimocode-docs provider guidance", () => {
     expect(providers).toContain("Preserve every top-level field, especially `favorite` and `variant`")
     expect(providers).toContain("remove any later entry with the same `providerID` and `modelID`")
     expect(providers).toContain("keep at most 10 entries")
-    expect(providers).toContain("Write the recent state only after `mimo models PROVIDER_ID`")
+    expect(providers).toContain("Write the recent state only after `oimo models PROVIDER_ID`")
     expect(providers).toContain("Never put the API key, base URL, display name, or combined `provider/model` string")
   })
 })
@@ -69,9 +69,9 @@ describe("mimocode-docs TUI troubleshooting", () => {
     expect(skill.content).toContain("Terminal compatibility, TUI rendering or lag, and SSH remote use")
     expect(guide).toContain("does not support the built-in Terminal.app")
     expect(guide).toContain("brew install --cask iterm2")
-    expect(guide).toContain("mimo serve --port 4096")
+    expect(guide).toContain("oimo serve --port 4096")
     expect(guide).toContain("ssh -N -L 4096:127.0.0.1:4096 user@remote-host")
-    expect(guide).toContain("mimo attach http://127.0.0.1:4096")
+    expect(guide).toContain("oimo attach http://127.0.0.1:4096")
     expect(guide).toContain("switch between Vivid and Minimal visuals as needed")
     expect(guide).toContain("visual-mode option in `ctrl+p`")
     expect(guide).toContain("separate animation override")

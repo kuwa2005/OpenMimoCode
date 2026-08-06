@@ -82,10 +82,10 @@ describe("Project.fromDirectory", () => {
     expect(project.worktree).toBe(tmp.path)
 
     // v4 SHA cache file should not be written.
-    const legacy = path.join(tmp.path, ".git", "mimocode")
+    const legacy = path.join(tmp.path, ".git", "oimo")
     expect(await Bun.file(legacy).exists()).toBe(false)
     // v5 UUID cache file should exist.
-    const idFile = path.join(tmp.path, ".git", "mimocode-project-id")
+    const idFile = path.join(tmp.path, ".git", "oimo-project-id")
     expect(await Bun.file(idFile).exists()).toBe(true)
   })
 
@@ -99,7 +99,7 @@ describe("Project.fromDirectory", () => {
     expect(project.vcs).toBe("git")
     expect(project.worktree).toBe(tmp.path)
 
-    const idFile = path.join(tmp.path, ".git", "mimocode-project-id")
+    const idFile = path.join(tmp.path, ".git", "oimo-project-id")
     expect(await Bun.file(idFile).exists()).toBe(true)
   })
 
@@ -218,7 +218,7 @@ describe("Project.fromDirectory with worktrees", () => {
       expect(wt.id).toBe(main.id)
 
       // Cache should live in the common .git dir, not the worktree's .git file
-      const cache = path.join(tmp.path, ".git", "mimocode-project-id")
+      const cache = path.join(tmp.path, ".git", "oimo-project-id")
       const exists = await Bun.file(cache).exists()
       expect(exists).toBe(true)
     } finally {

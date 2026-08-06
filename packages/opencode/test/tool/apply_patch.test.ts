@@ -609,11 +609,11 @@ describe("tool.apply_patch memory-path-guard", () => {
     })
   })
 
-  test("checkpoint-writer cannot patch under .mimocode", async () => {
+  test("checkpoint-writer cannot patch under .oimo", async () => {
     await using fixture = await tmpdir({ git: true })
     const { ctx: base } = makeCtx()
     const ctx = { ...base, agent: "checkpoint-writer" }
-    const target = path.join(fixture.path, ".mimocode", "skills", "unsafe", "SKILL.md")
+    const target = path.join(fixture.path, ".oimo", "skills", "unsafe", "SKILL.md")
 
     await Instance.provide({
       directory: fixture.path,

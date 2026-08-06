@@ -42,20 +42,20 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
     {
       name: pkg.name,
       version: version,
-      description: "MiMo Code: Where Models and Agents Co-Evolve",
+      description: "Open Open Mimo Code: Where Models and Agents Co-Evolve",
       license: "MIT",
-      author: "Xiaomi MiMo Team",
-      homepage: "https://mimo.xiaomi.com/coder",
+      author: "Open Open Mimo Code Team",
+      homepage: "https://github.com/kuwa2005/OpenMimoCode",
       repository: {
         type: "git",
-        url: "git+https://github.com/XiaomiMiMo/MiMo-Code.git",
+        url: "git+https://github.com/kuwa2005/OpenMimoCode.git",
       },
       bugs: {
-        url: "https://github.com/XiaomiMiMo/MiMo-Code/issues",
+        url: "https://github.com/kuwa2005/OpenMimoCode/issues",
       },
-      keywords: ["ai", "cli", "code", "xiaomi", "mimo", "mimocode"],
+      keywords: ["ai", "cli", "code", "xiaomi", "mimo", "oimo"],
       bin: {
-        omimo: "./bin/omimo",
+        oimo: "./bin/oimo",
       },
       scripts: {
         postinstall: "bun ./postinstall.mjs || node ./postinstall.mjs",

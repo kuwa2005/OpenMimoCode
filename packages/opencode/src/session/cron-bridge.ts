@@ -43,7 +43,7 @@ export interface Interface {
   readonly runKeepaliveSweep: () => Effect.Effect<void>
 }
 
-export class CronBridge extends Context.Service<CronBridge, Interface>()("@mimocode/CronBridge") {}
+export class CronBridge extends Context.Service<CronBridge, Interface>()("@oimo/CronBridge") {}
 
 export const layer = Layer.effect(
   CronBridge,

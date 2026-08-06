@@ -389,7 +389,7 @@ async function harness(input: {
   // PRODUCTION's own capability object, not a copy — so a regression that drops
   // `sampling` from src/mcp/index.ts fails these tests instead of passing against
   // a duplicated literal.
-  const client = new Client({ name: "mimocode", version: "test" }, MCP.CLIENT_OPTIONS)
+  const client = new Client({ name: "oimo", version: "test" }, MCP.CLIENT_OPTIONS)
   const [clientTransport, serverTransport] = InMemoryTransport.createLinkedPair()
   await Promise.all([client.connect(clientTransport), server.server.connect(serverTransport)])
   // Tap the SERVER's inbound transport after connect. `Protocol.connect` chains
@@ -460,7 +460,7 @@ function config(extra?: Record<string, unknown>) {
 async function withInstance(cfg: object, fn: () => Promise<void>) {
   await using tmp = await tmpdir({
     init: async (dir) => {
-      await Bun.write(path.join(dir, "mimocode.json"), JSON.stringify(cfg))
+      await Bun.write(path.join(dir, "oimo.json"), JSON.stringify(cfg))
     },
   })
   await Instance.provide({ directory: tmp.path, fn })
@@ -1204,7 +1204,7 @@ describe("MCP client-side sampling, end to end", () => {
       server.registerTool("echo", { description: "echo", inputSchema: { value: z.string() } }, async (args) => ({
         content: [{ type: "text", text: String((args as { value: string }).value) }],
       }))
-      const client = new Client({ name: "mimocode", version: "test" }, MCP.CLIENT_OPTIONS)
+      const client = new Client({ name: "oimo", version: "test" }, MCP.CLIENT_OPTIONS)
       const [a, b] = InMemoryTransport.createLinkedPair()
       await Promise.all([client.connect(a), server.server.connect(b)])
       await wireSampling(client, "plain")
@@ -1431,7 +1431,7 @@ describe("sampling deadlines and liveness", () => {
     })
   }, 90_000)
 
-  test("a per-provider chunkTimeout from mimocode.json is what bounds a silent sampling call", async () => {
+  test("a per-provider chunkTimeout from oimo.json is what bounds a silent sampling call", async () => {
     // THE REUSE, END TO END AND WITHOUT AN INJECTED PARAMETER. `wireSampling` passes
     // no bound here, so the value can only have come from the operator's provider
     // config — the same `chunkTimeout` key `provider.ts` reads for the main chat
@@ -1498,7 +1498,7 @@ describe("sampling deadlines and liveness", () => {
     // ⚠️0 IS INJECTED RATHER THAN CONFIGURED, and that is a finding rather than a
     // convenience. `chunkTimeout` is declared `PositiveInt`
     // (`config/provider.ts:5,111`, i.e. `isGreaterThan(0)`), so `chunkTimeout: 0` is
-    // REJECTED BY THE CONFIG SCHEMA and no operator can write it in mimocode.json —
+    // REJECTED BY THE CONFIG SCHEMA and no operator can write it in oimo.json —
     // which makes provider.ts's own "0 / negative to disable" affordance unreachable
     // from config too. Measured, not assumed: configuring 0 here made the provider
     // unresolvable and no HTTP call went out at all. So this guards the value
@@ -1963,7 +1963,7 @@ describe("upstream: a cancellation for JSON-RPC id 0 is dropped by the SDK", () 
    */
   async function pin(): Promise<Pin> {
     const server = new McpServer({ name: "cancelpin", version: "1.0.0" })
-    const client = new Client({ name: "mimocode", version: "test" }, MCP.CLIENT_OPTIONS)
+    const client = new Client({ name: "oimo", version: "test" }, MCP.CLIENT_OPTIONS)
     const signals: AbortSignal[] = []
     const release: Array<() => void> = []
     client.setRequestHandler(CreateMessageRequestSchema, (async (_request: any, extra: any) => {

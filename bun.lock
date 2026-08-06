@@ -280,7 +280,7 @@
       "name": "@mimo-ai/cli",
       "version": "0.1.10",
       "bin": {
-        "omimo": "./bin/omimo",
+        "oimo": "./bin/oimo",
       },
       "dependencies": {
         "@actions/core": "1.11.1",

@@ -38,13 +38,13 @@ describe("Worktree.setup git identity", () => {
           const wt = yield* Worktree.Service
           const info = yield* wt.makeWorktreeInfo()
           yield* wt.createFromInfo(info)
-          // The fixture sets the parent repo's local identity to Test/test@mimocode.test.
+          // The fixture sets the parent repo's local identity to Test/test@oimo.test.
           const name = (yield* Effect.promise(() => $`git config user.name`.cwd(info.directory).quiet().text())).trim()
           const email = (
             yield* Effect.promise(() => $`git config user.email`.cwd(info.directory).quiet().text())
           ).trim()
           expect(name).toBe("Test")
-          expect(email).toBe("test@mimocode.test")
+          expect(email).toBe("test@oimo.test")
           yield* wt.remove({ directory: info.directory })
         }),
       { git: true },

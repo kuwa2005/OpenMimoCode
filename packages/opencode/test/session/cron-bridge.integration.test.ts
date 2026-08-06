@@ -282,8 +282,8 @@ test("cron-bridge resets sentinel cache on main-agent Compacted, ignores subagen
     // Set up loop.md so the sentinel expansion is exercisable.
     const mkdirSync2 = (await import("fs")).mkdirSync
     const writeFileSync2 = (await import("fs")).writeFileSync
-    mkdirSync2(join(wsDir, ".mimocode"), { recursive: true })
-    writeFileSync2(join(wsDir, ".mimocode", "loop.md"), "cached body")
+    mkdirSync2(join(wsDir, ".oimo"), { recursive: true })
+    writeFileSync2(join(wsDir, ".oimo", "loop.md"), "cached body")
 
     const capture = makeCaptureLayer(captured)
     const base = Layer.mergeAll(SchedulerDefaultLayer, SessionStatus.defaultLayer, Bus.layer, capture)

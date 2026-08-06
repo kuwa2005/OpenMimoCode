@@ -46,14 +46,14 @@ const triggerTransform = () =>
   })
 
 describe("plugin file hooks", () => {
-  test("loads hooks from .mimocode/hooks and picks up external edits without reload call", async () => {
+  test("loads hooks from .oimo/hooks and picks up external edits without reload call", async () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
-        await Bun.write(path.join(dir, ".mimocode", "hooks", "greet.ts"), hookSource("v1"))
-        await Bun.write(path.join(dir, "mimocode.json"), '{}')
+        await Bun.write(path.join(dir, ".oimo", "hooks", "greet.ts"), hookSource("v1"))
+        await Bun.write(path.join(dir, "oimo.json"), '{}')
       },
     })
-    const hookFile = path.join(tmp.path, ".mimocode", "hooks", "greet.ts")
+    const hookFile = path.join(tmp.path, ".oimo", "hooks", "greet.ts")
 
     const out = await Instance.provide({
       directory: tmp.path,
@@ -79,8 +79,8 @@ describe("plugin file hooks", () => {
   test("detects newly added hook files", async () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
-        await fs.promises.mkdir(path.join(dir, ".mimocode", "hooks"), { recursive: true })
-        await Bun.write(path.join(dir, "mimocode.json"), '{}')
+        await fs.promises.mkdir(path.join(dir, ".oimo", "hooks"), { recursive: true })
+        await Bun.write(path.join(dir, "oimo.json"), '{}')
       },
     })
 
@@ -91,7 +91,7 @@ describe("plugin file hooks", () => {
           const first = yield* triggerTransform()
           expect(first.system).toEqual([])
 
-          fs.writeFileSync(path.join(tmp.path, ".mimocode", "hooks", "late.ts"), hookSource("late"))
+          fs.writeFileSync(path.join(tmp.path, ".oimo", "hooks", "late.ts"), hookSource("late"))
           yield* Effect.promise(() => Bun.sleep(1200))
 
           return yield* triggerTransform()
@@ -109,9 +109,9 @@ describe("plugin file hooks", () => {
     await using tmp = await tmpdir({
       init: async (dir) => {
         const sink = path.join(dir, "events.log")
-        await Bun.write(path.join(dir, "mimocode.json"), '{}')
+        await Bun.write(path.join(dir, "oimo.json"), '{}')
         await Bun.write(
-          path.join(dir, ".mimocode", "hooks", "listener.ts"),
+          path.join(dir, ".oimo", "hooks", "listener.ts"),
           [
             "import fs from 'fs'",
             "export default {",

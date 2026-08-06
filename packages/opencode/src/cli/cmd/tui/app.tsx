@@ -343,14 +343,14 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     if (!terminalTitleEnabled() || Flag.MIMOCODE_DISABLE_TERMINAL_TITLE) return
 
     if (route.data.type === "home") {
-      renderer.setTerminalTitle("MiMoCode")
+      renderer.setTerminalTitle("Open Mimo Code")
       return
     }
 
     if (route.data.type === "session") {
       const session = sync.session.get(route.data.sessionID)
       if (!session || SessionApi.isDefaultTitle(session.title)) {
-        renderer.setTerminalTitle("MiMoCode")
+        renderer.setTerminalTitle("Open Mimo Code")
         return
       }
 
@@ -522,7 +522,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     // gates the actual switch (race-free: uses the freshly-resolved dir, not the
     // async-populated signal).
     // A `-s <orchestratorSessionID>` launch from OUTSIDE orchestratorDir (the
-    // common case: user runs `omimo -s <id>` from a project dir) navigates the
+    // common case: user runs `oimo -s <id>` from a project dir) navigates the
     // route to that session (app.tsx onMount) and auto-restores agent=orchestrator
     // from the session's last message. That drives us here with sdk.directory !==
     // dir. We suppress the view, switch+bootstrap, then navigate ONCE directly to
@@ -1010,7 +1010,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         aliases: ["docs"],
       },
       onSelect: () => {
-        open("https://mimo.xiaomi.com/coder/docs").catch(() => {})
+        open("https://github.com/kuwa2005/OpenMimoCode").catch(() => {})
         dialog.clear()
       },
       category: "system",

@@ -32,7 +32,7 @@ const log = Log.create({ service: "actor.spawn" })
 
 /**
  * Cap on preStop ReAct re-entries per spawn — prevents infinite loops.
- * TODO: lift to mimocode.json config (e.g. actor.maxPreReact) and add per-hook
+ * TODO: lift to oimo.json config (e.g. actor.maxPreReact) and add per-hook
  * `maxContinue` clamp at registration. Plan: platform cap = hard ceiling, hook
  * cap may only narrow, never widen. See spec Future work.
  */
@@ -465,7 +465,7 @@ export const layer = Layer.effect(
         // runtime tool-stripping only under a session-level override — e.g. session "*":allow
         // un-stripping a read-only agent's write (we skip though runtime allows), or session
         // "*":deny on a writable agent (we nudge though runtime strips). Both are deliberately
-        // ignored: not reachable in normal usage (omimo run sets no such rule, spawn doesn't
+        // ignored: not reachable in normal usage (oimo run sets no such rule, spawn doesn't
         // rewrite session.permission). See spec §Decision. Unknown agent → fail-open (true).
         const forkAgentInfo = yield* agents.get(input.agentType)
         const canWrite = forkAgentInfo ? !Permission.disabled(["write"], forkAgentInfo.permission).has("write") : true

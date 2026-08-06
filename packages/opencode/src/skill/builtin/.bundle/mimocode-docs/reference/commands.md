@@ -1,41 +1,41 @@
-# MiMoCode Commands Reference
+# Open Mimo Code Commands Reference
 
-## CLI (`omimo <command>`)
+## CLI (`oimo <command>`)
 
-Invoked from the shell. `omimo` with no command opens the TUI.
+Invoked from the shell. `oimo` with no command opens the TUI.
 
 | Command | Purpose |
 |---------|---------|
-| `omimo` | Launch the interactive TUI |
-| `omimo run` | Headless, non-interactive run (scripting/eval) |
-| `omimo mcp` | Manage / inspect MCP servers |
-| `omimo agent` | Manage agents |
-| `omimo models` | List available models |
-| `omimo providers` | List / manage providers |
-| `omimo account` (console) | Account / login console |
-| `omimo upgrade` | Update to the latest version |
-| `omimo uninstall` | Uninstall MiMoCode |
-| `omimo serve` | Run the server |
-| `omimo stats` | Usage statistics |
-| `omimo export` / `omimo import` | Export / import sessions |
-| `omimo session` | Manage sessions |
-| `omimo github` / `omimo pr` | GitHub / pull-request integration |
-| `omimo generate` | Code generation entry |
-| `omimo plugin` (plug) | Manage plugins |
-| `omimo db` | Database utilities |
-| `omimo acp` / `omimo attach` | ACP / attach to a running session |
-| `omimo debug` | Debug utilities |
-| `omimo completion` | Generate shell completion script |
+| `oimo` | Launch the interactive TUI |
+| `oimo run` | Headless, non-interactive run (scripting/eval) |
+| `oimo mcp` | Manage / inspect MCP servers |
+| `oimo agent` | Manage agents |
+| `oimo models` | List available models |
+| `oimo providers` | List / manage providers |
+| `oimo account` (console) | Account / login console |
+| `oimo upgrade` | Update to the latest version |
+| `oimo uninstall` | Uninstall Open Mimo Code |
+| `oimo serve` | Run the server |
+| `oimo stats` | Usage statistics |
+| `oimo export` / `oimo import` | Export / import sessions |
+| `oimo session` | Manage sessions |
+| `oimo github` / `oimo pr` | GitHub / pull-request integration |
+| `oimo generate` | Code generation entry |
+| `oimo plugin` (plug) | Manage plugins |
+| `oimo db` | Database utilities |
+| `oimo acp` / `oimo attach` | ACP / attach to a running session |
+| `oimo debug` | Debug utilities |
+| `oimo completion` | Generate shell completion script |
 
-Run `omimo <command> --help` for flags on any command.
+Run `oimo <command> --help` for flags on any command.
 
 Notable TUI flags: `--continue`/`-c` (resume last session), `--session`/`-s`, `--model`/`-m`, `--agent`, `--never-ask`, `--trust`, and `--dangerously-skip-permissions` (auto-approve everything not explicitly denied; prompts once for confirmation — see permissions.md).
 
-For terminal compatibility, TUI rendering or lag, and local rendering over SSH with `omimo serve` + `omimo attach`, see @guide.md.
+For terminal compatibility, TUI rendering or lag, and local rendering over SSH with `oimo serve` + `oimo attach`, see @guide.md.
 
 ## Slash commands (inside the TUI)
 
-Type `/` to see the commands available in the current context. You can also ask in chat, for example, “Which slash commands can I use?” or “How do I switch models?” MiMoCode will explain the relevant command without requiring you to remember its name.
+Type `/` to see the commands available in the current context. You can also ask in chat, for example, “Which slash commands can I use?” or “How do I switch models?” Open Mimo Code will explain the relevant command without requiring you to remember its name.
 
 Most client commands run only when the whole input is the command. `/btw <question>` and prompt commands that accept arguments are the exceptions.
 
@@ -67,7 +67,7 @@ Most client commands run only when the whole input is the command. `/btw <questi
 | `/light` | — | Switch to light mode |
 | `/help` | — | Open command help |
 | `/doc` | `/docs` | Open the user documentation |
-| `/exit` | `/quit`, `/q` | Exit MiMoCode |
+| `/exit` | `/quit`, `/q` | Exit Open Mimo Code |
 | `/language` | `/lang` | Switch the TUI language |
 
 ### Prompt commands

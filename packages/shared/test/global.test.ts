@@ -7,7 +7,7 @@ describe("resolveMimocodeHome", () => {
     const result = resolveMimocodeHome({
       MIMOCODE_HOME: "/tmp/profile-a",
     })
-    expect(result.mode).toBe("mimocode_home")
+    expect(result.mode).toBe("oimo_home")
     expect(result.root).toBe("/tmp/profile-a")
     expect(result.config).toBe(path.join("/tmp/profile-a", "config"))
     expect(result.data).toBe(path.join("/tmp/profile-a", "data"))
@@ -19,11 +19,11 @@ describe("resolveMimocodeHome", () => {
     const result = resolveMimocodeHome({})
     expect(result.mode).toBe("xdg")
     expect(result.root).toBeUndefined()
-    // xdg paths end with "/mimocode"
-    expect(result.config.endsWith(path.join("", "mimocode"))).toBe(true)
-    expect(result.data.endsWith(path.join("", "mimocode"))).toBe(true)
-    expect(result.state.endsWith(path.join("", "mimocode"))).toBe(true)
-    expect(result.cache.endsWith(path.join("", "mimocode"))).toBe(true)
+    // xdg paths end with "/oimo"
+    expect(result.config.endsWith(path.join("", "oimo"))).toBe(true)
+    expect(result.data.endsWith(path.join("", "oimo"))).toBe(true)
+    expect(result.state.endsWith(path.join("", "oimo"))).toBe(true)
+    expect(result.cache.endsWith(path.join("", "oimo"))).toBe(true)
   })
 
   test("empty MIMOCODE_HOME string is treated as unset (xdg mode)", () => {

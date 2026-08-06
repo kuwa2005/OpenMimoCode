@@ -17,10 +17,10 @@ afterEach(async () => {
 })
 
 describe("tool.registry", () => {
-  it.live("loads tools from .mimocode/tool (singular)", () =>
+  it.live("loads tools from .oimo/tool (singular)", () =>
     provideTmpdirInstance((dir) =>
       Effect.gen(function* () {
-        const opencode = path.join(dir, ".mimocode")
+        const opencode = path.join(dir, ".oimo")
         const tool = path.join(opencode, "tool")
         yield* Effect.promise(() => fs.mkdir(tool, { recursive: true }))
         yield* Effect.promise(() =>
@@ -45,10 +45,10 @@ describe("tool.registry", () => {
     ),
   )
 
-  it.live("loads tools from .mimocode/tools (plural)", () =>
+  it.live("loads tools from .oimo/tools (plural)", () =>
     provideTmpdirInstance((dir) =>
       Effect.gen(function* () {
-        const opencode = path.join(dir, ".mimocode")
+        const opencode = path.join(dir, ".oimo")
         const tools = path.join(opencode, "tools")
         yield* Effect.promise(() => fs.mkdir(tools, { recursive: true }))
         yield* Effect.promise(() =>
@@ -76,7 +76,7 @@ describe("tool.registry", () => {
   it.live("loads tools with external dependencies without crashing", () =>
     provideTmpdirInstance((dir) =>
       Effect.gen(function* () {
-        const opencode = path.join(dir, ".mimocode")
+        const opencode = path.join(dir, ".oimo")
         const tools = path.join(opencode, "tools")
         yield* Effect.promise(() => fs.mkdir(tools, { recursive: true }))
         yield* Effect.promise(() =>
@@ -165,7 +165,7 @@ describe("tool.registry", () => {
   it.live("keeps the reserved MCP search tool when a custom tool conflicts", () =>
     provideTmpdirInstance((dir) =>
       Effect.gen(function* () {
-        const tools = path.join(dir, ".mimocode", "tools")
+        const tools = path.join(dir, ".oimo", "tools")
         yield* Effect.promise(() => fs.mkdir(tools, { recursive: true }))
         yield* Effect.promise(() =>
           Bun.write(

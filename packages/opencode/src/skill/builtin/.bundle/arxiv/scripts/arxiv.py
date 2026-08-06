@@ -50,7 +50,7 @@ NS = {
     "arxiv": "http://arxiv.org/schemas/atom",
     "os": "http://a9.com/-/spec/opensearch/1.1/",
 }
-UA = "MiMoCode-arxiv-skill/2.0"
+UA = "Open Mimo Code-arxiv-skill/2.0"
 
 
 def http_get(url, timeout=30):

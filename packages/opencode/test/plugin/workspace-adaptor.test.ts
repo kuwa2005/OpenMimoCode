@@ -63,7 +63,7 @@ describe("plugin.workspace", () => {
         )
 
         await Bun.write(
-          path.join(dir, "mimocode.json"),
+          path.join(dir, "oimo.json"),
           JSON.stringify(
             {
               $schema: "https://opencode.ai/config.json",

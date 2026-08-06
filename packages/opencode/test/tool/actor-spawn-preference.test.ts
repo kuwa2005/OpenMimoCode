@@ -20,7 +20,7 @@
 // blocking path" is.
 //
 // Gated behind RUN_ACTOR_SPAWN_AB=1 so it never runs in the normal suite (it needs
-// the live router + a real key in ~/.config/mimocode/mimocode.json). Run with:
+// the live router + a real key in ~/.config/oimo/oimo.json). Run with:
 //   RUN_ACTOR_SPAWN_AB=1 bun test test/tool/actor-spawn-preference.test.ts
 import { describe, expect, test } from "bun:test"
 import { mkdtempSync, mkdirSync, readFileSync, writeFileSync } from "fs"
@@ -43,8 +43,8 @@ const DELEGATION_PROMPT =
 function scratchHome() {
   const home = mkdtempSync(path.join(os.tmpdir(), "actor-ab-home-"))
   mkdirSync(path.join(home, "config"), { recursive: true })
-  const user = JSON.parse(readFileSync(path.join(os.homedir(), ".config", "mimocode", "mimocode.json"), "utf8"))
-  if (!user.provider?.mimo?.options?.apiKey) throw new Error("no mimo provider/key in ~/.config/mimocode/mimocode.json")
+  const user = JSON.parse(readFileSync(path.join(os.homedir(), ".config", "oimo", "oimo.json"), "utf8"))
+  if (!user.provider?.mimo?.options?.apiKey) throw new Error("no mimo provider/key in ~/.config/oimo/oimo.json")
   writeFileSync(
     path.join(home, "config", "config.json"),
     JSON.stringify({

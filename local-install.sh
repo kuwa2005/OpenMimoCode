@@ -4,7 +4,7 @@ set -euo pipefail
 
 repo_dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 package_dir="$repo_dir/packages/opencode"
-install_dir="${MIMOCODE_INSTALL_DIR:-$HOME/.mimocode/bin}"
+install_dir="${MIMOCODE_INSTALL_DIR:-$HOME/.oimo/bin}"
 
 if ! command -v bun >/dev/null 2>&1; then
   echo "bun is required but was not found in PATH" >&2
@@ -42,7 +42,7 @@ esac
   bun run build:local
 )
 
-binary="$package_dir/dist/mimocode-$platform-$arch/bin/omimo"
+binary="$package_dir/dist/oimo-$platform-$arch/bin/oimo"
 if [[ ! -f "$binary" ]]; then
   echo "Built binary not found: $binary" >&2
   exit 1
@@ -52,8 +52,8 @@ mkdir -p "$install_dir"
 temporary="$install_dir/.mimo.$$"
 trap 'rm -f "$temporary"' EXIT
 install -m 755 "$binary" "$temporary"
-mv -f "$temporary" "$install_dir/omimo"
+mv -f "$temporary" "$install_dir/oimo"
 trap - EXIT
 
-echo "Installed omimo to $install_dir/omimo"
-"$install_dir/omimo" --version
+echo "Installed oimo to $install_dir/oimo"
+"$install_dir/oimo" --version

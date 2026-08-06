@@ -29,9 +29,9 @@ const log = Log.create({ service: "db" })
 
 export function getChannelPath() {
   if (["latest", "beta", "prod"].includes(InstallationChannel) || Flag.MIMOCODE_DISABLE_CHANNEL_DB)
-    return path.join(Global.Path.data, "mimocode.db")
+    return path.join(Global.Path.data, "oimo.db")
   const safe = InstallationChannel.replace(/[^a-zA-Z0-9._-]/g, "-")
-  return path.join(Global.Path.data, `mimocode-${safe}.db`)
+  return path.join(Global.Path.data, `oimo-${safe}.db`)
 }
 
 export const Path = iife(() => {

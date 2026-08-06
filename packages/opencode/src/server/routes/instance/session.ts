@@ -1046,7 +1046,7 @@ export const SessionRoutes = lazy(() =>
         c.header("Content-Type", "application/json")
         return stream(c, async (stream) => {
           const body = c.req.valid("json")
-          // If the HTTP client gives up (TUI exits, driver kills its `omimo run`
+          // If the HTTP client gives up (TUI exits, driver kills its `oimo run`
           // client on its own per-turn timeout, network drop), we have to drive
           // the server-side runner to Idle ourselves. Otherwise the prompt
           // fiber keeps running with no consumer, and any next POST attaches
@@ -1072,7 +1072,7 @@ export const SessionRoutes = lazy(() =>
           // silent for a long time — most notably while the `question` tool
           // blocks on an un-timed Deferred waiting for a human reply (the Bun
           // server itself never times out: adapter.bun.ts idleTimeout:0). A
-          // client with its own request timeout (e.g. the external `omimo run`
+          // client with its own request timeout (e.g. the external `oimo run`
           // driver's per-turn budget) would otherwise see a dead connection and
           // abort with "error sending request for url". Periodic whitespace
           // resets the client's idle timer; whitespace is JSON-insignificant,

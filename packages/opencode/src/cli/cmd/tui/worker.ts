@@ -121,6 +121,6 @@ Rpc.listen(rpc)
 function getAuthorizationHeader(): string | undefined {
   const password = Flag.MIMOCODE_SERVER_PASSWORD
   if (!password) return undefined
-  const username = Flag.MIMOCODE_SERVER_USERNAME ?? "mimocode"
+  const username = Flag.MIMOCODE_SERVER_USERNAME ?? "oimo"
   return `Basic ${btoa(`${username}:${password}`)}`
 }

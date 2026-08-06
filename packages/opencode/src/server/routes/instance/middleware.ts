@@ -13,7 +13,7 @@ import { DIRECTORY_DENIED_CODE } from "./access"
 
 export function InstanceMiddleware(workspaceID?: WorkspaceID): MiddlewareHandler {
   return async (c, next) => {
-    const raw = c.req.query("directory") || c.req.header("x-mimocode-directory") || process.cwd()
+    const raw = c.req.query("directory") || c.req.header("x-oimo-directory") || process.cwd()
     const directory = AppFileSystem.resolve(
       (() => {
         try {

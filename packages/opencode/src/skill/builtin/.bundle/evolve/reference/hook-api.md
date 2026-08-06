@@ -327,7 +327,7 @@ import { readFileSync } from "fs"
 export default {
   "experimental.chat.system.transform": async (input, output) => {
     try {
-      const ctx = readFileSync(".mimocode/project-context.md", "utf-8")
+      const ctx = readFileSync(".oimo/project-context.md", "utf-8")
       output.system.push(ctx)
     } catch {}
   },

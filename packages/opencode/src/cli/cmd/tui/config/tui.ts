@@ -91,7 +91,7 @@ async function mergeFile(acc: Acc, file: string, ctx: { directory: string }) {
 }
 
 const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: string }) {
-  // Every config dir we may read from: global config dir, any `.mimocode`
+  // Every config dir we may read from: global config dir, any `.oimo`
   // folders between cwd and home, and MIMOCODE_CONFIG_DIR.
   const directories = yield* ConfigPaths.directories(ctx.directory)
   yield* Effect.promise(() => migrateTuiConfig({ directories, cwd: ctx.directory }))
@@ -119,13 +119,13 @@ const loadState = Effect.fn("TuiConfig.loadState")(function* (ctx: { directory: 
     yield* Effect.promise(() => mergeFile(acc, file, ctx)).pipe(Effect.orDie)
   }
 
-  // 4. `.mimocode` directories (and MIMOCODE_CONFIG_DIR) discovered while
+  // 4. `.oimo` directories (and MIMOCODE_CONFIG_DIR) discovered while
   // walking up the tree. Also returned below so callers can install plugin
   // dependencies from each location.
-  const dirs = unique(directories).filter((dir) => dir.endsWith(".mimocode") || dir === Flag.MIMOCODE_CONFIG_DIR)
+  const dirs = unique(directories).filter((dir) => dir.endsWith(".oimo") || dir === Flag.MIMOCODE_CONFIG_DIR)
 
   for (const dir of dirs) {
-    if (!dir.endsWith(".mimocode") && dir !== Flag.MIMOCODE_CONFIG_DIR) continue
+    if (!dir.endsWith(".oimo") && dir !== Flag.MIMOCODE_CONFIG_DIR) continue
     for (const file of ConfigPaths.fileInDirectory(dir, "tui")) {
       yield* Effect.promise(() => mergeFile(acc, file, ctx)).pipe(Effect.orDie)
     }
@@ -221,7 +221,7 @@ async function load(text: string, configFilepath: string): Promise<Info> {
       if (!isRecord(data)) return {}
 
       // Flatten a nested "tui" key so users who wrote `{ "tui": { ... } }` inside tui.json
-      // (mirroring the old mimocode.json shape) still get their settings applied.
+      // (mirroring the old oimo.json shape) still get their settings applied.
       return ConfigParse.schema(Info, normalize(data), configFilepath)
     })
     .then((data) => resolvePlugins(data, configFilepath))

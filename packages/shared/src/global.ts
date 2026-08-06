@@ -3,10 +3,10 @@ import { xdgData, xdgCache, xdgConfig, xdgState } from "xdg-basedir"
 import os from "os"
 import { Context, Effect, Layer } from "effect"
 
-const APP = "mimocode"
+const APP = "oimo"
 
 export type ResolvedPaths = {
-  mode: "mimocode_home" | "xdg"
+  mode: "oimo_home" | "xdg"
   root?: string
   data: string
   cache: string
@@ -15,7 +15,7 @@ export type ResolvedPaths = {
 }
 
 /**
- * Resolve mimocode's four base directories (config/data/state/cache)
+ * Resolve oimo's four base directories (config/data/state/cache)
  * from environment variables.
  *
  * If MIMOCODE_HOME is set and non-empty, the four paths are subdirectories
@@ -32,7 +32,7 @@ export function resolveMimocodeHome(env: NodeJS.ProcessEnv = process.env): Resol
       )
     }
     return {
-      mode: "mimocode_home",
+      mode: "oimo_home",
       root: home,
       data: path.join(home, "data"),
       cache: path.join(home, "cache"),

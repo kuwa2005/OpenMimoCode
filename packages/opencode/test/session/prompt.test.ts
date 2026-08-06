@@ -346,7 +346,7 @@ describe("session.prompt regression", () => {
         git: true,
         init: async (dir) => {
           await Bun.write(
-            path.join(dir, "mimocode.json"),
+            path.join(dir, "oimo.json"),
             JSON.stringify({
               $schema: "https://opencode.ai/config.json",
               enabled_providers: ["alibaba"],
@@ -420,7 +420,7 @@ describe("session.prompt regression", () => {
         git: true,
         init: async (dir) => {
           await Bun.write(
-            path.join(dir, "mimocode.json"),
+            path.join(dir, "oimo.json"),
             JSON.stringify({
               $schema: "https://opencode.ai/config.json",
               enabled_providers: ["alibaba"],
@@ -520,7 +520,7 @@ describe("session.prompt regression", () => {
         git: true,
         init: async (dir) => {
           await Bun.write(
-            path.join(dir, "mimocode.json"),
+            path.join(dir, "oimo.json"),
             JSON.stringify({
               $schema: "https://opencode.ai/config.json",
               enabled_providers: ["alibaba"],
@@ -784,7 +784,7 @@ describe("session.prompt F37 subagent context isolation", () => {
         git: true,
         init: async (dir) => {
           await Bun.write(
-            path.join(dir, "mimocode.json"),
+            path.join(dir, "oimo.json"),
             JSON.stringify({
               $schema: "https://opencode.ai/config.json",
               enabled_providers: ["alibaba"],

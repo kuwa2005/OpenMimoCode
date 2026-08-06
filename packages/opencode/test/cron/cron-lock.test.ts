@@ -29,14 +29,14 @@ const reconstructPidStartMs = (pid: number): number => {
 test("acquire returns true on fresh dir and writes lock file", async () => {
   const dir = fresh()
   expect(await run(tryAcquireSchedulerLock({ dir }))).toBe(true)
-  expect(existsSync(join(dir, ".mimocode", ".cron-lock"))).toBe(true)
+  expect(existsSync(join(dir, ".oimo", ".cron-lock"))).toBe(true)
   cleanup(dir)
 })
 
 test("creates .gitignore alongside lock file in fresh directory", async () => {
   const dir = fresh()
   expect(await run(tryAcquireSchedulerLock({ dir }))).toBe(true)
-  const gitignore = join(dir, ".mimocode", ".gitignore")
+  const gitignore = join(dir, ".oimo", ".gitignore")
   expect(existsSync(gitignore)).toBe(true)
   const content = readFileSync(gitignore, "utf-8")
   expect(content).toContain(".cron-lock")
@@ -53,7 +53,7 @@ test("acquire is idempotent for the same process", async () => {
 
 test("acquire returns false when a different live pid owns the lock", async () => {
   const dir = fresh()
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
   // Plant a lock that names pid=1 with a startedAt matching its ACTUAL
   // reconstructed start time on this system. In containers pid=1 may not
   // be at system boot (it's the container entrypoint), so we can't hardcode
@@ -63,7 +63,7 @@ test("acquire returns false when a different live pid owns the lock", async () =
   const initStartedAt =
     process.platform === "linux" ? Math.floor(reconstructPidStartMs(1)) : Date.now()
   writeFileSync(
-    join(dir, ".mimocode", ".cron-lock"),
+    join(dir, ".oimo", ".cron-lock"),
     JSON.stringify({ pid: 1, startedAt: initStartedAt }),
   )
   expect(await run(tryAcquireSchedulerLock({ dir }))).toBe(false)
@@ -72,16 +72,16 @@ test("acquire returns false when a different live pid owns the lock", async () =
 
 test("acquire takes over when previous owner is dead (ESRCH)", async () => {
   const dir = fresh()
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", ".cron-lock"), JSON.stringify({ pid: 999_999, startedAt: 0 }))
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", ".cron-lock"), JSON.stringify({ pid: 999_999, startedAt: 0 }))
   expect(await run(tryAcquireSchedulerLock({ dir }))).toBe(true)
   cleanup(dir)
 })
 
 test("acquire overwrites malformed lock file", async () => {
   const dir = fresh()
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", ".cron-lock"), "garbage{not json")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", ".cron-lock"), "garbage{not json")
   expect(await run(tryAcquireSchedulerLock({ dir }))).toBe(true)
   cleanup(dir)
 })
@@ -90,7 +90,7 @@ test("release removes our own lock", async () => {
   const dir = fresh()
   await run(tryAcquireSchedulerLock({ dir }))
   await run(releaseSchedulerLock({ dir }))
-  expect(existsSync(join(dir, ".mimocode", ".cron-lock"))).toBe(false)
+  expect(existsSync(join(dir, ".oimo", ".cron-lock"))).toBe(false)
   cleanup(dir)
 })
 
@@ -115,10 +115,10 @@ test("acquire does NOT take over when kill(pid,0) throws EPERM (foreign-uid live
   // exercised is the EPERM handling.
   if (process.platform !== "linux") return
   const dir = fresh()
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
   const initStartedAt = Math.floor(reconstructPidStartMs(1))
   writeFileSync(
-    join(dir, ".mimocode", ".cron-lock"),
+    join(dir, ".oimo", ".cron-lock"),
     JSON.stringify({ pid: 1, startedAt: initStartedAt }),
   )
   const origKill = process.kill
@@ -151,7 +151,7 @@ test("acquire does NOT take over when kill(pid,0) throws EPERM (foreign-uid live
 test("acquire treats a lock as recycled when the live pid started much later than claimed", async () => {
   if (process.platform !== "linux") return // /proc/*/stat + /proc/uptime only on Linux
   const dir = fresh()
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
   // Compute boot time from /proc/uptime and plant a lock claiming OUR pid
   // as owner but with startedAt = bootTimeMs. Our process really started
   // well after boot, so the reconstruction check should decide "recycled"
@@ -161,7 +161,7 @@ test("acquire treats a lock as recycled when the live pid started much later tha
   const uptimeMs = Math.floor(parseFloat(readFileSync("/proc/uptime", "utf-8").split(/\s+/)[0]!) * 1000)
   const bootTimeMs = Date.now() - uptimeMs
   writeFileSync(
-    join(dir, ".mimocode", ".cron-lock"),
+    join(dir, ".oimo", ".cron-lock"),
     JSON.stringify({ pid: process.pid, startedAt: bootTimeMs }),
   )
   expect(await run(tryAcquireSchedulerLock({ dir }))).toBe(true)

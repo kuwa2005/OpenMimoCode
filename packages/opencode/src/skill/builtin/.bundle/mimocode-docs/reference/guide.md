@@ -1,18 +1,18 @@
-# MiMoCode Usage Guide
+# Open Mimo Code Usage Guide
 
 How-to for the features users most often ask about. For config keys see @config.md; for permissions see @permissions.md; for commands see @commands.md.
 
 ## Getting started & auth
 
-1. **Sign in** — `omimo account login <url>` runs a device flow: it prints a URL + code and opens your browser. `/connect` does the same from inside the TUI (e.g. to add OpenRouter). OAuth logins are available for Xiaomi MiMo, Codex (ChatGPT Pro/Plus), and xAI (Grok); Claude Code auth can be imported from `~/.claude/settings*.json`. Other account subcommands: `logout`, `switch`, `orgs`, `open`, `console`.
+1. **Sign in** — `oimo account login <url>` runs a device flow: it prints a URL + code and opens your browser. `/connect` does the same from inside the TUI (e.g. to add OpenRouter). OAuth logins are available for Xiaomi MiMo, Codex (ChatGPT Pro/Plus), and xAI (Grok); Claude Code auth can be imported from `~/.claude/settings*.json`. Other account subcommands: `logout`, `switch`, `orgs`, `open`, `console`.
 2. **Pick a model** — set `"model": "provider/model"` in config, or switch live in the TUI model dialog. Provider API keys are auto-detected from environment variables (unless `MIMOCODE_MIMO_ONLY=1`).
-3. **List what's available** — `omimo models`, `omimo providers`.
+3. **List what's available** — `oimo models`, `oimo providers`.
 
 For a custom base URL, API key, or OpenAI-/Anthropic-compatible model, read @providers.md before editing config; it covers protocol selection, adapter names, provider reuse, secret handling, and local verification.
 
 ## TUI rendering, lag & remote use
 
-**macOS default terminal** — MiMoCode does not support the built-in Terminal.app. For misaligned output, flicker, or other rendering problems, use the VS Code integrated terminal or install iTerm2:
+**macOS default terminal** — Open Mimo Code does not support the built-in Terminal.app. For misaligned output, flicker, or other rendering problems, use the VS Code integrated terminal or install iTerm2:
 
 ```bash
 brew install --cask iterm2
@@ -22,18 +22,18 @@ brew install --cask iterm2
 
 ```bash
 # Remote host
-omimo serve --port 4096
+oimo serve --port 4096
 
 # Local host: keep this tunnel open
 ssh -N -L 4096:127.0.0.1:4096 user@remote-host
 
 # Local host: connect from another terminal
-omimo attach http://127.0.0.1:4096
+oimo attach http://127.0.0.1:4096
 ```
 
 **Decorative animation** — run `/vivid`, or configure the visual-mode option in `ctrl+p`, to switch between Vivid and Minimal visuals as needed. The separate animation override can stop high-frequency motion without changing the selected visual mode.
 
-## Memory: making MiMoCode remember
+## Memory: making Open Mimo Code remember
 
 Memory persists across sessions and is auto-injected on resume, so the agent doesn't relearn project context.
 
@@ -47,7 +47,7 @@ Tune memory behavior with `checkpoint.*`, `compaction.*`, and `memory.cc_index` 
 
 ## Custom slash commands
 
-Drop a markdown file at `.mimocode/command/<name>.md` (or `.mimocode/commands/`, `.claude/command(s)/` are also read). The frontmatter configures it; the body is the prompt template.
+Drop a markdown file at `.oimo/command/<name>.md` (or `.oimo/commands/`, `.claude/command(s)/` are also read). The frontmatter configures it; the body is the prompt template.
 
 ```markdown
 ---
@@ -67,7 +67,7 @@ Commands hot-reload on the next turn.
 
 ## Custom agents & modes (file-based system prompts)
 
-A "mode" is just a **primary agent** with its own system prompt. To give MiMoCode a custom mode (e.g. a `general` chat mode alongside the coding-focused `build`), drop a markdown file — no code, no server changes. The frontmatter is config; the **markdown body becomes the agent's system prompt**.
+A "mode" is just a **primary agent** with its own system prompt. To give Open Mimo Code a custom mode (e.g. a `general` chat mode alongside the coding-focused `build`), drop a markdown file — no code, no server changes. The frontmatter is config; the **markdown body becomes the agent's system prompt**.
 
 ```markdown
 ---
@@ -83,9 +83,9 @@ Where to put the file (all hot-reloaded on the next turn; `.claude/agent(s)` are
 
 | Path | Scope |
 |------|-------|
-| `.mimocode/agent/<name>.md` (or `agents/`) | project agent — most common |
-| `.mimocode/mode/<name>.md` (or `modes/`) | project mode — same as an agent forced to `mode: primary` |
-| `~/.config/mimocode/agent/<name>.md` | global agent, available in every project |
+| `.oimo/agent/<name>.md` (or `agents/`) | project agent — most common |
+| `.oimo/mode/<name>.md` (or `modes/`) | project mode — same as an agent forced to `mode: primary` |
+| `~/.config/oimo/agent/<name>.md` | global agent, available in every project |
 
 Frontmatter fields (all optional except that the body should be non-empty):
 
@@ -96,7 +96,7 @@ Frontmatter fields (all optional except that the body should be non-empty):
 
 **How it reaches the model:** for a primary agent the body is used as the base system prompt in place of the model's default prompt; the usual environment/skills/instructions blocks are still appended. Selecting the mode is session-scoped — the TUI `Tab` picker or, over the SDK, the `agent` field on `session.prompt`. So a desktop/SDK client switches modes by sending `agent: "general"` vs `agent: "build"` per session; the prompt itself lives in the file, server-side.
 
-Verify a file loaded with `omimo agent list` — your agent shows up with its `(primary)` / `(subagent)` mode.
+Verify a file loaded with `oimo agent list` — your agent shows up with its `(primary)` / `(subagent)` mode.
 
 Config-file alternative: instead of a `.md` file you can inline an agent under the `agent` config key (`agent.<name>.prompt`, plus `model`, `mode`, …); the markdown form is preferred for anything beyond a couple of lines.
 
@@ -127,11 +127,11 @@ Add servers under the `mcp` key. Two kinds:
 }
 ```
 
-Inspect/manage with `omimo mcp`. Request timeout defaults to 5000ms (`timeout` per server, or `experimental.mcp_timeout` globally).
+Inspect/manage with `oimo mcp`. Request timeout defaults to 5000ms (`timeout` per server, or `experimental.mcp_timeout` globally).
 
 ## Compose mode
 
-Compose is MiMoCode's specs-driven spec→ship lifecycle. Two interactive paths:
+Compose is Open Mimo Code's specs-driven spec→ship lifecycle. Two interactive paths:
 
 - **Recommended: `/compose-next` on Build** — one self-contained skill covering grill → spec → workspace → implement → verify → review → finalize → finish, with feature documents at `docs/compose/spec/<feature>.md`. Built for frontier models (Fable/Sol-class); hidden from auto-discovery by design, so invoke it explicitly.
 - **Legacy: the `compose` agent** (switch with `Tab`) — coordinates built-in skills (plan, tdd, debug, review, verify, merge) across the lifecycle; its step-by-step curriculum remains useful for weaker models.
@@ -160,13 +160,13 @@ The `cron` tool has six verbs:
 | `delete` (alias `cancel`) | Remove a job by `id` |
 
 - **Expressions are 5-field** (`minute hour dom month dow`) and evaluated in **UTC** — there is no timezone config.
-- **Durable** jobs persist to `<project>/.mimocode/scheduled_tasks.json` and survive restart; non-durable jobs live only for the session.
+- **Durable** jobs persist to `<project>/.oimo/scheduled_tasks.json` and survive restart; non-durable jobs live only for the session.
 - When a job fires, the prompt is injected with an `[cron fire @ <ISO>]` prefix; the TUI shows a `🕒 cron fire` clock-row before the reply.
 
 **Loop** — `/loop [interval] <prompt>` (a built-in skill) is a friendly front end: it parses an interval (e.g. `30m`, `2h`), maps it to a recurring cron job, and also runs the prompt once immediately. Manage loops with `/loops` (lists jobs; `/loops cancel <id>` stops one). Loops auto-stop after a keepalive budget of missed turns or a 7-day max age.
 
 `/loop` (cadence) and `/goal` (stop condition) are complementary and independent: `/goal` decides *whether* an autonomous agent may stop; `/loop` decides *how often* it runs.
 
-## Extending MiMoCode
+## Extending Open Mimo Code
 
-To add tools, hooks, or skills, use the `evolve` skill — it covers writing `.mimocode/tools/*.ts`, `.mimocode/hooks/*.ts`, and `.mimocode/skills/*/SKILL.md`, all hot-reloaded on the next turn.
+To add tools, hooks, or skills, use the `evolve` skill — it covers writing `.oimo/tools/*.ts`, `.oimo/hooks/*.ts`, and `.oimo/skills/*/SKILL.md`, all hot-reloaded on the next turn.

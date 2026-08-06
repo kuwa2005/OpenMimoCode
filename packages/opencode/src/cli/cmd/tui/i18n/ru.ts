@@ -30,7 +30,7 @@ export const dict = {
   "tui.home.placeholder.example.todo": "Исправь TODO в кодовой базе",
   "tui.home.placeholder.example.stack": "Какой технологический стек у этого проекта?",
   "tui.home.placeholder.example.tests": "Почини сломанные тесты",
-  "tui.home.agreement.prefix": "Используя MiMoCode, вы соглашаетесь с нашими ",
+  "tui.home.agreement.prefix": "Используя Open Mimo Code, вы соглашаетесь с нашими ",
   "tui.home.agreement.terms": "Условиями использования",
   "tui.home.agreement.separator": " и ",
   "tui.home.agreement.privacy": "Политикой конфиденциальности",
@@ -59,7 +59,7 @@ export const dict = {
   "tui.tips.doc": "Выполните {highlight}/doc{/highlight}, чтобы открыть пользовательскую документацию",
   "tui.tips.free_models": "Бесплатные модели доступны ограниченное время — попробуйте их сейчас!",
   "tui.tips.free_api_sunset":
-    "Сервис бесплатного API завершён. Выполните {highlight}/login{/highlight}, чтобы войти. Оформите подписку на MiMo Token Plan или настройте сторонний API для использования MiMo Code.",
+    "Сервис бесплатного API завершён. Выполните {highlight}/login{/highlight}, чтобы войти. Оформите подписку на MiMo Token Plan или настройте сторонний API для использования Open Mimo Code.",
   "tui.tips.multi_skills":
     "Комбинируйте несколько {highlight}/skill-name{/highlight} в одном сообщении, чтобы использовать несколько Skills одновременно",
   "tui.tips.ask_slash_commands":
@@ -124,9 +124,9 @@ export const dict = {
   "tui.tips.cycle_sessions":
     "Нажимайте {highlight}Ctrl+X Right/Left{/highlight}, чтобы переключаться между родительской и дочерними сессиями",
   "tui.tips.config_files":
-    "Создайте {highlight}mimocode.json{/highlight} для серверных настроек и {highlight}tui.json{/highlight} для настроек TUI",
+    "Создайте {highlight}oimo.json{/highlight} для серверных настроек и {highlight}tui.json{/highlight} для настроек TUI",
   "tui.tips.global_config":
-    "Поместите настройки TUI в {highlight}~/.config/mimocode/tui.json{/highlight} как глобальные",
+    "Поместите настройки TUI в {highlight}~/.config/oimo/tui.json{/highlight} как глобальные",
   "tui.tips.schema":
     "Добавьте {highlight}$schema{/highlight} в конфиг для автодополнения в редакторе",
   "tui.tips.default_model":
@@ -138,15 +138,15 @@ export const dict = {
   "tui.tips.mcp_config":
     "Настройте локальные или удалённые MCP-серверы в разделе {highlight}mcp{/highlight} конфига",
   "tui.tips.mcp_oauth":
-    "MiMoCode автоматически обрабатывает OAuth для удалённых MCP-серверов с авторизацией",
+    "Open Mimo Code автоматически обрабатывает OAuth для удалённых MCP-серверов с авторизацией",
   "tui.tips.custom_command":
-    "Добавляйте файлы {highlight}.md{/highlight} в {highlight}.mimocode/command/{/highlight} для повторно используемых пользовательских команд",
+    "Добавляйте файлы {highlight}.md{/highlight} в {highlight}.oimo/command/{/highlight} для повторно используемых пользовательских команд",
   "tui.tips.command_args":
     "Используйте {highlight}$ARGUMENTS{/highlight}, {highlight}$1{/highlight}, {highlight}$2{/highlight} в командах для динамического ввода",
   "tui.tips.command_backticks":
     "Используйте обратные кавычки в командах, чтобы вставить вывод shell (например, {highlight}`git status`{/highlight})",
   "tui.tips.custom_agent":
-    "Добавляйте файлы {highlight}.md{/highlight} в {highlight}.mimocode/agent/{/highlight} для специализированных AI-персон",
+    "Добавляйте файлы {highlight}.md{/highlight} в {highlight}.oimo/agent/{/highlight} для специализированных AI-персон",
   "tui.tips.agent_perms":
     "Настройте для каждого агента отдельные права на инструменты {highlight}edit{/highlight}, {highlight}bash{/highlight} и {highlight}webfetch{/highlight}",
   "tui.tips.bash_allow":
@@ -156,48 +156,48 @@ export const dict = {
   "tui.tips.bash_ask":
     'Настройте {highlight}"git push": "ask"{/highlight}, чтобы запрашивать подтверждение перед push',
   "tui.tips.formatter":
-    "MiMoCode автоматически форматирует файлы с помощью prettier, gofmt, ruff и других инструментов",
+    "Open Mimo Code автоматически форматирует файлы с помощью prettier, gofmt, ruff и других инструментов",
   "tui.tips.disable_formatter":
     'Установите {highlight}"formatter": false{/highlight}, чтобы отключить всё авто-форматирование',
   "tui.tips.custom_formatter":
     "Определяйте собственные команды форматирования по расширениям файлов в конфиге",
-  "tui.tips.lsp": "MiMoCode использует LSP-серверы для интеллектуального анализа кода",
+  "tui.tips.lsp": "Open Mimo Code использует LSP-серверы для интеллектуального анализа кода",
   "tui.tips.custom_tool":
-    "Создавайте файлы {highlight}.ts{/highlight} в {highlight}.mimocode/tools/{/highlight}, чтобы определить новые LLM-инструменты",
+    "Создавайте файлы {highlight}.ts{/highlight} в {highlight}.oimo/tools/{/highlight}, чтобы определить новые LLM-инструменты",
   "tui.tips.tool_scripts":
     "Определения инструментов могут вызывать скрипты на Python, Go и других языках",
   "tui.tips.plugins":
-    "Добавляйте файлы {highlight}.ts{/highlight} в {highlight}.mimocode/plugin/{/highlight} для подключения хуков событий",
+    "Добавляйте файлы {highlight}.ts{/highlight} в {highlight}.oimo/plugin/{/highlight} для подключения хуков событий",
   "tui.tips.plugin_notify":
     "Используйте плагины, чтобы отправлять системные уведомления при завершении сессий",
   "tui.tips.plugin_protect":
-    "Создайте плагин, который запретит MiMoCode читать чувствительные файлы",
+    "Создайте плагин, который запретит Open Mimo Code читать чувствительные файлы",
   "tui.tips.run":
-    "Используйте {highlight}omimo run{/highlight} для неинтерактивных скриптов",
+    "Используйте {highlight}oimo run{/highlight} для неинтерактивных скриптов",
   "tui.tips.continue":
-    "Используйте {highlight}omimo --continue{/highlight}, чтобы продолжить последнюю сессию",
+    "Используйте {highlight}oimo --continue{/highlight}, чтобы продолжить последнюю сессию",
   "tui.tips.attach_cli":
-    "Используйте {highlight}omimo run -f file.ts{/highlight}, чтобы прикрепить файлы из командной строки",
+    "Используйте {highlight}oimo run -f file.ts{/highlight}, чтобы прикрепить файлы из командной строки",
   "tui.tips.format_json":
     "Используйте {highlight}--format json{/highlight} для машинно-читаемого вывода в скриптах",
   "tui.tips.serve":
-    "Запустите {highlight}omimo serve{/highlight} для headless-доступа к API MiMoCode",
+    "Запустите {highlight}oimo serve{/highlight} для headless-доступа к API Open Mimo Code",
   "tui.tips.attach_server":
-    "Используйте {highlight}omimo run --attach{/highlight}, чтобы подключиться к запущенному серверу",
+    "Используйте {highlight}oimo run --attach{/highlight}, чтобы подключиться к запущенному серверу",
   "tui.tips.upgrade":
-    "Выполните {highlight}omimo upgrade{/highlight}, чтобы обновиться до последней версии",
+    "Выполните {highlight}oimo upgrade{/highlight}, чтобы обновиться до последней версии",
   "tui.tips.auth_list":
-    "Выполните {highlight}omimo auth list{/highlight}, чтобы увидеть всех настроенных провайдеров",
+    "Выполните {highlight}oimo auth list{/highlight}, чтобы увидеть всех настроенных провайдеров",
   "tui.tips.agent_create":
-    "Выполните {highlight}omimo agent create{/highlight}, чтобы создать агента в пошаговом режиме",
+    "Выполните {highlight}oimo agent create{/highlight}, чтобы создать агента в пошаговом режиме",
   "tui.tips.github_install":
-    "Выполните {highlight}omimo github install{/highlight}, чтобы настроить GitHub-workflow",
+    "Выполните {highlight}oimo github install{/highlight}, чтобы настроить GitHub-workflow",
   "tui.tips.github_oc":
     "Оставьте {highlight}/oc{/highlight} в комментарии к строке PR для точечного код-ревью",
   "tui.tips.theme_system":
     'Используйте {highlight}"theme": "system"{/highlight}, чтобы соответствовать цветам терминала',
   "tui.tips.theme_files":
-    "Создавайте JSON-файлы тем в каталоге {highlight}.mimocode/themes/{/highlight}",
+    "Создавайте JSON-файлы тем в каталоге {highlight}.oimo/themes/{/highlight}",
   "tui.tips.theme_variants":
     "Темы поддерживают тёмные и светлые варианты для обоих режимов",
   "tui.tips.theme_ansi": "Ссылайтесь на ANSI-цвета 0-255 в собственных темах",
@@ -228,7 +228,7 @@ export const dict = {
   "tui.tips.external_dir":
     "Разрешение {highlight}external_directory{/highlight} защищает файлы вне проекта",
   "tui.tips.debug_config":
-    "Выполните {highlight}omimo debug config{/highlight}, чтобы диагностировать проблемы конфигурации",
+    "Выполните {highlight}oimo debug config{/highlight}, чтобы диагностировать проблемы конфигурации",
   "tui.tips.print_logs":
     "Используйте флаг {highlight}--print-logs{/highlight}, чтобы видеть подробные логи в stderr",
   "tui.tips.timeline":
@@ -242,7 +242,7 @@ export const dict = {
   "tui.tips.username_toggle":
     "Переключайте отображение имени пользователя через палитру команд ({highlight}Ctrl+P{/highlight})",
   "tui.tips.zen":
-    "Используйте {highlight}/connect{/highlight} с MiMo Code для подобранных и протестированных моделей",
+    "Используйте {highlight}/connect{/highlight} с Open Mimo Code для подобранных и протестированных моделей",
   "tui.tips.agents_md":
     "Закоммитьте {highlight}AGENTS.md{/highlight} вашего проекта в Git для общего доступа в команде",
   "tui.tips.review":
@@ -286,14 +286,14 @@ export const dict = {
   "tui.skill.xlsx-official.description": "Создание, редактирование и чтение книг Microsoft Excel (.xlsx)",
   "tui.skill.pdf-official.description": "Создание, редактирование, преобразование и чтение PDF-файлов",
   "tui.skill.pptx-official.description": "Создание, редактирование и чтение презентаций Microsoft PowerPoint (.pptx)",
-  "tui.skill.mimocode.description": "Самодокументация функций, конфигурации и команд MiMoCode",
+  "tui.skill.oimo.description": "Самодокументация функций, конфигурации и команд Open Mimo Code",
   "tui.skill.evolve.description": "Перепишите любой свой слой — инструменты, hooks, знания, workflows и даже UI",
   "tui.skill.frontend-design.description": "Руководство по выразительному, осмысленному визуальному дизайну UI",
   "tui.skill.loop.description": "Запланировать запуск промпта с периодичностью",
   "tui.skill.html-to-video-pipeline.description": "Магический инструмент для коротких видео — создавайте короткие видео с помощью HTML",
   "tui.skill.arxiv.description": "Поиск, цитирование, загрузка и отслеживание статей arXiv",
   "tui.skill.skill-creator.description": "Создание, проверка и улучшение skills агента",
-  "tui.skill.drive-mimo.description": "Программное управление другим процессом MiMoCode — headless JSON-события или интерактивный TUI через tmux",
+  "tui.skill.drive-mimo.description": "Программное управление другим процессом Open Mimo Code — headless JSON-события или интерактивный TUI через tmux",
   "tui.skill.research-paper-writing.description": "Написание, полировка и рецензирование научных статей",
   "tui.skill.playwright.description": "Автоматизация реальных сценариев браузера из терминала",
   "tui.skill.codex.description": "Автономный запуск Codex CLI в скриптах, CI, Docker и Kubernetes",
@@ -402,7 +402,7 @@ export const dict = {
   "tui.dialog.agreement.confirm": "Принять и продолжить",
   "tui.dialog.free_api_sunset.title": "Сервис бесплатного API завершён",
   "tui.dialog.free_api_sunset.message":
-    "Выполните /login, чтобы войти. Оформите подписку на MiMo Token Plan или настройте сторонний API для использования MiMo Code.",
+    "Выполните /login, чтобы войти. Оформите подписку на MiMo Token Plan или настройте сторонний API для использования Open Mimo Code.",
   "tui.command.consent.revoke.title": "Отозвать согласие на бесплатную модель",
   "tui.consent.revoked": "Согласие на бесплатную модель отозвано — потребуется принять снова",
   "tui.dialog.select.placeholder": "Поиск",
@@ -457,7 +457,7 @@ export const dict = {
   "tui.toast.update_available.confirm": "Доступна новая версия v{{version}}. Обновить сейчас?",
   "tui.toast.update_available.updating": "Обновление до v{{version}}...",
   "tui.toast.update_available.failed": "Не удалось обновить",
-  "tui.toast.update_available.success": "Обновлено до MiMoCode v{{version}}. Пожалуйста, перезапустите приложение.",
+  "tui.toast.update_available.success": "Обновлено до Open Mimo Code v{{version}}. Пожалуйста, перезапустите приложение.",
   "tui.toast.updated.title": "Автообновление выполнено",
   "tui.toast.updated.message": "Патч применён автоматически: v{{version}}. Перезапустите для использования новой версии. Отключите через autoupdate: false в конфигурации.",
   "tui.toast.native_installer_tip": "Совет: рекомендуется нативный установщик (curl/PowerShell) для лучшего опыта установки и обновления.",
@@ -585,7 +585,7 @@ export const dict = {
   "cli.providers.mimo_free.failed": "Не удалось проверить MiMo Auto (free)",
   "cli.providers.mimo_free.default_set": "Модель по умолчанию: mimo/mimo-auto (контекст 1M, бесплатно)",
   "cli.providers.mimo_free.usage_hint":
-    "Вход не требуется — просто запустите omimo. Для платных/премиум-моделей выберите вход через браузер MiMo.",
+    "Вход не требуется — просто запустите oimo. Для платных/премиум-моделей выберите вход через браузер MiMo.",
   "cli.providers.mimo_login.decrypt_retry": "Ошибка расшифровки, повторите попытку (осталось попыток: {remaining})",
   "cli.providers.mimo_login.decrypt_exhausted": "Ошибка расшифровки, превышено максимальное число попыток",
 
@@ -603,7 +603,7 @@ export const dict = {
   // Workspace trust
   "trust.title": "Доступ к рабочему пространству:",
   "trust.safety_check": "Проверка безопасности: это проект, который вы создали или которому доверяете? (Ваш собственный код, известный open source проект или работа вашей команды). Если нет, сначала проверьте содержимое этой папки.",
-  "trust.capabilities": "MiMo Code сможет читать, редактировать и выполнять файлы здесь.",
+  "trust.capabilities": "Open Mimo Code сможет читать, редактировать и выполнять файлы здесь.",
   "trust.plugin_warn": "Если в этом каталоге есть вредоносные плагины, они могут выполнять произвольный код, читать, изменять или похищать ваши файлы.",
   "trust.option.yes": "Да, я доверяю этой папке",
   "trust.option.no": "Нет, выйти",
@@ -617,7 +617,7 @@ export const dict = {
   "trust.dangerous.option.no": "Выйти (рекомендуется)",
   "skip_permissions.title": "ПРЕДУПРЕЖДЕНИЕ: режим обхода разрешений",
   "skip_permissions.body":
-    "Вы запустили с --dangerously-skip-permissions. MiMo Code будет читать, редактировать и выполнять файлы, а также запускать команды оболочки БЕЗ запроса подтверждения. Действуют только правила, которые вы явно запретили (deny) в конфигурации. Вы несёте полную ответственность за все его действия.",
+    "Вы запустили с --dangerously-skip-permissions. Open Mimo Code будет читать, редактировать и выполнять файлы, а также запускать команды оболочки БЕЗ запроса подтверждения. Действуют только правила, которые вы явно запретили (deny) в конфигурации. Вы несёте полную ответственность за все его действия.",
   "skip_permissions.plugin_warn":
     "В этом режиме вредоносный запрос, файл или плагин может выполнить произвольные команды и изменить или похитить ваши данные без какого-либо подтверждения.",
   "skip_permissions.root_warn":

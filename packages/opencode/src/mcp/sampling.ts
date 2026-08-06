@@ -107,7 +107,7 @@ export const DEFAULT_LIVENESS_INTERVAL = 15_000
  * IT USED TO BE OURS: `DEFAULT_SAMPLING_STALL_TIMEOUT = 45_000`, justified only as
  * 3x the liveness interval. The repo already had this exact concept — "no output
  * for this long means the stream is dead" — as `chunkTimeout`, wired in
- * `provider.ts:wrapSSE`, configurable per provider in `mimocode.json`, default
+ * `provider.ts:wrapSSE`, configurable per provider in `oimo.json`, default
  * `DEFAULT_CHUNK_TIMEOUT` = 8 minutes. Carrying a second, tighter, differently
  * named silence bound in the same repo for the same question was the defect; 45 s
  * against 480 s is not a divergence to justify but a 10x disagreement about the
@@ -748,7 +748,7 @@ export const handle = Effect.fn("MCP.sampling.handle")(function* (input: HandleI
         temperature: model.capabilities.temperature ? input.params.temperature : undefined,
         stopSequences: input.params.stopSequences ? [...input.params.stopSequences] : undefined,
         providerOptions: ProviderTransform.providerOptions(model, {}),
-        headers: { ...model.headers, "User-Agent": `mimocode/${InstallationVersion}` },
+        headers: { ...model.headers, "User-Agent": `oimo/${InstallationVersion}` },
         abortSignal: providerSignal,
         maxRetries: 1,
         // `streamText` reports provider failures as an `error` PART rather than by

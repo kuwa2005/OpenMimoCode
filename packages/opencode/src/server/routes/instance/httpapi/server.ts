@@ -24,7 +24,7 @@ const Query = Schema.Struct({
 
 const Headers = Schema.Struct({
   authorization: Schema.optional(Schema.String),
-  "x-mimocode-directory": Schema.optional(Schema.String),
+  "x-oimo-directory": Schema.optional(Schema.String),
 })
 
 function decode(input: string) {
@@ -73,7 +73,7 @@ const auth = Layer.succeed(
       Effect.gen(function* () {
         if (!Flag.MIMOCODE_SERVER_PASSWORD) return yield* effect
 
-        const user = Flag.MIMOCODE_SERVER_USERNAME ?? "mimocode"
+        const user = Flag.MIMOCODE_SERVER_USERNAME ?? "oimo"
         if (credential.username !== user) {
           return yield* new Unauthorized({ message: "Unauthorized" })
         }
@@ -97,7 +97,7 @@ const instance = HttpRouter.middleware()(
       Effect.gen(function* () {
         const query = yield* HttpServerRequest.schemaSearchParams(Query)
         const headers = yield* HttpServerRequest.schemaHeaders(Headers)
-        const raw = query.directory || headers["x-mimocode-directory"] || process.cwd()
+        const raw = query.directory || headers["x-oimo-directory"] || process.cwd()
         const workspace = query.workspace || undefined
         const directory = Filesystem.resolve(decode(raw))
 

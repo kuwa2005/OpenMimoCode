@@ -9,10 +9,10 @@ const SCRIPT_PATH = path.join(import.meta.dirname, "../../script/postinstall.mjs
 describe("postinstall", () => {
   const platform = os.platform() === "win32" ? "windows" : os.platform() === "darwin" ? "darwin" : "linux"
   const arch = os.arch()
-  const binaryName = platform === "windows" ? "omimo.exe" : "omimo"
-  const packageName = `@mimo-ai/mimocode-${platform}-${arch}`
+  const binaryName = platform === "windows" ? "oimo.exe" : "oimo"
+  const packageName = `@mimo-ai/oimo-${platform}-${arch}`
 
-  test("creates .mimocode binary cache from platform package", async () => {
+  test("creates .oimo binary cache from platform package", async () => {
     await using tmp = await tmpdir()
     const dir = tmp.path
 
@@ -35,7 +35,7 @@ describe("postinstall", () => {
 
     expect(result.exitCode).toBe(0)
 
-    const cached = path.join(binDir, ".mimocode")
+    const cached = path.join(binDir, ".oimo")
     expect(fs.existsSync(cached)).toBe(true)
     expect(fs.readFileSync(cached)).toEqual(fakeBinary)
   })
@@ -59,7 +59,7 @@ describe("postinstall", () => {
     })
 
     const stdout = result.stdout.toString()
-    expect(stdout).toContain("Recommended: install MiMoCode natively for a better")
+    expect(stdout).toContain("Recommended: install Open Mimo Code natively for a better")
     expect(stdout).toContain(os.platform() === "win32" ? "    irm" : "    curl")
   })
 
@@ -76,7 +76,7 @@ describe("postinstall", () => {
     })
 
     expect(result.exitCode).toBe(1)
-    expect(result.stdout.toString()).toContain("Recommended: install MiMoCode natively")
+    expect(result.stdout.toString()).toContain("Recommended: install Open Mimo Code natively")
   })
 
   test("skips binary cache on windows but still prints notice", () => {

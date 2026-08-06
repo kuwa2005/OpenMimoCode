@@ -32,8 +32,8 @@ export function FormatError(input: unknown) {
     return [
       `Model not found: ${data?.providerID}/${data?.modelID}`,
       ...(suggestions.length ? ["Did you mean: " + suggestions.join(", ")] : []),
-      `Try: \`omimo models\` to list available models`,
-      `Or check your config (mimocode.json) provider/model names`,
+      `Try: \`oimo models\` to list available models`,
+      `Or check your config (oimo.json) provider/model names`,
     ].join("\n")
   }
 

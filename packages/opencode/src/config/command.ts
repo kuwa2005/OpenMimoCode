@@ -44,8 +44,8 @@ export async function load(dir: string) {
     if (!md) continue
 
     const patterns = [
-      "/.mimocode/command/",
-      "/.mimocode/commands/",
+      "/.oimo/command/",
+      "/.oimo/commands/",
       "/.claude/command/",
       "/.claude/commands/",
       "/command/",

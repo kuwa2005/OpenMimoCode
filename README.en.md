@@ -1,24 +1,24 @@
-<h1 align="center">MiMoCode</h1>
+<h1 align="center">Open Mimo Code</h1>
 
 <p align="center">
-  <img src="assets/readme/mimocode-banner.png" alt="MiMoCode" width="700">
+  <img src="assets/readme/oimo-banner.png" alt="Open Mimo Code" width="700">
 </p>
 
-<p align="center"><strong>MiMo Code: Where Models and Agents Co-Evolve</strong></p>
+<p align="center"><strong>Open Mimo Code: Where Models and Agents Co-Evolve</strong></p>
 
 <p align="center">
   <a href="README.md">日本語</a> | <a href="README.zh.md">中文</a> | English
 </p>
 
 <p align="center">
-  <a href="https://mimo.xiaomi.com/coder">Website</a> | <a href="https://mimo.xiaomi.com/en/blog/mimo-code-long-horizon">Blog</a>
+  <a href="https://github.com/kuwa2005/OpenMimoCode">GitHub</a> | <a href="https://github.com/kuwa2005/OpenMimoCode/releases">Releases</a>
 </p>
 
 ---
 
-MiMoCode is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while continuously improving itself.
+Open Mimo Code is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while continuously improving itself.
 
-OpenCode Zen is built in as a free default channel, so you can start with zero configuration. MiMoCode also supports connecting to any mainstream LLM provider API.
+OpenCode Zen is built in as a free default channel, so you can start with zero configuration. Open Mimo Code also supports connecting to any mainstream LLM provider API.
 
 ---
 
@@ -45,7 +45,7 @@ npm install -g @mimo-ai/cli
 **Run**:
 
 ```bash
-omimo
+oimo
 ```
 
 The first launch guides you through configuration automatically. Supported options:
@@ -68,7 +68,7 @@ sudo apt install xsel
 <details>
 <summary><strong>macOS: rendering issues in the default terminal</strong></summary>
 
-MiMoCode does not support the built-in macOS Terminal (Terminal.app). If the interface is misaligned, flickers, or has other rendering issues, use [iTerm2](https://iterm2.com/) or the VS Code integrated terminal instead:
+Open Mimo Code does not support the built-in macOS Terminal (Terminal.app). If the interface is misaligned, flickers, or has other rendering issues, use [iTerm2](https://iterm2.com/) or the VS Code integrated terminal instead:
 
 ```bash
 brew install --cask iterm2
@@ -78,17 +78,17 @@ brew install --cask iterm2
 <details>
 <summary><strong>TUI lag and visual animation issues</strong></summary>
 
-If the TUI lags when run directly over SSH, render it locally and run only the MiMoCode server on the remote host. Start the server from the remote project directory:
+If the TUI lags when run directly over SSH, render it locally and run only the Open Mimo Code server on the remote host. Start the server from the remote project directory:
 
 ```bash
 # Remote host
-omimo serve --port 4096
+oimo serve --port 4096
 
 # Local host: create the SSH port forward
 ssh -N -L 4096:127.0.0.1:4096 user@remote-host
 
 # Local host: connect from another terminal
-omimo attach http://127.0.0.1:4096
+oimo attach http://127.0.0.1:4096
 ```
 
 If decorative animation is causing the lag, run `/vivid`, or configure **Vivid visuals** in the `ctrl+p` command palette, to switch between Vivid and Minimal visuals as needed.
@@ -99,7 +99,7 @@ If decorative animation is causing the lag, run `/vivid`, or configure **Vivid v
 <summary><strong>Windows: garbled CJK (Chinese/Japanese/Korean) output in the shell</strong></summary>
 
 On Windows with a non-UTF-8 system locale (e.g. zh-CN, whose active code page is 936/GBK),
-command output containing CJK characters may appear garbled (mojibake). MiMoCode forces
+command output containing CJK characters may appear garbled (mojibake). Open Mimo Code forces
 UTF-8 output for spawned PowerShell/cmd subprocesses. If you still encounter garbled output
 in cases this does not yet cover, enable Windows' system-wide UTF-8 support:
 
@@ -116,7 +116,7 @@ some older non-Unicode programs to display incorrectly, so treat it as a workaro
 
 ## MiMo Ecosystem
 
-Beyond MiMoCode, Xiaomi MiMo models also work in other agents and coding tools like Cursor, Cline, and Zed.
+Beyond Open Mimo Code, Xiaomi MiMo models also work in other agents and coding tools like Cursor, Cline, and Zed.
 
 **[awesome-mimo-agent](https://github.com/XiaomiMiMo/awesome-mimo-agent)** collects setup guides for using MiMo in those tools — worth a look if you want to try MiMo elsewhere. Contributions welcome: open a PR to add your own setup.
 
@@ -185,7 +185,7 @@ Why you might want it:
   serves 1M.
 - **Quality and latency.** Very long contexts are slower and, past a point, not better.
 
-`omimo models <provider>` prints, per model, the window MiMoCode resolved and the token count
+`oimo models <provider>` prints, per model, the window Open Mimo Code resolved and the token count
 where it will compact. The prompt footer uses that same number as its denominator
 (`33.0K/260K↓ (13%)` — the `↓` means a budget is in force), and `/status` breaks it down.
 
@@ -205,7 +205,7 @@ The `/goal` command sets a stopping condition for a session. When the agent trie
 
 ### Compose Mode
 
-Compose is MiMoCode's structured workflow for specs-driven development, orchestrating the full lifecycle from spec to shipped code.
+Compose is Open Mimo Code's structured workflow for specs-driven development, orchestrating the full lifecycle from spec to shipped code.
 
 The recommended way to use it is the **`/compose-next`** skill on the **build** agent: a single self-contained contract covering grill → spec → workspace → implement → verify → review → finalize → finish, with feature documents at `docs/compose/spec/<feature>.md`. It is designed for frontier models (Fable/Sol-class), which internalize most of the workflow and work best from one compact contract.
 
@@ -215,7 +215,7 @@ The legacy path is the dedicated **compose agent** (switch with `Tab`), which or
 
 Workflows are deterministic JavaScript scripts that orchestrate multiple agents in a sandboxed runtime. Unlike agent conversations, workflows encode fixed phase sequences with bounded retries and automatic parallelization — fire-and-forget execution with no user interaction required.
 
-MiMoCode ships with four built-in workflows:
+Open Mimo Code ships with four built-in workflows:
 
 | Workflow | Phases | Description |
 |----------|--------|-------------|
@@ -226,13 +226,13 @@ MiMoCode ships with four built-in workflows:
 
 The compose workflow complements the interactive path: use the **workflow** when requirements are clear and tasks split cleanly (deterministic, parallel, non-interactive); use the **build** agent with `/compose-next` (or the legacy compose agent) when you need to redirect mid-flow or inject judgment between steps (conversational, interactive).
 
-**Custom workflows:** Place a `.js` file in `.mimocode/workflows/` or `.claude/workflows/` to define your own, or override a built-in by using the same name (e.g. `.mimocode/workflows/compose.js`).
+**Custom workflows:** Place a `.js` file in `.oimo/workflows/` or `.claude/workflows/` to define your own, or override a built-in by using the same name (e.g. `.oimo/workflows/compose.js`).
 
 ### Builtin Skills
 
-Skills are reusable instruction sets that teach agents how to handle specific tasks (e.g. generating PDFs, writing academic papers, searching arXiv). For a new task, MiMoCode searches available non-Compose skills by exact name, localized alias, and BM25 relevance. High-confidence matches are loaded automatically; uncertain matches are ranked for the agent to assess. In the TUI, type `/` to browse the autocomplete list or invoke a skill directly with `/<skill-name>` — mentioning two or more skills in a single message auto-loads them and injects a multi-skill orchestration plan.
+Skills are reusable instruction sets that teach agents how to handle specific tasks (e.g. generating PDFs, writing academic papers, searching arXiv). For a new task, Open Mimo Code searches available non-Compose skills by exact name, localized alias, and BM25 relevance. High-confidence matches are loaded automatically; uncertain matches are ranked for the agent to assess. In the TUI, type `/` to browse the autocomplete list or invoke a skill directly with `/<skill-name>` — mentioning two or more skills in a single message auto-loads them and injects a multi-skill orchestration plan.
 
-MiMoCode bundles the following builtin skills:
+Open Mimo Code bundles the following builtin skills:
 
 | Skill | Description |
 |-------|-------------|
@@ -244,13 +244,13 @@ MiMoCode bundles the following builtin skills:
 | `deep-research` | Produce cited, multi-source research reports with parallel subagents and built-in web tools |
 | `design-blueprint` | Produce a design blueprint (DESIGN.md + Decision Trace) before mocking up visuals |
 | `docx-official` | Produce, read, and transform Word (.docx) files |
-| `drive-mimo` | Script, test, and automate another MiMoCode process in headless or interactive TUI mode |
+| `drive-mimo` | Script, test, and automate another Open Mimo Code process in headless or interactive TUI mode |
 | `evolve` | Total self-modification — rewrite any layer of the agent: tools, behavior hooks, knowledge, workflows, even the UI |
 | `frontend-design` | Visual design guidance for UI work |
 | `html-to-video-pipeline` | HTML-to-MP4 rendering via headless browser + ffmpeg |
 | `learn-everything` | Turn documents, URLs, or topics into adaptive courses with exercises, feedback, and progress tracking |
 | `loop` | Schedule recurring prompts on a fixed cadence |
-| `mimocode-docs` | Self-documenting reference for MiMoCode features, commands, providers, and configuration |
+| `mimocode-docs` | Self-documenting reference for Open Mimo Code features, commands, providers, and configuration |
 | `modern-python-toolchain` | Set up modern Python projects with uv, Ruff, and Pyright |
 | `pdf-official` | Produce, read, fill, and transform PDF files |
 | `pptx-official` | Author and manipulate PowerPoint (.pptx) decks |
@@ -263,7 +263,7 @@ MiMoCode bundles the following builtin skills:
 
 `claude-code` and `codex` are exposed only when the `claude` and `codex` executables, respectively, are installed. Other skills may still require task-specific tools described in their instructions.
 
-**Overriding a builtin skill:** Create a skill with the same `name` in your project (`.mimocode/skills/<name>/SKILL.md`) or personal skill directory (`~/.claude/skills/`, `~/.opencode/skills/`, etc.). User skills discovered later in the scan order override builtins with the same name.
+**Overriding a builtin skill:** Create a skill with the same `name` in your project (`.oimo/skills/<name>/SKILL.md`) or personal skill directory (`~/.claude/skills/`, `~/.opencode/skills/`, etc.). User skills discovered later in the scan order override builtins with the same name.
 
 <details>
 <summary><strong>Disabling builtin skills via environment variables</strong></summary>
@@ -360,25 +360,25 @@ Custom providers must register at least one model in their `models` field to be 
 
 ## Configuration
 
-MiMoCode uses JSON/JSONC config files with published JSON Schemas for autocompletion and validation.
+Open Mimo Code uses JSON/JSONC config files with published JSON Schemas for autocompletion and validation.
 
 ### File Locations
 
 | File | Project-level | Global |
 |------|--------------|--------|
-| Main config | `.mimocode/mimocode.jsonc` (also `.json`) | `~/.config/mimocode/mimocode.jsonc` (also `.json`) |
-| TUI config | `.mimocode/tui.json` | `~/.config/mimocode/tui.json` |
-| Auth credentials | — | `~/.local/share/mimocode/auth.json` |
+| Main config | `.oimo/oimo.jsonc` (also `.json`) | `~/.config/oimo/oimo.jsonc` (also `.json`) |
+| TUI config | `.oimo/tui.json` | `~/.config/oimo/tui.json` |
+| Auth credentials | — | `~/.local/share/oimo/auth.json` |
 
-> On Windows, XDG paths fall under `%LOCALAPPDATA%\mimocode\`. You can override all paths with `MIMOCODE_HOME`.
+> On Windows, XDG paths fall under `%LOCALAPPDATA%\oimo\`. You can override all paths with `MIMOCODE_HOME`.
 
 ### JSON Schemas
 
-MiMoCode auto-injects a `$schema` field when it first loads your config, so your editor gets completions and validation out of the box:
+Open Mimo Code auto-injects a `$schema` field when it first loads your config, so your editor gets completions and validation out of the box:
 
 | Config | Schema URL |
 |--------|-----------|
-| `mimocode.jsonc` / `mimocode.json` | `https://mimo.xiaomi.com/mimocode/config.json` |
+| `oimo.jsonc` / `oimo.json` | `https://mimo.xiaomi.com/mimocode/config.json` |
 | `tui.json` | `https://mimo.xiaomi.com/mimocode/tui.json` |
 
 <details>
@@ -399,15 +399,15 @@ Add to your `settings.json` so the editor can download schemas for autocompletio
 <details>
 <summary><strong>Data directories</strong></summary>
 
-Beyond config files, MiMoCode stores runtime data under XDG paths (or `$MIMOCODE_HOME`):
+Beyond config files, Open Mimo Code stores runtime data under XDG paths (or `$MIMOCODE_HOME`):
 
 | Directory | Default (Linux) | Contents |
 |-----------|----------------|----------|
-| data | `~/.local/share/mimocode/` | SQLite database, auth credentials (`auth.json`), memory, logs |
-| state | `~/.local/state/mimocode/` | TUI preferences (`kv.json`), recent models (`model.json`) |
-| cache | `~/.cache/mimocode/` | Language servers, cached model catalog, skills |
+| data | `~/.local/share/oimo/` | SQLite database, auth credentials (`auth.json`), memory, logs |
+| state | `~/.local/state/oimo/` | TUI preferences (`kv.json`), recent models (`model.json`) |
+| cache | `~/.cache/oimo/` | Language servers, cached model catalog, skills |
 
-To remove stored credentials, delete `auth.json` from the data directory. On macOS, XDG data defaults to `~/Library/Application Support/mimocode/`.
+To remove stored credentials, delete `auth.json` from the data directory. On macOS, XDG data defaults to `~/Library/Application Support/oimo/`.
 
 </details>
 
@@ -439,12 +439,12 @@ If your provider is not in the built-in model catalog, configure it directly wit
 ```
 
 - Use the exact keys `baseURL` and `apiKey`.
-- Preserve the base URL and model ID exactly as supplied. MiMoCode does not require a known provider and you should not add or remove `/v1` unless the endpoint requires it.
+- Preserve the base URL and model ID exactly as supplied. Open Mimo Code does not require a known provider and you should not add or remove `/v1` unless the endpoint requires it.
 - The key under `models` is the upstream model ID. Model IDs containing `/` are supported because only the first `/` in `model` separates the provider ID from the model ID.
 - Replace `custom` with another unused lowercase provider ID if needed, and use the same ID in the top-level `model` value.
 - `@ai-sdk/openai-compatible` is for OpenAI-compatible APIs. Services using a different wire protocol require their provider-specific adapter.
 
-Put user-wide settings in `~/.config/mimocode/mimocode.jsonc` (or `mimocode.json` in the same directory), or project-only settings in `.mimocode/mimocode.jsonc` (or `.json`), and merge them with any existing configuration. Because `apiKey` is stored as plaintext, keep the file readable only by your user and never commit it. Run `omimo models` or use the TUI model picker to verify the configured model.
+Put user-wide settings in `~/.config/oimo/oimo.jsonc` (or `oimo.json` in the same directory), or project-only settings in `.oimo/oimo.jsonc` (or `.json`), and merge them with any existing configuration. Because `apiKey` is stored as plaintext, keep the file readable only by your user and never commit it. Run `oimo models` or use the TUI model picker to verify the configured model.
 
 To declare which input modalities a custom model supports (image, audio, video, PDF), run `/modalities` in the TUI — a multi-select dialog that persists the setting to config without hand-editing.
 
@@ -463,14 +463,14 @@ Max Mode (parallel best-of-N reasoning with judge selection) can be enabled via 
 
 By default, reading or writing files outside the project working directory triggers an
 `external_directory` permission prompt — including the system temp directory. This is
-intentional: MiMoCode does not silently widen permissions, so you stay in control of what
+intentional: Open Mimo Code does not silently widen permissions, so you stay in control of what
 the model can touch outside your project.
 
 The temp directory comes up often because most models reach for it as scratch space (e.g.
 a quick script, a throwaway data file). If you trust your environment and would rather not
 be prompted each time, you can opt in by allowing it in your config:
 
-```json title=".mimocode/mimocode.json"
+```json title=".oimo/oimo.json"
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
   "permission": {
@@ -498,13 +498,13 @@ everything the agent does instead of confirming each action:
 
 ```bash
 # TUI — prompts once for an explicit confirmation on startup
-omimo --dangerously-skip-permissions
+oimo --dangerously-skip-permissions
 
 # Headless
-omimo run --dangerously-skip-permissions "your prompt"
+oimo run --dangerously-skip-permissions "your prompt"
 
 # Or via environment variable (any surface)
-MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS=1 omimo
+MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS=1 oimo
 ```
 
 This injects an **allow-all base underneath your config**, so a tool with no rule
@@ -538,7 +538,7 @@ bun turbo typecheck      # Type check
 
 ## Relationship to OpenCode
 
-MiMoCode is built as a fork of [OpenCode](https://github.com/anomalyco/opencode). It keeps all core OpenCode capabilities (multiple providers, TUI, LSP, MCP, plugins) and adds persistent memory, intelligent context management, subagent orchestration, goal-driven autonomous loops, compose workflows, and self-improvement via dream/distill.
+Open Mimo Code is built as a fork of [OpenCode](https://github.com/anomalyco/opencode). It keeps all core OpenCode capabilities (multiple providers, TUI, LSP, MCP, plugins) and adds persistent memory, intelligent context management, subagent orchestration, goal-driven autonomous loops, compose workflows, and self-improvement via dream/distill.
 
 ---
 
@@ -558,6 +558,6 @@ Scan the QR code to join the community group chat:
 
 Source code is licensed under the [MIT License](./LICENSE).
 
-Use of MiMoCode is also subject to the [Use Restrictions](./USE_RESTRICTIONS.md).
+Use of Open Mimo Code is also subject to the [Use Restrictions](./USE_RESTRICTIONS.md).
 Use of Xiaomi MiMo-hosted services is subject to the [MiMo Terms of Service](https://platform.xiaomimimo.com/docs/terms/user-agreement).
 Use of the MiMo name, logo, and trademarks is subject to the MiMo Trademark Policy.

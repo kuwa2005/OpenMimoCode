@@ -629,7 +629,7 @@ You can control context compaction behavior through the `compaction` option.
 
 The compaction trigger is the budget minus the reserves, so `"max_context": "300K"` on a
 model with a 20K output reserve and a 20K compaction buffer compacts at 260K. Run
-`mimocode models <provider>` to print each model's window and where it compacts, or use
+`oimo models <provider>` to print each model's window and where it compacts, or use
 the `/context-limit` command in the TUI to set the budget for the current model from
 preset tiers.
 

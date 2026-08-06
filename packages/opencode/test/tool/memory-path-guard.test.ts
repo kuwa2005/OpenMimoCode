@@ -629,10 +629,10 @@ describe("assertAgentWriteSandbox", () => {
     ).toThrow(/may only write under the memory tree/)
   })
 
-  test("checkpoint-writer may NOT write under <worktree>/.mimocode", () => {
+  test("checkpoint-writer may NOT write under <worktree>/.oimo", () => {
     expect(() =>
       assertAgentWriteSandbox({
-        target: path.join(WORKTREE, ".mimocode", "skills", "unsafe", "SKILL.md"),
+        target: path.join(WORKTREE, ".oimo", "skills", "unsafe", "SKILL.md"),
         agentName: "checkpoint-writer",
         memoryRoot: MEMORY_ROOT,
         worktree: WORKTREE,
@@ -652,10 +652,10 @@ describe("assertAgentWriteSandbox", () => {
       ).not.toThrow()
     })
 
-    test(`${agent} may write under <worktree>/.mimocode`, () => {
+    test(`${agent} may write under <worktree>/.oimo`, () => {
       expect(() =>
         assertAgentWriteSandbox({
-          target: path.join(WORKTREE, ".mimocode", "skills", "foo", "SKILL.md"),
+          target: path.join(WORKTREE, ".oimo", "skills", "foo", "SKILL.md"),
           agentName: agent,
           memoryRoot: MEMORY_ROOT,
           worktree: WORKTREE,
@@ -685,10 +685,10 @@ describe("assertAgentWriteSandbox", () => {
       ).toThrow(/may only write/)
     })
 
-    test(`${agent} may NOT escape .mimocode via .. into a source file`, () => {
+    test(`${agent} may NOT escape .oimo via .. into a source file`, () => {
       expect(() =>
         assertAgentWriteSandbox({
-          target: path.join(WORKTREE, ".mimocode", "..", "src", "index.ts"),
+          target: path.join(WORKTREE, ".oimo", "..", "src", "index.ts"),
           agentName: agent,
           memoryRoot: MEMORY_ROOT,
           worktree: WORKTREE,
@@ -710,7 +710,7 @@ describe("assertAgentWriteSandbox", () => {
     test(`${agent} unnormalized-but-in-bounds path still passes`, () => {
       expect(() =>
         assertAgentWriteSandbox({
-          target: path.join(WORKTREE, ".mimocode", "skills", "..", "agent", "x.md"),
+          target: path.join(WORKTREE, ".oimo", "skills", "..", "agent", "x.md"),
           agentName: agent,
           memoryRoot: MEMORY_ROOT,
           worktree: WORKTREE,

@@ -2441,7 +2441,7 @@ describe("ProviderTransform.message - strip openai metadata when store=false", (
       providerID: "opencode",
       api: {
         id: "opencode-test",
-        url: "https://api.mimocode.ai",
+        url: "https://api.oimo.ai",
         npm: "@ai-sdk/openai-compatible",
       },
     }

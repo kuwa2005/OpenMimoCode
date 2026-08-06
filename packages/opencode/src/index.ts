@@ -63,7 +63,7 @@ const CLI_EXIT = Symbol("CLI_EXIT")
 
 function show(out: string) {
   const text = out.trimStart()
-  if (!text.startsWith("omimo ")) {
+  if (!text.startsWith("oimo ")) {
     process.stderr.write(UI.logo() + EOL + EOL)
     process.stderr.write(UI.withTrailingEOL(text))
     return
@@ -73,7 +73,7 @@ function show(out: string) {
 
 const cli = yargs(args)
   .parserConfiguration({ "populate--": true })
-  .scriptName("omimo")
+  .scriptName("oimo")
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -123,14 +123,14 @@ const cli = yargs(args)
     process.env.MIMOCODE = "1"
     process.env.MIMOCODE_PID = String(process.pid)
 
-    Log.Default.info("mimocode", {
+    Log.Default.info("oimo", {
       version: InstallationVersion,
       args: process.argv.slice(2),
       process_role: processMetadata.processRole,
       run_id: processMetadata.runID,
     })
 
-    const marker = path.join(Global.Path.data, "mimocode.db")
+    const marker = path.join(Global.Path.data, "oimo.db")
     if (!(await Filesystem.exists(marker))) {
       const tty = process.stderr.isTTY
       process.stderr.write("Performing one time database migration, may take a few minutes..." + EOL)
@@ -184,7 +184,7 @@ const cli = yargs(args)
       try {
         const binDir = path.dirname(process.execPath)
         for (const entry of readdirSync(binDir)) {
-          if (entry.startsWith("omimo.exe.old_")) {
+          if (entry.startsWith("oimo.exe.old_")) {
             try { unlinkSync(path.join(binDir, entry)) } catch {}
           }
         }

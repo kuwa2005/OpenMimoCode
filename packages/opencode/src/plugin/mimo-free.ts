@@ -89,7 +89,7 @@ async function jwt(): Promise<string> {
 function withAuth(init: RequestInit | undefined, bearer: string): Headers {
   const headers = new Headers(init?.headers)
   headers.set("Authorization", `Bearer ${bearer}`)
-  headers.set("X-Mimo-Source", "mimocode-cli-free")
+  headers.set("X-Mimo-Source", "oimo-cli-free")
   return headers
 }
 

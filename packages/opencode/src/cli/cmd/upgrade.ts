@@ -7,7 +7,7 @@ import { InstallationVersion } from "../../installation/version"
 
 export const UpgradeCommand = {
   command: "upgrade [target]",
-  describe: "upgrade mimocode to the latest or a specific version",
+  describe: "upgrade oimo to the latest or a specific version",
   builder: (yargs: Argv) => {
     return yargs
       .positional("target", {
@@ -29,7 +29,7 @@ export const UpgradeCommand = {
     const detectedMethod = await AppRuntime.runPromise(Installation.Service.use((svc) => svc.method()))
     const method = (args.method as Installation.Method) ?? detectedMethod
     if (method === "unknown") {
-      prompts.log.error(`mimocode is installed to ${process.execPath} and may be managed by a package manager`)
+      prompts.log.error(`oimo is installed to ${process.execPath} and may be managed by a package manager`)
       const install = await prompts.select({
         message: "Install anyways?",
         options: [
@@ -49,7 +49,7 @@ export const UpgradeCommand = {
       : await AppRuntime.runPromise(Installation.Service.use((svc) => svc.latest()))
 
     if (InstallationVersion === target) {
-      prompts.log.warn(`mimocode upgrade skipped: ${target} is already installed`)
+      prompts.log.warn(`oimo upgrade skipped: ${target} is already installed`)
       prompts.outro("Done")
       return
     }

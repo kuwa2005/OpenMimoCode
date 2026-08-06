@@ -1,6 +1,6 @@
 ---
 name: drive-mimo
-description: Use when you need to programmatically drive another MiMoCode (mimo) process — supports both headless `omimo run` with JSON events and interactive TUI via tmux for full terminal interaction testing. Covers driving either an installed `omimo` binary or a dev build launched from source with `bun dev` (for debugging mimocode itself). Reach for it to script, test, or automate a separate mimo instance and validate its behavior from parseable evidence.
+description: Use when you need to programmatically drive another Open Mimo Code (mimo) process — supports both headless `oimo run` with JSON events and interactive TUI via tmux for full terminal interaction testing. Covers driving either an installed `oimo` binary or a dev build launched from source with `bun dev` (for debugging oimo itself). Reach for it to script, test, or automate a separate mimo instance and validate its behavior from parseable evidence.
 ---
 
 # Drive MiMo
@@ -11,8 +11,8 @@ Two **interfaces** for driving a separate mimo process:
 
 | Interface | Command | Use when |
 |------|---------|----------|
-| **Headless** | `omimo run --format json` | Scripted tasks, CI, event validation |
-| **TUI** | `omimo` in tmux | Interactive flow, permission dialogs, keybindings, visual regression |
+| **Headless** | `oimo run --format json` | Scripted tasks, CI, event validation |
+| **TUI** | `oimo` in tmux | Interactive flow, permission dialogs, keybindings, visual regression |
 
 **Core principle:** Every run produces parseable evidence. No eyeballing.
 
@@ -25,20 +25,20 @@ The interface (headless vs TUI, above) is *what you drive*. How the process is
 
 | Launcher | Command | Use when |
 |----------|---------|----------|
-| **Installed binary** | `omimo …` | Testing a released/installed build |
-| **Dev (from source)** | `bun dev …` | Debugging mimocode itself — runs `src/index.ts` directly, no build step, picks up local code changes |
+| **Installed binary** | `oimo …` | Testing a released/installed build |
+| **Dev (from source)** | `bun dev …` | Debugging oimo itself — runs `src/index.ts` directly, no build step, picks up local code changes |
 
-Everything below uses `omimo` for brevity. To drive a **dev build** instead,
-substitute `bun dev` for `omimo` and run from the repo root — every flag,
+Everything below uses `oimo` for brevity. To drive a **dev build** instead,
+substitute `bun dev` for `oimo` and run from the repo root — every flag,
 JSON event, and tmux technique is identical. See the Dev Mode section.
 
 ## Prerequisites
 
 ```bash
-# omimo binary must be on PATH (installed-binary launcher)
-which omimo || echo "omimo not found on PATH"
+# oimo binary must be on PATH (installed-binary launcher)
+which oimo || echo "oimo not found on PATH"
 
-# OR: dev launcher — run from the mimocode repo root, needs bun
+# OR: dev launcher — run from the oimo repo root, needs bun
 which bun || echo "bun not found — needed for dev mode"
 
 # tmux (for TUI interface)
@@ -52,31 +52,31 @@ which tmux || echo "tmux not found — install it for TUI mode"
 
 ---
 
-## Dev Mode (debugging mimocode itself)
+## Dev Mode (debugging oimo itself)
 
-When the goal is to debug **mimocode's own code**, launch from source with
-`bun dev` instead of the installed `omimo` binary. It runs
+When the goal is to debug **oimo's own code**, launch from source with
+`bun dev` instead of the installed `oimo` binary. It runs
 `packages/opencode/src/index.ts` directly — no build step — so local edits take
 effect on the next launch.
 
 **Key facts:**
 
 - Run from the **repo root**. `bun dev` == `bun run dev`.
-- It is the dev equivalent of the `omimo` command: same CLI, same subcommands
+- It is the dev equivalent of the `oimo` command: same CLI, same subcommands
   and flags. `bun dev --help`, `bun dev run …`, `bun dev serve`, etc.
 - Args pass straight through, so **both interfaces work under dev**:
   - Headless: `bun dev run --format json --dangerously-skip-permissions …`
-  - TUI:      `bun dev <workspace>` (positional workspace arg, as with `omimo`)
+  - TUI:      `bun dev <workspace>` (positional workspace arg, as with `oimo`)
 - If `MIMOCODE_HOME` is not set, dev defaults it to a repo-local `.dev-home`
   dir. For an isolated driven run, set `MIMOCODE_HOME=$(mktemp -d)` explicitly
   just like with the binary.
 
-**Substitution rule:** anywhere Part 1 / Part 2 / Part 3 below say `omimo`,
+**Substitution rule:** anywhere Part 1 / Part 2 / Part 3 below say `oimo`,
 replace it with `bun dev` (invoked from the repo root) to drive a dev build.
 
 ```bash
 # Headless, dev build (from repo root)
-REPO=/path/to/mimocode/checkout   # your local mimocode repo root
+REPO=/path/to/oimo/checkout   # your local oimo repo root
 MIMOCODE_HOME=$(mktemp -d) bun --cwd "$REPO" dev run \
   --format json --dangerously-skip-permissions --dir "$WORKSPACE" \
   < "$PROMPT" > /tmp/mimo-dev.jsonl 2>&1
@@ -88,7 +88,7 @@ tmux new-session -d -s "$SESSION" -x 120 -y 30 \
 
 ---
 
-## Part 1: Headless Mode (`omimo run`)
+## Part 1: Headless Mode (`oimo run`)
 
 ### Launch
 
@@ -98,7 +98,7 @@ cat >"$PROMPT" <<'EOF'
 Your task here.
 EOF
 
-MIMOCODE_HOME=$(mktemp -d) omimo run \
+MIMOCODE_HOME=$(mktemp -d) oimo run \
   --format json \
   --dangerously-skip-permissions \
   --dir "$WORKSPACE" \
@@ -176,7 +176,7 @@ jq -e 'select(.type=="tool_use") | .part.tool=="write"' /tmp/mimo-out.jsonl >/de
 ### Timeout
 
 ```bash
-timeout 120 omimo run --format json --dangerously-skip-permissions < "$PROMPT"
+timeout 120 oimo run --format json --dangerously-skip-permissions < "$PROMPT"
 [ $? -eq 124 ] && echo "FAIL: timed out"
 ```
 
@@ -200,9 +200,9 @@ MHOME=$(mktemp -d)
 WORKSPACE=$(mktemp -d)
 SESSION="mimo-drive-$$"
 
-# Launch omimo TUI in tmux (workspace is a positional arg, NOT --dir)
+# Launch oimo TUI in tmux (workspace is a positional arg, NOT --dir)
 tmux new-session -d -s "$SESSION" -x 120 -y 30 \
-  "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true omimo $WORKSPACE; sleep 999"
+  "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true oimo $WORKSPACE; sleep 999"
 
 # Wait for the TUI to render its input prompt
 bash scripts/wait-for-text.sh -t "$SESSION:0.0" -p "$PROMPT_RE" -T 15
@@ -317,7 +317,7 @@ rm -rf "$MHOME" "$WORKSPACE"
 test_smoke() {
   local P=$(mktemp) MHOME=$(mktemp -d)
   echo "Say hello" > "$P"
-  MIMOCODE_HOME=$MHOME omimo run --format json --dangerously-skip-permissions \
+  MIMOCODE_HOME=$MHOME oimo run --format json --dangerously-skip-permissions \
     < "$P" > /tmp/s1.jsonl 2>&1
   local E=$?
   rm -rf "$MHOME" "$P"
@@ -331,7 +331,7 @@ test_smoke() {
 test_tool_use() {
   local P=$(mktemp) MHOME=$(mktemp -d) WS=$(mktemp -d)
   echo 'Create file test.txt with content "hello"' > "$P"
-  MIMOCODE_HOME=$MHOME omimo run --format json --dangerously-skip-permissions --dir "$WS" \
+  MIMOCODE_HOME=$MHOME oimo run --format json --dangerously-skip-permissions --dir "$WS" \
     < "$P" > /tmp/s2.jsonl 2>&1
   local E=$?
   local OK=true
@@ -349,7 +349,7 @@ test_tool_use() {
 test_tui_interactive() {
   local MHOME=$(mktemp -d) WS=$(mktemp -d) SID="mimo-s3-$$"
   local PROMPT_RE='>|Ask|/[a-z]'
-  tmux new-session -d -s "$SID" -x 120 -y 30 "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true omimo $WS; sleep 999"
+  tmux new-session -d -s "$SID" -x 120 -y 30 "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true oimo $WS; sleep 999"
 
   # Wait for prompt
   bash scripts/wait-for-text.sh -t "$SID:0.0" -p "$PROMPT_RE" -T 15 || { echo "FAIL: no prompt"; tmux kill-session -t $SID; return 1; }
@@ -374,7 +374,7 @@ test_tui_interactive() {
 test_tui_permission() {
   local MHOME=$(mktemp -d) WS=$(mktemp -d) SID="mimo-s4-$$"
   local PROMPT_RE='>|Ask|/[a-z]'
-  tmux new-session -d -s "$SID" -x 120 -y 30 "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true omimo $WS; sleep 999"
+  tmux new-session -d -s "$SID" -x 120 -y 30 "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true oimo $WS; sleep 999"
 
   bash scripts/wait-for-text.sh -t "$SID:0.0" -p "$PROMPT_RE" -T 15
 
@@ -404,7 +404,7 @@ test_tui_permission() {
 test_tui_keybindings() {
   local MHOME=$(mktemp -d) WS=$(mktemp -d) SID="mimo-s5-$$"
   local PROMPT_RE='>|Ask|/[a-z]'
-  tmux new-session -d -s "$SID" -x 120 -y 30 "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true omimo $WS; sleep 999"
+  tmux new-session -d -s "$SID" -x 120 -y 30 "MIMOCODE_HOME=$MHOME MIMOCODE_PURE=true oimo $WS; sleep 999"
 
   bash scripts/wait-for-text.sh -t "$SID:0.0" -p "$PROMPT_RE" -T 15
 
@@ -448,8 +448,8 @@ run_all() {
 
 | Task | Command |
 |------|---------|
-| Headless run | `MIMOCODE_HOME=$(mktemp -d) omimo run --format json --dangerously-skip-permissions "prompt"` |
-| TUI launch | `tmux new-session -d -s test -x 120 -y 30 "MIMOCODE_HOME=$(mktemp -d) omimo $WORKSPACE; sleep 999"` |
+| Headless run | `MIMOCODE_HOME=$(mktemp -d) oimo run --format json --dangerously-skip-permissions "prompt"` |
+| TUI launch | `tmux new-session -d -s test -x 120 -y 30 "MIMOCODE_HOME=$(mktemp -d) oimo $WORKSPACE; sleep 999"` |
 | Send text | `tmux send-keys -t test:0.0 -l -- "text" && tmux send-keys -t test:0.0 Enter` |
 | Capture screen | `tmux capture-pane -t test:0.0 -p -S -` |
 | Wait for text | `bash scripts/wait-for-text.sh -t test:0.0 -p "pattern" -T 30` |

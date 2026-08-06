@@ -86,7 +86,7 @@ export const WebFetchTool = Tool.define(
               () =>
                 httpOk.execute(
                   HttpClientRequest.get(params.url).pipe(
-                    HttpClientRequest.setHeaders({ ...headers, "User-Agent": "mimocode" }),
+                    HttpClientRequest.setHeaders({ ...headers, "User-Agent": "oimo" }),
                   ),
                 ),
             ),

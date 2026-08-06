@@ -6,7 +6,7 @@
  * file, prints the URL, and exits immediately. Detects already-running
  * instances. Supports --stop to kill a running server.
  *
- * SCOPE: for the MiMoCode CLI only. If MiMoCode is embedded via SDK in
+ * SCOPE: for the Open Mimo Code CLI only. If Open Mimo Code is embedded via SDK in
  * a GUI host (web app, desktop app, IDE plugin, …), use that host's
  * native preview instead of this server.
  *

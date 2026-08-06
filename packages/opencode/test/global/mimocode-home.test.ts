@@ -7,7 +7,7 @@ import path from "path"
 const worker = path.join(import.meta.dir, "fixture", "global-paths-worker.ts")
 
 async function tmpdir() {
-  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "mimocode-home-test-"))
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), "oimo-home-test-"))
   return {
     path: dir,
     async [Symbol.asyncDispose]() {
@@ -152,8 +152,8 @@ describe("MIMOCODE_HOME end-to-end", () => {
     })
     expect(result.ok).toBe(true)
     if (!result.ok) return
-    // Paths should reflect XDG layout (ends with "/mimocode"), not MIMOCODE_HOME layout
-    expect(result.paths.config).toBe(path.join(tmp.path, "config", "mimocode"))
-    expect(result.paths.data).toBe(path.join(tmp.path, "data", "mimocode"))
+    // Paths should reflect XDG layout (ends with "/oimo"), not MIMOCODE_HOME layout
+    expect(result.paths.config).toBe(path.join(tmp.path, "config", "oimo"))
+    expect(result.paths.data).toBe(path.join(tmp.path, "data", "oimo"))
   })
 })

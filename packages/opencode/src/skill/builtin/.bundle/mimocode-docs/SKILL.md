@@ -1,21 +1,21 @@
 ---
 name: mimocode-docs
-description: "Use whenever the user asks about MiMoCode itself: features, TUI or CLI commands, keybindings, terminal compatibility, rendering glitches, TUI lag, SSH or remote rendering, agent modes (build / plan / compose) and how to switch between them, configuration, file locations, providers, models, authentication, or custom OpenAI-compatible or Anthropic-compatible API endpoints. Especially trigger when a prompt supplies or asks to configure a base URL/baseURL, API key/apiKey, model name or ID, provider, Anthropic Messages API, or global/project mimocode.json/jsonc, or when the user asks how to enter or leave plan mode. Use this skill to inspect existing config safely, make minimal changes, and verify them without guessing schema fields or model capabilities."
+description: "Use whenever the user asks about Open Mimo Code itself: features, TUI or CLI commands, keybindings, terminal compatibility, rendering glitches, TUI lag, SSH or remote rendering, agent modes (build / plan / compose) and how to switch between them, configuration, file locations, providers, models, authentication, or custom OpenAI-compatible or Anthropic-compatible API endpoints. Especially trigger when a prompt supplies or asks to configure a base URL/baseURL, API key/apiKey, model name or ID, provider, Anthropic Messages API, or global/project oimo.json/jsonc, or when the user asks how to enter or leave plan mode. Use this skill to inspect existing config safely, make minimal changes, and verify them without guessing schema fields or model capabilities."
 ---
 
-# MiMoCode
+# Open Mimo Code
 
-You are MiMoCode. This skill lets you explain your own features, tell users how to use them, and help configure yourself. When a user asks "what can you do", "how do I set X", "where does Y live", or "how does Z work", answer from here — don't guess.
+You are Open Mimo Code. This skill lets you explain your own features, tell users how to use them, and help configure yourself. When a user asks "what can you do", "how do I set X", "where does Y live", or "how does Z work", answer from here — don't guess.
 
 ## Identity
 
-MiMoCode (CLI binary `omimo`) is an agentic coding tool with a terminal UI, built as a fork of OpenCode. Beyond OpenCode's core (multi-provider, TUI, LSP, MCP, plugins) it adds: persistent memory, intelligent context management, subagent orchestration, goal-driven autonomous loops, compose workflows, and self-improvement via dream/distill.
+Open Mimo Code (CLI binary `oimo`) is an agentic coding tool with a terminal UI, built as a fork of OpenCode. Beyond OpenCode's core (multi-provider, TUI, LSP, MCP, plugins) it adds: persistent memory, intelligent context management, subagent orchestration, goal-driven autonomous loops, compose workflows, and self-improvement via dream/distill.
 
 ## Feature Map
 
 | Feature | What it is | How to reach it |
 |---------|-----------|-----------------|
-| **Agents / modes** | `build` (default, full tools), `plan` (read-only analysis), `compose` (specs-driven orchestration), plus custom modes you define. Mode locks after the first message (Build↔Plan still switch freely; Compose is isolated). Only the user enters a mode — no tool lets the agent switch into plan, and the agent does not raise plan mode unasked; from inside plan the agent can call `plan_exit` to ask for approval and hand the plan back to build | `Tab` cycles primary agents, or pick one in the agent dialog; add your own via `.mimocode/agent/<name>.md` (see @reference/guide.md) |
+| **Agents / modes** | `build` (default, full tools), `plan` (read-only analysis), `compose` (specs-driven orchestration), plus custom modes you define. Mode locks after the first message (Build↔Plan still switch freely; Compose is isolated). Only the user enters a mode — no tool lets the agent switch into plan, and the agent does not raise plan mode unasked; from inside plan the agent can call `plan_exit` to ask for approval and hand the plan back to build | `Tab` cycles primary agents, or pick one in the agent dialog; add your own via `.oimo/agent/<name>.md` (see @reference/guide.md) |
 | **Subagents** | Primary agent spawns `general`/`explore` helpers, parallel + background, with lifecycle/cancel | automatic; `actor` tooling |
 | **Persistent memory** | Markdown-backed memory with indexed search across `MEMORY.md`, `checkpoint.md`, `notes.md`, and `tasks/<id>/progress.md` | auto-injected on resume |
 | **Context management** | Auto-checkpoints, context reconstruction near limit, budgeted injection | automatic; tune via `checkpoint`/`compaction` config |
@@ -27,22 +27,22 @@ MiMoCode (CLI binary `omimo`) is an agentic coding tool with a terminal UI, buil
 | **Dream** | Consolidates recent traces into project memory | `/dream` |
 | **Distill** | Packages repeated manual workflows into skills/subagents/commands | `/distill` |
 | **Scheduled prompts** | Cron/loop: inject a prompt on a schedule or repeating loop (UTC, 5-field) | `cron` tool · `/loop` · `/loops` |
-| **Dynamic workflows** | JS scripts that orchestrate many subagents deterministically (fan-out, pipelines, nesting); built-ins include `compose`, `deep-research`, `fact-check`, and `research-experiment` | `.mimocode/workflows/*.js` + `workflow` tool |
-| **Skills / self-extension** | Add tools, hooks, skills under `.mimocode/` | see the `evolve` skill |
+| **Dynamic workflows** | JS scripts that orchestrate many subagents deterministically (fan-out, pipelines, nesting); built-ins include `compose`, `deep-research`, `fact-check`, and `research-experiment` | `.oimo/workflows/*.js` + `workflow` tool |
+| **Skills / self-extension** | Add tools, hooks, skills under `.oimo/` | see the `evolve` skill |
 | **Skill discovery** | `/skill-name` slash invocation (2+ in one message auto-load with an orchestration plan); `skill_search` tool matches by exact name/alias + BM25 and auto-loads high-confidence hits; some builtins (`claude-code`, `codex`) only appear when their CLI is installed | `/` autocomplete · automatic |
-| **MCP** | Local & remote Model Context Protocol servers | `mcp` config + `omimo mcp` |
+| **MCP** | Local & remote Model Context Protocol servers | `mcp` config + `oimo mcp` |
 
 ## Configuration Basics
 
 Config file (JSON or JSONC), discovered by walking up from cwd:
-- **Project**: `.mimocode/mimocode.json` (or `.jsonc`)
-- **Global**: `~/.config/mimocode/mimocode.jsonc` (preferred for new files) or `mimocode.json`
+- **Project**: `.oimo/oimo.json` (or `.jsonc`)
+- **Global**: `~/.config/oimo/oimo.jsonc` (preferred for new files) or `oimo.json`
 
-Add `"$schema": "https://omimo.xiaomi.com/mimocode/config.json"` for editor validation. All top-level keys are optional; project config merges over global.
+Add `"$schema": "https://oimo.xiaomi.com/mimocode/config.json"` for editor validation. All top-level keys are optional; project config merges over global.
 
 ```jsonc
 {
-  "$schema": "https://omimo.xiaomi.com/mimocode/config.json",
+  "$schema": "https://oimo.xiaomi.com/mimocode/config.json",
   "model": "provider/model",
   "permission": { "external_directory": { "/tmp/**": "allow" } }
 }
@@ -63,7 +63,7 @@ Read only the reference needed for the request, but read it before changing file
 
 ## How-To Guide
 
-For task-oriented walkthroughs — signing in & choosing a model, troubleshooting TUI rendering or lag, using MiMoCode over SSH, making memory remember project rules, writing custom slash commands, remapping keybinds, adding MCP servers, scheduling prompts (cron/loop), and using compose mode — see @reference/guide.md. For authoring and running **dynamic workflows** (the in-script API, where to save `.js` workflow files, and the `workflow` tool) see @reference/workflows.md.
+For task-oriented walkthroughs — signing in & choosing a model, troubleshooting TUI rendering or lag, using Open Mimo Code over SSH, making memory remember project rules, writing custom slash commands, remapping keybinds, adding MCP servers, scheduling prompts (cron/loop), and using compose mode — see @reference/guide.md. For authoring and running **dynamic workflows** (the in-script API, where to save `.js` workflow files, and the `workflow` tool) see @reference/workflows.md.
 
 **Built-in workflows** (runnable by name via the `workflow` tool, no file needed):
 - **`compose`** — deterministic spec→ship pipeline (brainstorm → design → implement/TDD → verify → review → merge), auto-parallelized across per-task worktrees. Pass `args.task`.
@@ -73,11 +73,11 @@ For task-oriented walkthroughs — signing in & choosing a model, troubleshootin
 
 ## Where Things Live On Disk
 
-Base dirs follow `MIMOCODE_HOME` (if set, absolute) else XDG. Data typically lives at `~/.local/share/mimocode/` (memory, logs, extracted builtin skills), config at `~/.config/mimocode/`, cache at `~/.cache/mimocode/`. See @reference/config.md for the full layout and env vars.
+Base dirs follow `MIMOCODE_HOME` (if set, absolute) else XDG. Data typically lives at `~/.local/share/oimo/` (memory, logs, extracted builtin skills), config at `~/.config/oimo/`, cache at `~/.cache/oimo/`. See @reference/config.md for the full layout and env vars.
 
 ## Commands
 
-`omimo` subcommands (`mcp`, `run`, `agent`, `models`, `providers`, `upgrade`, `stats`, `export`/`import`, `github`/`pr`, `serve`, …) and slash commands (`/goal`, `/dream`, `/distill`, `/vivid`, `/voice`, `/loop`, `/connect`, `/<skill-name>`) are documented in @reference/commands.md.
+`oimo` subcommands (`mcp`, `run`, `agent`, `models`, `providers`, `upgrade`, `stats`, `export`/`import`, `github`/`pr`, `serve`, …) and slash commands (`/goal`, `/dream`, `/distill`, `/vivid`, `/voice`, `/loop`, `/connect`, `/<skill-name>`) are documented in @reference/commands.md.
 
 ## Helping the User Configure
 

@@ -177,8 +177,8 @@ A live preview server is available for real-time slide feedback.
 if they want live preview enabled.
 
 **Only offer this in a pure command-line environment.** This server is
-for the MiMoCode CLI. If you are running inside a host that embeds
-MiMoCode via the SDK — a web UI, a desktop app, an IDE plugin, etc. —
+for the Open Mimo Code CLI. If you are running inside a host that embeds
+Open Mimo Code via the SDK — a web UI, a desktop app, an IDE plugin, etc. —
 that host almost certainly has its own native preview / file-open
 mechanism; use it instead and do NOT start this server.
 

@@ -30,7 +30,7 @@ export const dict = {
   "tui.home.placeholder.example.todo": "コードベース内の TODO を修正",
   "tui.home.placeholder.example.stack": "このプロジェクトの技術スタックは？",
   "tui.home.placeholder.example.tests": "壊れたテストを修正",
-  "tui.home.agreement.prefix": "MiMoCode をご利用いただくことで、",
+  "tui.home.agreement.prefix": "Open Mimo Code をご利用いただくことで、",
   "tui.home.agreement.terms": "利用規約",
   "tui.home.agreement.separator": "および",
   "tui.home.agreement.privacy": "プライバシーポリシー",
@@ -58,7 +58,7 @@ export const dict = {
   "tui.tips.doc": "{highlight}/doc{/highlight} を実行してユーザードキュメントを開きます",
   "tui.tips.free_models": "期間限定で無料モデルを提供中。今すぐお試しください！",
   "tui.tips.free_api_sunset":
-    "無料 API サービスは終了しました。{highlight}/login{/highlight} でログインしてください。MiMo Token Plan を購読するか、サードパーティ API を設定して MiMo Code をご利用ください。",
+    "無料 API サービスは終了しました。{highlight}/login{/highlight} でログインしてください。MiMo Token Plan を購読するか、サードパーティ API を設定して Open Mimo Code をご利用ください。",
   "tui.tips.multi_skills":
     "1 つのメッセージ内で複数の {highlight}/skill-name{/highlight} を組み合わせて、複数の Skill を同時に使えます",
   "tui.tips.ask_slash_commands":
@@ -107,55 +107,55 @@ export const dict = {
   "tui.tips.subagent": "プロンプト内で {highlight}@agent-name{/highlight} を使うと専用サブエージェントを呼び出します",
   "tui.tips.cycle_sessions": "{highlight}Ctrl+X Right/Left{/highlight} で親子セッション間を移動します",
   "tui.tips.config_files":
-    "サーバ設定は {highlight}mimocode.json{/highlight}、TUI 設定は {highlight}tui.json{/highlight} を作成します",
+    "サーバ設定は {highlight}oimo.json{/highlight}、TUI 設定は {highlight}tui.json{/highlight} を作成します",
   "tui.tips.global_config":
-    "TUI 設定をグローバルに置くなら {highlight}~/.config/mimocode/tui.json{/highlight} を使います",
+    "TUI 設定をグローバルに置くなら {highlight}~/.config/oimo/tui.json{/highlight} を使います",
   "tui.tips.schema": "設定に {highlight}$schema{/highlight} を加えるとエディタで自動補完されます",
   "tui.tips.default_model": "設定の {highlight}model{/highlight} でデフォルトモデルを指定します",
   "tui.tips.keybinds":
     "{highlight}tui.json{/highlight} の {highlight}keybinds{/highlight} セクションで任意のキーバインドを上書きできます",
   "tui.tips.disable_keybind": "任意のキーバインドを {highlight}none{/highlight} にすると完全に無効化できます",
   "tui.tips.mcp_config": "{highlight}mcp{/highlight} 設定セクションでローカル/リモート MCP サーバを設定します",
-  "tui.tips.mcp_oauth": "MiMoCode は認証が必要なリモート MCP サーバの OAuth を自動処理します",
+  "tui.tips.mcp_oauth": "Open Mimo Code は認証が必要なリモート MCP サーバの OAuth を自動処理します",
   "tui.tips.custom_command":
-    "{highlight}.mimocode/command/{/highlight} に {highlight}.md{/highlight} ファイルを追加すると再利用可能なカスタムプロンプトを定義できます",
+    "{highlight}.oimo/command/{/highlight} に {highlight}.md{/highlight} ファイルを追加すると再利用可能なカスタムプロンプトを定義できます",
   "tui.tips.command_args":
     "カスタムコマンドで {highlight}$ARGUMENTS{/highlight}、{highlight}$1{/highlight}、{highlight}$2{/highlight} を使うと動的な入力を受け取れます",
   "tui.tips.command_backticks":
     "コマンド内でバッククォートを使うとシェル出力を埋め込めます（例：{highlight}`git status`{/highlight}）",
   "tui.tips.custom_agent":
-    "{highlight}.mimocode/agent/{/highlight} に {highlight}.md{/highlight} ファイルを追加して専用 AI ペルソナを作れます",
+    "{highlight}.oimo/agent/{/highlight} に {highlight}.md{/highlight} ファイルを追加して専用 AI ペルソナを作れます",
   "tui.tips.agent_perms":
     "エージェントごとに {highlight}edit{/highlight}、{highlight}bash{/highlight}、{highlight}webfetch{/highlight} ツールの権限を設定できます",
   "tui.tips.bash_allow":
     '{highlight}"git *": "allow"{/highlight} のようなパターンで bash 権限を細かく制御できます',
   "tui.tips.bash_deny": '{highlight}"rm -rf *": "deny"{/highlight} を設定して破壊的なコマンドをブロックします',
   "tui.tips.bash_ask": '{highlight}"git push": "ask"{/highlight} を設定すると push 前に承認を求めます',
-  "tui.tips.formatter": "MiMoCode は prettier、gofmt、ruff などでファイルを自動整形します",
+  "tui.tips.formatter": "Open Mimo Code は prettier、gofmt、ruff などでファイルを自動整形します",
   "tui.tips.disable_formatter":
     '設定で {highlight}"formatter": false{/highlight} にするとすべての自動整形を無効化できます',
   "tui.tips.custom_formatter": "拡張子ごとのカスタム整形コマンドを設定で定義できます",
-  "tui.tips.lsp": "MiMoCode はインテリジェントなコード解析に LSP サーバを使います",
+  "tui.tips.lsp": "Open Mimo Code はインテリジェントなコード解析に LSP サーバを使います",
   "tui.tips.custom_tool":
-    "{highlight}.mimocode/tools/{/highlight} に {highlight}.ts{/highlight} ファイルを作って新しい LLM ツールを定義します",
+    "{highlight}.oimo/tools/{/highlight} に {highlight}.ts{/highlight} ファイルを作って新しい LLM ツールを定義します",
   "tui.tips.tool_scripts": "ツール定義から Python、Go などのスクリプトを呼び出せます",
   "tui.tips.plugins":
-    "{highlight}.mimocode/plugin/{/highlight} に {highlight}.ts{/highlight} ファイルを追加してイベントフックを実装できます",
+    "{highlight}.oimo/plugin/{/highlight} に {highlight}.ts{/highlight} ファイルを追加してイベントフックを実装できます",
   "tui.tips.plugin_notify": "プラグインでセッション完了時に OS 通知を送れます",
-  "tui.tips.plugin_protect": "プラグインを書いて MiMoCode が機密ファイルを読まないようにできます",
-  "tui.tips.run": "{highlight}omimo run{/highlight} で非対話的なスクリプト実行ができます",
-  "tui.tips.continue": "{highlight}omimo --continue{/highlight} で前回のセッションを再開します",
-  "tui.tips.attach_cli": "{highlight}omimo run -f file.ts{/highlight} で CLI からファイルを添付できます",
+  "tui.tips.plugin_protect": "プラグインを書いて Open Mimo Code が機密ファイルを読まないようにできます",
+  "tui.tips.run": "{highlight}oimo run{/highlight} で非対話的なスクリプト実行ができます",
+  "tui.tips.continue": "{highlight}oimo --continue{/highlight} で前回のセッションを再開します",
+  "tui.tips.attach_cli": "{highlight}oimo run -f file.ts{/highlight} で CLI からファイルを添付できます",
   "tui.tips.format_json": "{highlight}--format json{/highlight} を使うとスクリプトで機械可読な出力を得られます",
-  "tui.tips.serve": "{highlight}omimo serve{/highlight} を実行するとヘッドレスで MiMoCode API にアクセスできます",
-  "tui.tips.attach_server": "{highlight}omimo run --attach{/highlight} で起動中のサーバに接続します",
-  "tui.tips.upgrade": "{highlight}omimo upgrade{/highlight} で最新バージョンに更新します",
-  "tui.tips.auth_list": "{highlight}omimo auth list{/highlight} で設定済みプロバイダを確認します",
-  "tui.tips.agent_create": "{highlight}omimo agent create{/highlight} でガイド付きエージェント作成を行います",
-  "tui.tips.github_install": "{highlight}omimo github install{/highlight} で GitHub workflow を設定します",
+  "tui.tips.serve": "{highlight}oimo serve{/highlight} を実行するとヘッドレスで Open Mimo Code API にアクセスできます",
+  "tui.tips.attach_server": "{highlight}oimo run --attach{/highlight} で起動中のサーバに接続します",
+  "tui.tips.upgrade": "{highlight}oimo upgrade{/highlight} で最新バージョンに更新します",
+  "tui.tips.auth_list": "{highlight}oimo auth list{/highlight} で設定済みプロバイダを確認します",
+  "tui.tips.agent_create": "{highlight}oimo agent create{/highlight} でガイド付きエージェント作成を行います",
+  "tui.tips.github_install": "{highlight}oimo github install{/highlight} で GitHub workflow を設定します",
   "tui.tips.github_oc": "PR のコード行に {highlight}/oc{/highlight} とコメントすると的を絞ったレビューが行われます",
   "tui.tips.theme_system": '{highlight}"theme": "system"{/highlight} でターミナルの配色に合わせます',
-  "tui.tips.theme_files": "{highlight}.mimocode/themes/{/highlight} ディレクトリに JSON テーマファイルを作成します",
+  "tui.tips.theme_files": "{highlight}.oimo/themes/{/highlight} ディレクトリに JSON テーマファイルを作成します",
   "tui.tips.theme_variants": "テーマはダーク/ライトのバリアントをサポートします",
   "tui.tips.theme_ansi": "カスタムテーマで ANSI カラー 0-255 を参照できます",
   "tui.tips.env_var":
@@ -176,7 +176,7 @@ export const dict = {
   "tui.tips.doom_loop": "権限 {highlight}doom_loop{/highlight} がツール呼び出しの無限ループを防ぎます",
   "tui.tips.external_dir":
     "権限 {highlight}external_directory{/highlight} がプロジェクト外のファイルを保護します",
-  "tui.tips.debug_config": "{highlight}omimo debug config{/highlight} で設定の問題を調査します",
+  "tui.tips.debug_config": "{highlight}oimo debug config{/highlight} で設定の問題を調査します",
   "tui.tips.print_logs": "{highlight}--print-logs{/highlight} フラグで stderr に詳細ログを出力します",
   "tui.tips.timeline":
     "{highlight}Ctrl+X G{/highlight} または {highlight}/timeline{/highlight} で特定のメッセージにジャンプします",
@@ -187,7 +187,7 @@ export const dict = {
     "{highlight}tui.json{/highlight} の {highlight}scroll_acceleration{/highlight} を有効にすると macOS 風のなめらかなスクロールになります",
   "tui.tips.username_toggle":
     "コマンドパレット（{highlight}Ctrl+P{/highlight}）でチャット内のユーザー名表示を切り替えます",
-  "tui.tips.zen": "MiMo Code と組み合わせて {highlight}/connect{/highlight} で厳選されたモデルを使えます",
+  "tui.tips.zen": "Open Mimo Code と組み合わせて {highlight}/connect{/highlight} で厳選されたモデルを使えます",
   "tui.tips.agents_md": "プロジェクトの {highlight}AGENTS.md{/highlight} を Git にコミットしてチームで共有します",
   "tui.tips.review": "{highlight}/review{/highlight} で未コミット変更、ブランチ、PR をレビューします",
   "tui.tips.help": "{highlight}/help{/highlight} または {highlight}Ctrl+X H{/highlight} でヘルプを表示します",
@@ -221,14 +221,14 @@ export const dict = {
   "tui.skill.xlsx-official.description": "Microsoft Excel (.xlsx) ブックの作成・編集・読み取り",
   "tui.skill.pdf-official.description": "PDF ファイルの作成・編集・変換・読み取り",
   "tui.skill.pptx-official.description": "Microsoft PowerPoint (.pptx) スライドの作成・編集・読み取り",
-  "tui.skill.mimocode.description": "MiMoCode の機能・設定・コマンドに関するセルフドキュメント",
+  "tui.skill.oimo.description": "Open Mimo Code の機能・設定・コマンドに関するセルフドキュメント",
   "tui.skill.evolve.description": "自身のあらゆる層を書き換える——ツール、フック、知識、ワークフロー、UIまで",
   "tui.skill.frontend-design.description": "個性的で意図的な UI ビジュアルデザインのガイド",
   "tui.skill.loop.description": "プロンプトを一定間隔で繰り返し実行するようスケジュール",
   "tui.skill.html-to-video-pipeline.description": "ショート動画の神ツール - HTML でショート動画を制作",
   "tui.skill.arxiv.description": "arXiv 論文の検索・引用・ダウンロード・追跡",
   "tui.skill.skill-creator.description": "エージェントスキルの作成・レビュー・改善",
-  "tui.skill.drive-mimo.description": "別の MiMoCode プロセスをプログラムで操作——ヘッドレス JSON イベントまたは tmux 経由のインタラクティブ TUI",
+  "tui.skill.drive-mimo.description": "別の Open Mimo Code プロセスをプログラムで操作——ヘッドレス JSON イベントまたは tmux 経由のインタラクティブ TUI",
   "tui.skill.research-paper-writing.description": "学術論文の執筆・推敲・査読者視点の批評",
   "tui.skill.playwright.description": "ターミナルから実ブラウザの操作を自動化",
   "tui.skill.codex.description": "スクリプト、CI、Docker、Kubernetes で Codex CLI を自律実行",
@@ -329,7 +329,7 @@ export const dict = {
   "tui.dialog.agreement.confirm": "同意して続行",
   "tui.dialog.free_api_sunset.title": "無料 API サービスは終了しました",
   "tui.dialog.free_api_sunset.message":
-    "/login でログインしてください。MiMo Token Plan を購読するか、サードパーティ API を設定して MiMo Code をご利用ください。",
+    "/login でログインしてください。MiMo Token Plan を購読するか、サードパーティ API を設定して Open Mimo Code をご利用ください。",
   "tui.command.consent.revoke.title": "無料モデルの同意を取り消す",
   "tui.consent.revoked": "無料モデルの同意を取り消しました — 次回利用時に再度同意を求めます",
   "tui.dialog.select.placeholder": "検索",
@@ -382,7 +382,7 @@ export const dict = {
   "tui.toast.update_available.confirm": "新しいバージョン v{{version}} が利用可能です。今すぐ更新しますか？",
   "tui.toast.update_available.updating": "v{{version}} に更新中...",
   "tui.toast.update_available.failed": "更新に失敗しました",
-  "tui.toast.update_available.success": "MiMoCode v{{version}} に更新しました。アプリケーションを再起動してください。",
+  "tui.toast.update_available.success": "Open Mimo Code v{{version}} に更新しました。アプリケーションを再起動してください。",
   "tui.toast.updated.title": "自動更新済み",
   "tui.toast.updated.message": "パッチ更新を自動適用しました：v{{version}}。再起動後に有効になります。設定で autoupdate: false を指定すると無効にできます。",
   "tui.toast.native_installer_tip": "ヒント：より良いインストール・更新体験のため、ネイティブインストーラー（curl/PowerShell）を推奨します。",
@@ -513,7 +513,7 @@ export const dict = {
   "cli.providers.mimo_free.failed": "MiMo Auto (free) の自己診断に失敗",
   "cli.providers.mimo_free.default_set": "デフォルトモデルを mimo/mimo-auto に設定（1M コンテキスト、無料）",
   "cli.providers.mimo_free.usage_hint":
-    "ログイン不要 — そのまま omimo を実行できます。有料/上位モデルを利用する場合は MiMo ブラウザログインを選択してください。",
+    "ログイン不要 — そのまま oimo を実行できます。有料/上位モデルを利用する場合は MiMo ブラウザログインを選択してください。",
   "cli.providers.mimo_login.decrypt_retry": "復号に失敗しました、再試行してください（残り {remaining} 回）",
   "cli.providers.mimo_login.decrypt_exhausted": "復号に失敗しました、最大再試行回数に達しました",
 
@@ -531,7 +531,7 @@ export const dict = {
   // Workspace trust
   "trust.title": "ワークスペースにアクセス中：",
   "trust.safety_check": "安全確認：これはあなたが作成した、または信頼しているプロジェクトですか？（自分のコード、有名なオープンソースプロジェクト、チームの作業など）。そうでない場合は、まずこのフォルダの内容を確認してください。",
-  "trust.capabilities": "MiMo Code はここでファイルの読み取り、編集、実行が可能になります。",
+  "trust.capabilities": "Open Mimo Code はここでファイルの読み取り、編集、実行が可能になります。",
   "trust.plugin_warn": "このディレクトリに悪意あるプラグインが存在する場合、任意のコードを実行し、ファイルを読み取り、変更、または流出させる可能性があります。",
   "trust.option.yes": "はい、このフォルダを信頼します",
   "trust.option.no": "いいえ、終了",
@@ -545,7 +545,7 @@ export const dict = {
   "trust.dangerous.option.no": "終了（推奨）",
   "skip_permissions.title": "警告: パーミッションスキップモード",
   "skip_permissions.body":
-    "--dangerously-skip-permissions を指定して起動しました。MiMo Code は承認を求めずにファイルの読み取り・編集・実行やシェルコマンドの実行を行います。設定で明示的に拒否（deny）したルールのみが引き続き適用されます。発生したいかなる結果についてもあなた自身が全責任を負います。",
+    "--dangerously-skip-permissions を指定して起動しました。Open Mimo Code は承認を求めずにファイルの読み取り・編集・実行やシェルコマンドの実行を行います。設定で明示的に拒否（deny）したルールのみが引き続き適用されます。発生したいかなる結果についてもあなた自身が全責任を負います。",
   "skip_permissions.plugin_warn":
     "このモードでは、悪意のあるプロンプト・ファイル・プラグインが一切の確認なしに任意のコマンドを実行し、データを改ざんまたは持ち出す可能性があります。",
   "skip_permissions.root_warn":

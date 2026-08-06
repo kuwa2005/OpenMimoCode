@@ -1,9 +1,9 @@
 #@build-remove Run `bun script/build-install-ps1.ts` to convert install-utf8.ps1 -> install.ps1 (ASCII-safe)
 <#
 .SYNOPSIS
-    MiMoCode installer for Windows.
+    Open Mimo Code installer for Windows.
 .DESCRIPTION
-    Downloads and installs MiMoCode to $env:USERPROFILE\.mimocode\bin,
+    Downloads and installs Open Mimo Code to $env:USERPROFILE\.oimo\bin,
     then adds the directory to the user PATH.
 .PARAMETER Version
     Install a specific version (e.g., 0.1.0). Defaults to latest.
@@ -58,7 +58,7 @@ if (($PSVersionTable.PSVersion.Major) -lt 5) {
 
 $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" }
     elseif ([Environment]::Is64BitOperatingSystem) { "x64" }
-    else { Write-Err "MiMoCode requires a 64-bit operating system." }
+    else { Write-Err "Open Mimo Code requires a 64-bit operating system." }
 
 # AVX2 baseline detection (only relevant for x64)
 $NeedsBaseline = $false
@@ -99,14 +99,14 @@ if (-not $Version) {
     $Version = $Version.TrimStart('v')
 }
 
-# Warn about old versions that don't support omimo upgrade via install.ps1
+# Warn about old versions that don't support oimo upgrade via install.ps1
 $MajMin = $Version -replace '^(\d+\.\d+\.\d+).*', '$1'
 if ($MajMin -match '^\d+\.\d+\.\d+$') {
     $parts = $MajMin.Split('.')
     $semver = [int]$parts[0] * 10000 + [int]$parts[1] * 100 + [int]$parts[2]
     if ($semver -le 104) {
         Write-Host ""
-        Write-Host "WARNING: Installing v$Version via install.ps1 will cause 'omimo upgrade' to not function properly." -ForegroundColor Yellow
+        Write-Host "WARNING: Installing v$Version via install.ps1 will cause 'oimo upgrade' to not function properly." -ForegroundColor Yellow
         Write-Host "This is a known limitation for versions before 0.1.5." -ForegroundColor Yellow
         Write-Host ""
     }
@@ -119,15 +119,15 @@ if ($env:MIMOCODE_INSTALL_DIR) {
     $InstallDir = $env:MIMOCODE_INSTALL_DIR
     $Staging = $true
 } else {
-    $InstallDir = Join-Path $env:USERPROFILE ".mimocode\bin"
+    $InstallDir = Join-Path $env:USERPROFILE ".oimo\bin"
 }
 
 if (-not $Staging) {
-    $Existing = Get-Command omimo -ErrorAction SilentlyContinue
+    $Existing = Get-Command oimo -ErrorAction SilentlyContinue
     if ($Existing) {
-        $InstalledVersion = & omimo --version 2>$null
+        $InstalledVersion = & oimo --version 2>$null
         if ($InstalledVersion -eq $Version) {
-            Write-Host "MiMoCode v$Version is already installed." -ForegroundColor DarkGray
+            Write-Host "Open Mimo Code v$Version is already installed." -ForegroundColor DarkGray
             Exit-Install 0
         }
         Write-Host "Installed version: $InstalledVersion" -ForegroundColor DarkGray
@@ -136,16 +136,16 @@ if (-not $Staging) {
 
 # --- Download and install ---
 
-$Filename = "mimocode-$Target.zip"
+$Filename = "oimo-$Target.zip"
 $Url = "https://github.com/$Repo/releases/download/v$Version/$Filename"
 
 Write-Host ""
 Write-Host "Installing " -NoNewline -ForegroundColor DarkGray
-Write-Host "omimo" -NoNewline
+Write-Host "oimo" -NoNewline
 Write-Host " version: " -NoNewline -ForegroundColor DarkGray
 Write-Host "$Version"
 
-$TmpDir = Join-Path ([System.IO.Path]::GetTempPath()) "mimocode_install_$PID"
+$TmpDir = Join-Path ([System.IO.Path]::GetTempPath()) "oimo_install_$PID"
 New-Item -ItemType Directory -Path $TmpDir -Force | Out-Null
 $ZipPath = Join-Path $TmpDir $Filename
 
@@ -171,12 +171,12 @@ try {
 }
 
 New-Item -ItemType Directory -Path $InstallDir -Force | Out-Null
-$BinName = if (Test-Path (Join-Path $TmpDir "omimo.exe")) { "omimo.exe" } else { "omimo" }
+$BinName = if (Test-Path (Join-Path $TmpDir "oimo.exe")) { "oimo.exe" } else { "oimo" }
 try {
-    Move-Item -Path (Join-Path $TmpDir $BinName) -Destination (Join-Path $InstallDir "omimo.exe") -Force -ErrorAction Stop
+    Move-Item -Path (Join-Path $TmpDir $BinName) -Destination (Join-Path $InstallDir "oimo.exe") -Force -ErrorAction Stop
 } catch {
     Remove-Item -Recurse -Force $TmpDir -ErrorAction SilentlyContinue
-    Write-Err "Failed to install binary. If MiMoCode is currently running, please close it and retry.`n$($_.Exception.Message)"
+    Write-Err "Failed to install binary. If Open Mimo Code is currently running, please close it and retry.`n$($_.Exception.Message)"
 }
 Remove-Item -Recurse -Force $TmpDir -ErrorAction SilentlyContinue
 
@@ -225,7 +225,7 @@ if ($PathUpdated) {
 }
 Write-Host ""
 Write-Host "  cd <project>"
-Write-Host "  omimo"
+Write-Host "  oimo"
 Write-Host ""
 Write-Host "For more information visit " -NoNewline -ForegroundColor DarkGray
 Write-Host "https://github.com/kuwa2005/OpenMimoCode"

@@ -26,7 +26,7 @@ describe("tool.skill_search", () => {
     provideTmpdirInstance(
       (dir) =>
         Effect.gen(function* () {
-          const skill = path.join(dir, ".mimocode", "skill", "business-review")
+          const skill = path.join(dir, ".oimo", "skill", "business-review")
           yield* Effect.promise(() =>
             Bun.write(
               path.join(skill, "SKILL.md"),
@@ -139,7 +139,7 @@ Build the management presentation.
         Effect.gen(function* () {
           yield* Effect.promise(() =>
             Bun.write(
-              path.join(dir, ".mimocode", "skill", "quasar-analysis", "SKILL.md"),
+              path.join(dir, ".oimo", "skill", "quasar-analysis", "SKILL.md"),
               `---
 name: quasar-analysis
 description: Analyze quasar telemetry and operational metrics.

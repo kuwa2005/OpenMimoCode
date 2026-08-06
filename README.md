@@ -1,22 +1,22 @@
-<h1 align="center">MiMoCode</h1>
+<h1 align="center">Open Mimo Code</h1>
 
 <p align="center">
-  <img src="assets/readme/mimocode-banner.png" alt="MiMoCode" width="700">
+  <img src="assets/readme/oimo-banner.png" alt="Open Mimo Code" width="700">
 </p>
 
-<p align="center"><strong>MiMo Code: Where Models and Agents Co-Evolve</strong></p>
+<p align="center"><strong>Open Mimo Code: Where Models and Agents Co-Evolve</strong></p>
 
 <p align="center">
   日本語 | <a href="README.en.md">English</a> | <a href="README.zh.md">中文</a>
 </p>
 
 <p align="center">
-  <a href="https://mimo.xiaomi.com/coder">Webサイト</a> | <a href="https://mimo.xiaomi.com/en/blog/mimo-code-long-horizon">ブログ</a>
+  <a href="https://github.com/kuwa2005/OpenMimoCode">GitHub</a> | <a href="https://github.com/kuwa2005/OpenMimoCode/releases">リリース</a>
 </p>
 
 ---
 
-MiMoCode は、ターミナルネイティブの AI コーディングアシスタントです。コードの読み書き、コマンド実行、Git 操作に加えて、持続的なメモリシステムによってセッションをまたいでプロジェクトへの深い理解を維持し、自己進化を続けます。
+Open Mimo Code は、ターミナルネイティブの AI コーディングアシスタントです。コードの読み書き、コマンド実行、Git 操作に加えて、持続的なメモリシステムによってセッションをまたいでプロジェクトへの深い理解を維持し、自己進化を続けます。
 
 OpenCode Zen が無料のデフォルトチャネルとして組み込まれており、ゼロ設定ですぐに始められます。また、主要な LLM プロバイダーの API にも接続できます。
 
@@ -45,7 +45,7 @@ npm install -g @mimo-ai/cli
 **実行**:
 
 ```bash
-omimo
+oimo
 ```
 
 初回起動時に自動で設定を案内されます。対応しているオプション:
@@ -68,7 +68,7 @@ sudo apt install xsel
 <details>
 <summary><strong>macOS: 標準ターミナルでの描画問題</strong></summary>
 
-MiMoCode は macOS 標準のターミナル（Terminal.app）には対応していません。表示がずれたり、ちらついたり、その他の描画問題が発生する場合は、[iTerm2](https://iterm2.com/) または VS Code 統合ターミナルを使用してください:
+Open Mimo Code は macOS 標準のターミナル（Terminal.app）には対応していません。表示がずれたり、ちらついたり、その他の描画問題が発生する場合は、[iTerm2](https://iterm2.com/) または VS Code 統合ターミナルを使用してください:
 
 ```bash
 brew install --cask iterm2
@@ -78,17 +78,17 @@ brew install --cask iterm2
 <details>
 <summary><strong>TUI の遅延とアニメーション表示の問題</strong></summary>
 
-SSH 経由で直接実行すると TUI が遅くなる場合は、表示をローカルで行い、リモートホストでは MiMoCode サーバーのみを実行してください。リモートのプロジェクトディレクトリからサーバーを起動します:
+SSH 経由で直接実行すると TUI が遅くなる場合は、表示をローカルで行い、リモートホストでは Open Mimo Code サーバーのみを実行してください。リモートのプロジェクトディレクトリからサーバーを起動します:
 
 ```bash
 # リモートホスト
-omimo serve --port 4096
+oimo serve --port 4096
 
 # ローカルホスト: SSH ポートフォワードを作成
 ssh -N -L 4096:127.0.0.1:4096 user@remote-host
 
 # ローカルホスト: 別のターミナルから接続
-omimo attach http://127.0.0.1:4096
+oimo attach http://127.0.0.1:4096
 ```
 
 装飾アニメーションが原因で遅い場合は `/vivid` を実行するか、`ctrl+p` コマンドパレットで **Vivid visuals** を設定して、必要に応じて Vivid と Minimal の表示を切り替えてください。
@@ -98,7 +98,7 @@ omimo attach http://127.0.0.1:4096
 <details>
 <summary><strong>Windows: シェルでの CJK（中国語/日本語/韓国語）文字化け</strong></summary>
 
-非 UTF-8 のシステムロケール（例: アクティブコードページが 936/GBK の zh-CN）の Windows では、CJK 文字を含むコマンド出力が文字化け（mojibake）することがあります。MiMoCode は spawn する PowerShell/cmd サブプロセスに対して UTF-8 出力を強制します。それでも対応しきれないケースで文字化けが発生する場合は、Windows のシステム全体の UTF-8 サポートを有効にしてください:
+非 UTF-8 のシステムロケール（例: アクティブコードページが 936/GBK の zh-CN）の Windows では、CJK 文字を含むコマンド出力が文字化け（mojibake）することがあります。Open Mimo Code は spawn する PowerShell/cmd サブプロセスに対して UTF-8 出力を強制します。それでも対応しきれないケースで文字化けが発生する場合は、Windows のシステム全体の UTF-8 サポートを有効にしてください:
 
 **設定 → 時刻と言語 → 言語と地域 → 管理用の言語設定 →
 システムロケールの変更 → 「ベータ: 世界対応の Unicode UTF-8 を使用」にチェック →
@@ -111,7 +111,7 @@ omimo attach http://127.0.0.1:4096
 
 ## MiMo エコシステム
 
-MiMoCode 以外でも、Xiaomi MiMo モデルは Cursor、Cline、Zed などの他のエージェントやコーディングツールで利用できます。
+Open Mimo Code 以外でも、Xiaomi MiMo モデルは Cursor、Cline、Zed などの他のエージェントやコーディングツールで利用できます。
 
 **[awesome-mimo-agent](https://github.com/XiaomiMiMo/awesome-mimo-agent)** には、それらのツールで MiMo を利用するためのセットアップガイドがまとめられています — 他の場所でも MiMo を試したい場合は必見です。投稿も歓迎します: ご自身のセットアップを PR として追加してください。
 
@@ -176,7 +176,7 @@ SQLite FTS5 全文検索を利用したセッション横断メモリ:
 - **宣伝されているウィンドウが実際の値とは限らない。** 同じモデルでも、アクセス方法（ChatGPT/Codex サブスクリプション、直接 API キー、OpenRouter などのリセラー）によって利用可能ウィンドウが異なるため、カタログの 1M という数字が必ずしもそのルートで 1M 使えることを意味しません。
 - **品質とレイテンシ。** 非常に長いコンテキストは遅くなり、ある点を超えると品質も向上しません。
 
-`omimo models <provider>` は、モデルごとに MiMoCode が解決したウィンドウと、どのトークン数で
+`oimo models <provider>` は、モデルごとに Open Mimo Code が解決したウィンドウと、どのトークン数で
 圧縮するかを出力します。プロンプトのフッターにはその同じ数値が分母として表示されます
 （`33.0K/260K↓ (13%)` — `↓` は予算が有効であることを意味します）。`/status` で内訳を確認できます。
 
@@ -196,7 +196,7 @@ SQLite FTS5 全文検索を利用したセッション横断メモリ:
 
 ### Compose モード
 
-Compose は、仕様からデリバリーまでをオーケストレーションする、仕様駆動開発のための MiMoCode の構造化ワークフローです。
+Compose は、仕様からデリバリーまでをオーケストレーションする、仕様駆動開発のための Open Mimo Code の構造化ワークフローです。
 
 推奨される使い方は、**build** エージェントの **`/compose-next`** スキルです: grill → spec → workspace → implement → verify → review → finalize → finish をカバーする単一の自己完結型コントラクトで、機能ドキュメントは `docs/compose/spec/<feature>.md` に置きます。ワークフローの大半を内面化し、1 つのコンパクトなコントラクトで最もうまく機能する、最先端モデル（Fable/Sol クラス）向けに設計されています。
 
@@ -206,7 +206,7 @@ Compose は、仕様からデリバリーまでをオーケストレーション
 
 ワークフローは、サンドボックス化されたランタイムで複数のエージェントをオーケストレーションする決定論的な JavaScript スクリプトです。エージェントの会話とは異なり、ワークフローはリトライに上限があり、自動並列化される固定のフェーズ列をエンコードします — ユーザー操作を必要としない fire-and-forget 実行です。
 
-MiMoCode には 4 つの組み込みワークフローが同梱されています:
+Open Mimo Code には 4 つの組み込みワークフローが同梱されています:
 
 | ワークフロー | フェーズ | 説明 |
 |----------|--------|-------------|
@@ -217,13 +217,13 @@ MiMoCode には 4 つの組み込みワークフローが同梱されていま�
 
 compose ワークフローは対話型の経路を補完します: 要件が明確でタスクがきれいに分割できる場合は **workflow** を（決定論的・並列・非対話型）、進行中のリダイレクトやステップ間の判断注入が必要な場合は **build** エージェントと `/compose-next`（またはレガシーの compose エージェント）を使います（対話型）。
 
-**カスタムワークフロー:** `.mimocode/workflows/` または `.claude/workflows/` に `.js` ファイルを置いて独自定義するか、同じ名前を使うことで組み込みを上書きできます（例: `.mimocode/workflows/compose.js`）。
+**カスタムワークフロー:** `.oimo/workflows/` または `.claude/workflows/` に `.js` ファイルを置いて独自定義するか、同じ名前を使うことで組み込みを上書きできます（例: `.oimo/workflows/compose.js`）。
 
 ### 組み込みスキル
 
-スキルは、特定のタスク（PDF 生成、学術論文執筆、arXiv 検索など）の処理方法をエージェントに教える再利用可能な指示セットです。新しいタスクに対して、MiMoCode は利用可能な非 Compose スキルを、正確な名前、ローカライズされたエイリアス、BM25 関連度で検索します。信頼度の高い一致は自動的にロードされ、不確実な一致はエージェントが評価できるようにランク付けされます。TUI では `/` を入力してオートコンプリート一覧を参照するか、`/<skill-name>` で直接スキルを呼び出せます — 1 つのメッセージで 2 つ以上のスキルに言及すると自動ロードされ、複数スキルのオーケストレーション計画が注入されます。
+スキルは、特定のタスク（PDF 生成、学術論文執筆、arXiv 検索など）の処理方法をエージェントに教える再利用可能な指示セットです。新しいタスクに対して、Open Mimo Code は利用可能な非 Compose スキルを、正確な名前、ローカライズされたエイリアス、BM25 関連度で検索します。信頼度の高い一致は自動的にロードされ、不確実な一致はエージェントが評価できるようにランク付けされます。TUI では `/` を入力してオートコンプリート一覧を参照するか、`/<skill-name>` で直接スキルを呼び出せます — 1 つのメッセージで 2 つ以上のスキルに言及すると自動ロードされ、複数スキルのオーケストレーション計画が注入されます。
 
-MiMoCode には次の組み込みスキルが同梱されています:
+Open Mimo Code には次の組み込みスキルが同梱されています:
 
 | スキル | 説明 |
 |-------|-------------|
@@ -235,13 +235,13 @@ MiMoCode には次の組み込みスキルが同梱されています:
 | `deep-research` | 並列サブエージェントと組み込み Web ツールによる、引用付きマルチソースのリサーチレポート生成 |
 | `design-blueprint` | ビジュアルのモックアップ前に設計ブループリント（DESIGN.md + Decision Trace）を作成 |
 | `docx-official` | Word（.docx）ファイルの作成、読み取り、変換 |
-| `drive-mimo` | 別の MiMoCode プロセスをヘッドレスまたは対話型 TUI モードでスクリプト化、テスト、自動化 |
+| `drive-mimo` | 別の Open Mimo Code プロセスをヘッドレスまたは対話型 TUI モードでスクリプト化、テスト、自動化 |
 | `evolve` | 完全な自己改変 — エージェントのあらゆる層（ツール、動作フック、知識、ワークフロー、UI さえも）を書き換え |
 | `frontend-design` | UI 作業のためのビジュアルデザインガイダンス |
 | `html-to-video-pipeline` | ヘッドレスブラウザ + ffmpeg による HTML-to-MP4 レンダリング |
 | `learn-everything` | ドキュメント、URL、トピックを、演習・フィードバック・進捗追跡付きの適応型コースに変換 |
 | `loop` | 固定の周期で反復プロンプトをスケジュール |
-| `mimocode-docs` | MiMoCode の機能、コマンド、プロバイダー、設定の自己文書化リファレンス |
+| `mimocode-docs` | Open Mimo Code の機能、コマンド、プロバイダー、設定の自己文書化リファレンス |
 | `modern-python-toolchain` | uv、Ruff、Pyright を使ったモダンな Python プロジェクトのセットアップ |
 | `pdf-official` | PDF ファイルの作成、読み取り、入力、変換 |
 | `pptx-official` | PowerPoint（.pptx）デッキの作成と操作 |
@@ -254,7 +254,7 @@ MiMoCode には次の組み込みスキルが同梱されています:
 
 `claude-code` と `codex` は、それぞれ `claude` と `codex` の実行ファイルがインストールされている場合にのみ公開されます。他のスキルは、その指示に記述されたタスク固有のツールが必要な場合があります。
 
-**組み込みスキルの上書き:** プロジェクト（`.mimocode/skills/<name>/SKILL.md`）または個人スキルディレクトリ（`~/.claude/skills/`、`~/.opencode/skills/` など）に同じ `name` のスキルを作成してください。スキャン順で後から見つかるユーザースキルは、同じ名前の組み込みスキルを上書きします。
+**組み込みスキルの上書き:** プロジェクト（`.oimo/skills/<name>/SKILL.md`）または個人スキルディレクトリ（`~/.claude/skills/`、`~/.opencode/skills/` など）に同じ `name` のスキルを作成してください。スキャン順で後から見つかるユーザースキルは、同じ名前の組み込みスキルを上書きします。
 
 <details>
 <summary><strong>環境変数による組み込みスキルの無効化</strong></summary>
@@ -351,25 +351,25 @@ export PULSE_SERVER=tcp:127.0.0.1:4713
 
 ## 設定
 
-MiMoCode は、オートコンプリートと検証のための公開済み JSON Schema を持つ JSON/JSONC 設定ファイルを使用します。
+Open Mimo Code は、オートコンプリートと検証のための公開済み JSON Schema を持つ JSON/JSONC 設定ファイルを使用します。
 
 ### ファイルの場所
 
 | ファイル | プロジェクトレベル | グローバル |
 |------|--------------|--------|
-| メイン設定 | `.mimocode/mimocode.jsonc`（`.json` も可） | `~/.config/mimocode/mimocode.jsonc`（`.json` も可） |
-| TUI 設定 | `.mimocode/tui.json` | `~/.config/mimocode/tui.json` |
-| 認証情報 | — | `~/.local/share/mimocode/auth.json` |
+| メイン設定 | `.oimo/oimo.jsonc`（`.json` も可） | `~/.config/oimo/oimo.jsonc`（`.json` も可） |
+| TUI 設定 | `.oimo/tui.json` | `~/.config/oimo/tui.json` |
+| 認証情報 | — | `~/.local/share/oimo/auth.json` |
 
-> Windows では、XDG パスは `%LOCALAPPDATA%\mimocode\` 配下になります。すべてのパスは `MIMOCODE_HOME` で上書きできます。
+> Windows では、XDG パスは `%LOCALAPPDATA%\oimo\` 配下になります。すべてのパスは `MIMOCODE_HOME` で上書きできます。
 
 ### JSON Schema
 
-MiMoCode は設定を初回ロードするときに `$schema` フィールドを自動注入するため、エディタでそのまま補完と検証が使えます:
+Open Mimo Code は設定を初回ロードするときに `$schema` フィールドを自動注入するため、エディタでそのまま補完と検証が使えます:
 
 | 設定 | Schema URL |
 |--------|-----------|
-| `mimocode.jsonc` / `mimocode.json` | `https://mimo.xiaomi.com/mimocode/config.json` |
+| `oimo.jsonc` / `oimo.json` | `https://mimo.xiaomi.com/mimocode/config.json` |
 | `tui.json` | `https://mimo.xiaomi.com/mimocode/tui.json` |
 
 <details>
@@ -390,15 +390,15 @@ MiMoCode は設定を初回ロードするときに `$schema` フィールドを
 <details>
 <summary><strong>データディレクトリ</strong></summary>
 
-設定ファイル以外に、MiMoCode は実行時データを XDG パス（または `$MIMOCODE_HOME`）配下に保存します:
+設定ファイル以外に、Open Mimo Code は実行時データを XDG パス（または `$MIMOCODE_HOME`）配下に保存します:
 
 | ディレクトリ | デフォルト（Linux） | 内容 |
 |-----------|----------------|----------|
-| data | `~/.local/share/mimocode/` | SQLite データベース、認証情報（`auth.json`）、メモリ、ログ |
-| state | `~/.local/state/mimocode/` | TUI 設定（`kv.json`）、最近のモデル（`model.json`） |
-| cache | `~/.cache/mimocode/` | 言語サーバー、モデルカタログキャッシュ、スキル |
+| data | `~/.local/share/oimo/` | SQLite データベース、認証情報（`auth.json`）、メモリ、ログ |
+| state | `~/.local/state/oimo/` | TUI 設定（`kv.json`）、最近のモデル（`model.json`） |
+| cache | `~/.cache/oimo/` | 言語サーバー、モデルカタログキャッシュ、スキル |
 
-保存された認証情報を削除するには、データディレクトリから `auth.json` を削除してください。macOS では、XDG データのデフォルトは `~/Library/Application Support/mimocode/` です。
+保存された認証情報を削除するには、データディレクトリから `auth.json` を削除してください。macOS では、XDG データのデフォルトは `~/Library/Application Support/oimo/` です。
 
 </details>
 
@@ -430,12 +430,12 @@ MiMoCode は設定を初回ロードするときに `$schema` フィールドを
 ```
 
 - キーは正確に `baseURL` と `apiKey` を使用してください。
-- ベース URL とモデル ID は指定されたとおりに保持してください。MiMoCode は既知のプロバイダーを必要とせず、エンドポイントが要求しない限り `/v1` を追加・削除してはいけません。
+- ベース URL とモデル ID は指定されたとおりに保持してください。Open Mimo Code は既知のプロバイダーを必要とせず、エンドポイントが要求しない限り `/v1` を追加・削除してはいけません。
 - `models` 配下のキーはアップストリームのモデル ID です。`model` の最初の `/` だけがプロバイダー ID とモデル ID を分離するため、`/` を含むモデル ID もサポートされています。
 - 必要に応じて `custom` を別の未使用の小文字プロバイダー ID に置き換え、トップレベルの `model` 値でも同じ ID を使ってください。
 - `@ai-sdk/openai-compatible` は OpenAI 互換 API 用です。異なるワイヤープロトコルを使用するサービスには、プロバイダー固有のアダプターが必要です。
 
-ユーザー全体の設定は `~/.config/mimocode/mimocode.jsonc`（または同ディレクトリの `mimocode.json`）、プロジェクト専用の設定は `.mimocode/mimocode.jsonc`（または `.json`）に置き、既存の設定とマージしてください。`apiKey` は平文で保存されるため、ファイルは自分だけが読めるようにし、コミットしないでください。設定を検証するには `omimo models` を実行するか、TUI のモデルピッカーを使用してください。
+ユーザー全体の設定は `~/.config/oimo/oimo.jsonc`（または同ディレクトリの `oimo.json`）、プロジェクト専用の設定は `.oimo/oimo.jsonc`（または `.json`）に置き、既存の設定とマージしてください。`apiKey` は平文で保存されるため、ファイルは自分だけが読めるようにし、コミットしないでください。設定を検証するには `oimo models` を実行するか、TUI のモデルピッカーを使用してください。
 
 カスタムモデルがサポートする入力モダリティ（画像、音声、動画、PDF）を宣言するには、TUI で `/modalities` を実行してください — 手編集なしで設定に保存されるマルチセレクトダイアログです。
 
@@ -453,14 +453,14 @@ Max Mode（ジャッジ選択による並列 best-of-N 推論）は、設定の 
 <summary><strong>システム一時ディレクトリ（<code>/tmp</code>）を許可する</strong></summary>
 
 デフォルトでは、プロジェクトの作業ディレクトリ外のファイル読み書きは — システムの一時ディレクトリも含めて —
-`external_directory` 権限プロンプトを引き起こします。これは意図的です: MiMoCode は許可を静かに広げないため、
+`external_directory` 権限プロンプトを引き起こします。これは意図的です: Open Mimo Code は許可を静かに広げないため、
 モデルがプロジェクト外で触れる範囲を自分でコントロールできます。
 
 一時ディレクトリは、ほとんどのモデルがスクラッチスペースとして使うため（例:
 簡単なスクリプト、使い捨てのデータファイル）、よく話題になります。環境を信頼していて、
 毎回プロンプトされるのを避けたい場合は、設定で許可してオプトインできます:
 
-```json title=".mimocode/mimocode.json"
+```json title=".oimo/oimo.json"
 {
   "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
   "permission": {
@@ -488,13 +488,13 @@ Max Mode（ジャッジ選択による並列 best-of-N 推論）は、設定の 
 
 ```bash
 # TUI — 起動時に明示的な確認を 1 回だけ要求
-omimo --dangerously-skip-permissions
+oimo --dangerously-skip-permissions
 
 # ヘッドレス
-omimo run --dangerously-skip-permissions "your prompt"
+oimo run --dangerously-skip-permissions "your prompt"
 
 # または環境変数（あらゆる画面で）
-MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS=1 omimo
+MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS=1 oimo
 ```
 
 これは**設定の下に allow-all のベースを注入する**ため、ルールのないツールは自動承認されますが、
@@ -527,7 +527,7 @@ bun turbo typecheck      # 型チェック
 
 ## OpenCode との関係
 
-MiMoCode は [OpenCode](https://github.com/anomalyco/opencode) のフォークとして構築されています。OpenCode の全コア機能（複数プロバイダー、TUI、LSP、MCP、プラグイン）を保持しつつ、持続的なメモリ、インテリジェントコンテキスト管理、サブエージェントオーケストレーション、ゴール駆動の自律ループ、compose ワークフロー、dream/distill による自己改善を追加しています。
+Open Mimo Code は [OpenCode](https://github.com/anomalyco/opencode) のフォークとして構築されています。OpenCode の全コア機能（複数プロバイダー、TUI、LSP、MCP、プラグイン）を保持しつつ、持続的なメモリ、インテリジェントコンテキスト管理、サブエージェントオーケストレーション、ゴール駆動の自律ループ、compose ワークフロー、dream/distill による自己改善を追加しています。
 
 ---
 
@@ -547,6 +547,6 @@ QR コードをスキャンしてコミュニティのグループチャット�
 
 ソースコードは [MIT ライセンス](./LICENSE) の下で提供されます。
 
-MiMoCode の利用には [利用制限](./USE_RESTRICTIONS.md) も適用されます。
+Open Mimo Code の利用には [利用制限](./USE_RESTRICTIONS.md) も適用されます。
 Xiaomi MiMo がホストするサービスの利用には、[MiMo 利用規約](https://platform.xiaomimimo.com/docs/terms/user-agreement) が適用されます。
 MiMo の名称、ロゴ、商標の使用には、MiMo 商標ポリシーが適用されます。

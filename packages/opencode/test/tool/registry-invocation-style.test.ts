@@ -124,10 +124,10 @@ describe("ToolRegistry.tools: invocation style resolution", () => {
   it.live.skip("masks multiedit for GPT models", () =>
     provideTmpdirInstance((dir) =>
       Effect.gen(function* () {
-        yield* Effect.promise(() => fs.mkdir(path.join(dir, ".mimocode/tool"), { recursive: true }))
+        yield* Effect.promise(() => fs.mkdir(path.join(dir, ".oimo/tool"), { recursive: true }))
         yield* Effect.promise(() =>
           Bun.write(
-            path.join(dir, ".mimocode/tool/multiedit.ts"),
+            path.join(dir, ".oimo/tool/multiedit.ts"),
             [
               "export default {",
               "  description: 'multi-edit files',",

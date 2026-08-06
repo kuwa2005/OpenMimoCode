@@ -86,7 +86,7 @@ export function DialogContextLimit() {
 
     // The write lands in the user-global config, but everything reads the merged one and
     // project config wins per key. Re-resolve and say so rather than claiming success on
-    // a value that a project mimocode.json shadows.
+    // a value that a project oimo.json shadows.
     const applied = Model.contextWindow(
       sync.data.config,
       Model.get(sync.data.provider, selected.providerID, selected.modelID),

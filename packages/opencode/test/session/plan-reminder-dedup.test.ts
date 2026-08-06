@@ -82,7 +82,7 @@ describe("session.prompt plan reminder dedup", () => {
         init: async (dir) => {
           await Bun.write(path.join(dir, "readme.md"), "hi\n")
           await Bun.write(
-            path.join(dir, "mimocode.json"),
+            path.join(dir, "oimo.json"),
             JSON.stringify({
               $schema: "https://opencode.ai/config.json",
               enabled_providers: ["alibaba"],

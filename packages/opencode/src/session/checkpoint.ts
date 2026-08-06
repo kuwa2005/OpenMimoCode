@@ -446,7 +446,7 @@ export interface Interface {
 
   /**
    * Await all in-flight writers across sessions up to `timeoutMs`. Used by
-   * the CLI shutdown path so headless `omimo run` invocations don't exit
+   * the CLI shutdown path so headless `oimo run` invocations don't exit
    * while a forked checkpoint writer is still waiting on its LLM round-trip.
    * Returns the count of writers that completed vs. still pending when the
    * timeout fired.

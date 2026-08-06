@@ -49,13 +49,13 @@ const withHome = <A, E, R>(home: string, self: Effect.Effect<A, E, R>) =>
   )
 
 describe("skill", () => {
-  it.live("discovers skills from .mimocode/skill/ directory", () =>
+  it.live("discovers skills from .oimo/skill/ directory", () =>
     provideTmpdirInstance(
       (dir) =>
         Effect.gen(function* () {
           yield* Effect.promise(() =>
             Bun.write(
-              path.join(dir, ".mimocode", "skill", "test-skill", "SKILL.md"),
+              path.join(dir, ".oimo", "skill", "test-skill", "SKILL.md"),
               `---
 name: test-skill
 description: A test skill for verification.
@@ -88,7 +88,7 @@ Instructions here.
           Effect.gen(function* () {
             yield* Effect.promise(() =>
               Bun.write(
-                path.join(dir, ".mimocode", "skill", "dir-skill", "SKILL.md"),
+                path.join(dir, ".oimo", "skill", "dir-skill", "SKILL.md"),
                 `---
 name: dir-skill
 description: Skill for dirs test.
@@ -101,7 +101,7 @@ description: Skill for dirs test.
 
             const skill = yield* Skill.Service
             const dirs = yield* skill.dirs()
-            expect(dirs).toContain(path.join(dir, ".mimocode", "skill", "dir-skill"))
+            expect(dirs).toContain(path.join(dir, ".oimo", "skill", "dir-skill"))
             expect(dirs.length).toBe(1)
           }),
         ),
@@ -109,14 +109,14 @@ description: Skill for dirs test.
     ),
   )
 
-  it.live("discovers multiple skills from .mimocode/skill/ directory", () =>
+  it.live("discovers multiple skills from .oimo/skill/ directory", () =>
     provideTmpdirInstance(
       (dir) =>
         Effect.gen(function* () {
           yield* Effect.promise(() =>
             Promise.all([
               Bun.write(
-                path.join(dir, ".mimocode", "skill", "skill-one", "SKILL.md"),
+                path.join(dir, ".oimo", "skill", "skill-one", "SKILL.md"),
                 `---
 name: skill-one
 description: First test skill.
@@ -126,7 +126,7 @@ description: First test skill.
 `,
               ),
               Bun.write(
-                path.join(dir, ".mimocode", "skill", "skill-two", "SKILL.md"),
+                path.join(dir, ".oimo", "skill", "skill-two", "SKILL.md"),
                 `---
 name: skill-two
 description: Second test skill.
@@ -154,7 +154,7 @@ description: Second test skill.
         Effect.gen(function* () {
           yield* Effect.promise(() =>
             Bun.write(
-              path.join(dir, ".mimocode", "skill", "no-frontmatter", "SKILL.md"),
+              path.join(dir, ".oimo", "skill", "no-frontmatter", "SKILL.md"),
               `# No Frontmatter
 
 Just some content without YAML frontmatter.
@@ -435,20 +435,20 @@ description: A skill in the .agents/skills directory.
 `,
               ),
               Bun.write(
-                path.join(dir, ".mimocode", "skill", "agent-skill", "SKILL.md"),
+                path.join(dir, ".oimo", "skill", "agent-skill", "SKILL.md"),
                 `---
 name: opencode-skill
-description: A skill in the .mimocode/skill directory.
+description: A skill in the .oimo/skill directory.
 ---
 
 # OpenCode Skill
 `,
               ),
               Bun.write(
-                path.join(dir, ".mimocode", "skills", "agent-skill", "SKILL.md"),
+                path.join(dir, ".oimo", "skills", "agent-skill", "SKILL.md"),
                 `---
 name: opencode-skill
-description: A skill in the .mimocode/skills directory.
+description: A skill in the .oimo/skills directory.
 ---
 
 # OpenCode Skill
@@ -474,7 +474,7 @@ description: A skill in the .mimocode/skills directory.
           yield* Effect.promise(() =>
             Promise.all([
               Bun.write(
-                path.join(dir, ".mimocode", "skill", "gated-skill", "SKILL.md"),
+                path.join(dir, ".oimo", "skill", "gated-skill", "SKILL.md"),
                 `---
 name: gated-skill
 description: Only the user may start this one.
@@ -485,7 +485,7 @@ disable-model-invocation: true
 `,
               ),
               Bun.write(
-                path.join(dir, ".mimocode", "skill", "open-skill", "SKILL.md"),
+                path.join(dir, ".oimo", "skill", "open-skill", "SKILL.md"),
                 `---
 name: open-skill
 description: Anyone may start this one.

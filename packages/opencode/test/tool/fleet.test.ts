@@ -64,8 +64,8 @@ describe("assembleFleet", () => {
       { session: sess("ses_e", "never started", "/shared"), actor: null },
     ]
     const worktrees: WorktreeEntry[] = [
-      { directory: "/wt/a", branch: "mimocode/port-parser", ahead: 3 },
-      { directory: "/wt/b", branch: "mimocode/billing", ahead: 0 },
+      { directory: "/wt/a", branch: "oimo/port-parser", ahead: 3 },
+      { directory: "/wt/b", branch: "oimo/billing", ahead: 0 },
     ]
 
     const summary = assembleFleet(inputs, worktrees, NOW)
@@ -86,7 +86,7 @@ describe("assembleFleet", () => {
     expect(a.turnCount).toBe(5)
     expect(a.lastActivityMs).toBe(1_000)
     expect(a.worktreeDir).toBe("/wt/a")
-    expect(a.branch).toBe("mimocode/port-parser")
+    expect(a.branch).toBe("oimo/port-parser")
     expect(a.ahead).toBe(3)
 
     const b = byId("ses_b")
@@ -161,7 +161,7 @@ describe("renderFleetTable", () => {
       },
       { session: sess("ses_z", "idle one", "/shared"), actor: null },
     ]
-    const worktrees: WorktreeEntry[] = [{ directory: "/wt/a", branch: "mimocode/port-parser", ahead: 3 }]
+    const worktrees: WorktreeEntry[] = [{ directory: "/wt/a", branch: "oimo/port-parser", ahead: 3 }]
 
     const out = renderFleetTable(assembleFleet(inputs, worktrees, NOW))
 
@@ -169,7 +169,7 @@ describe("renderFleetTable", () => {
     expect(out).toContain("In progress — progressing (advancing) (1):")
     expect(out).toContain("Finished / idle (1):")
     // Isolated child shows branch (+ahead) @ dir; shared child shows "shared".
-    expect(out).toContain("mimocode/port-parser (+3) @ /wt/a")
+    expect(out).toContain("oimo/port-parser (+3) @ /wt/a")
     expect(out).toContain("shared")
     expect(out).toContain("ses_a")
     expect(out).toContain("2s")

@@ -24,7 +24,7 @@ const it = testEffect(makeLayer())
 function writeSkill(dir: string, name: string, marker: string, description?: string, extraFrontmatter?: string) {
   return Effect.promise(() =>
     Bun.write(
-      path.join(dir, ".mimocode", "skill", name, "SKILL.md"),
+      path.join(dir, ".oimo", "skill", name, "SKILL.md"),
       `---\nname: ${name}\ndescription: ${description ?? `${name} used by multi-skill injection tests.`}\n${extraFrontmatter ? `${extraFrontmatter}\n` : ""}---\n\n# ${name}\n\n${marker}\n`,
     ),
   )

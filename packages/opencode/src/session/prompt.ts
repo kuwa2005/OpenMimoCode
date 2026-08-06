@@ -228,7 +228,7 @@ const log = Log.create({ service: "session.prompt" })
 // itself via mtime staleness checks (covers external editors too), so only
 // tools and skills need the write/edit-triggered registry reload.
 function isExtensionPath(filePath: string): boolean {
-  return /\/\.mimocode\/(tools?|skills?)\//.test(filePath)
+  return /\/\.oimo\/(tools?|skills?)\//.test(filePath)
 }
 const elog = EffectLogger.create({ service: "session.prompt" })
 
@@ -711,7 +711,7 @@ export const layer = Layer.effect(
           providerOptions: ProviderTransform.providerOptions(mdl, ProviderTransform.smallOptions(mdl)),
           headers: {
             ...mdl.headers,
-            "User-Agent": `mimocode/${InstallationVersion}`,
+            "User-Agent": `oimo/${InstallationVersion}`,
           },
           maxRetries: 1,
         }),
@@ -3232,7 +3232,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
 
           // F37: filter by agentID so subagent slices stay isolated from the
           // main agent's slice within the same session. Without this, an actor
-          // (explore/general/etc) spawned via mimocode's shared-sessionID
+          // (explore/general/etc) spawned via oimo's shared-sessionID
           // design would see the parent's full conversation here and drift
           // off-task. agentID === "main" => main agent slice (agent_id = 'main'
           // in DB), agentID === "explore-1" => only explore-1's slice.
@@ -4874,7 +4874,7 @@ const quoteTrimRegex = /^["']|["']$/g
  *
  * Funnels a cron/loop fire through the SAME entry point typed user prompts use:
  * `SessionPrompt.Service.prompt`. The synthetic part carries `synthetic: true`
- * (mimocode convention for `isMeta`) so transcript-preview surfaces can hide it,
+ * (oimo convention for `isMeta`) so transcript-preview surfaces can hide it,
  * and `metadata.origin = { kind: "cron", taskId, kindOfTask }` so the TUI can
  * render a clock icon. Sentinel expansion is intentionally NOT done here — T19
  * will wrap `value` before this call.

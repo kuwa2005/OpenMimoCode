@@ -327,7 +327,7 @@ export const GlobalRoutes = lazy(() =>
       describeRoute({
         summary: "Import external sessions",
         description:
-          "Import sessions from external AI tools (Claude Code, Codex, opencode) into mimocode. Idempotent; pass force to re-sync. Per-source failures are not thrown as HTTP errors — they are collected into the corresponding stats.errors[] while other sources continue.",
+          "Import sessions from external AI tools (Claude Code, Codex, opencode) into oimo. Idempotent; pass force to re-sync. Per-source failures are not thrown as HTTP errors — they are collected into the corresponding stats.errors[] while other sources continue.",
         operationId: "global.import.run",
         responses: {
           200: {

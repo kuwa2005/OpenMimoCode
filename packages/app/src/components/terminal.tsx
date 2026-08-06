@@ -519,7 +519,7 @@ export const Terminal = (props: TerminalProps) => {
           try {
             const tokenUrl = new URL(url + `/pty/${id}/connect-token`)
             const headers: Record<string, string> = {
-              "x-mimocode-ticket": "1",
+              "x-oimo-ticket": "1",
               Authorization: `Basic ${btoa(`${username}:${password}`)}`,
             }
             const res = await fetch(tokenUrl, { method: "POST", headers })

@@ -146,7 +146,7 @@ describe("session.llm system prompt — memory-instructions guard", () => {
 
     await using tmp = await tmpdir({
       init: async (dir) => {
-        await Bun.write(path.join(dir, "mimocode.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
+        await Bun.write(path.join(dir, "oimo.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
       },
     })
 
@@ -205,7 +205,7 @@ describe("session.llm system prompt — memory-instructions guard", () => {
 
     await using tmp = await tmpdir({
       init: async (dir) => {
-        await Bun.write(path.join(dir, "mimocode.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
+        await Bun.write(path.join(dir, "oimo.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
       },
     })
 
@@ -289,7 +289,7 @@ describe("session.llm system prompt — memory-instructions guard", () => {
 
     await using tmp = await tmpdir({
       init: async (dir) => {
-        await Bun.write(path.join(dir, "mimocode.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
+        await Bun.write(path.join(dir, "oimo.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
       },
     })
 
@@ -347,7 +347,7 @@ describe("session.llm system prompt — memory-instructions guard", () => {
 
     await using tmp = await tmpdir({
       init: async (dir) => {
-        await Bun.write(path.join(dir, "mimocode.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
+        await Bun.write(path.join(dir, "oimo.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
       },
     })
 
@@ -427,7 +427,7 @@ describe("session.llm system prompt — memory-instructions guard", () => {
 
     await using tmp = await tmpdir({
       init: async (dir) => {
-        await Bun.write(path.join(dir, "mimocode.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
+        await Bun.write(path.join(dir, "oimo.json"), tmpConfig(providerID, `${server.url.origin}/v1`))
       },
     })
 

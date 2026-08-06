@@ -45,7 +45,7 @@ describe("SessionPrompt session loop hooks", () => {
           ].join("\n"),
         )
         await Bun.write(
-          path.join(tmp.path, "mimocode.json"),
+          path.join(tmp.path, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             plugin: [pathToFileURL(file).href],
@@ -115,7 +115,7 @@ describe("SessionPrompt session loop hooks", () => {
           ].join("\n"),
         )
         await Bun.write(
-          path.join(tmp.path, "mimocode.json"),
+          path.join(tmp.path, "oimo.json"),
           JSON.stringify({
             $schema: "https://opencode.ai/config.json",
             plugin: [pathToFileURL(file).href],

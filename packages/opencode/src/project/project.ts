@@ -24,8 +24,8 @@ async function setupProjectIdEnvironment(workingDir: string): Promise<void> {
   const mainGit = resolveMainGitDir(workingDir)
   if (!mainGit) return
 
-  const localFile = nodePath.join(workingDir, ".mimocode-project-id")
-  const idFile = nodePath.join(mainGit, "mimocode-project-id")
+  const localFile = nodePath.join(workingDir, ".oimo-project-id")
+  const idFile = nodePath.join(mainGit, "oimo-project-id")
 
   // 运行时无关:用 node fs(node engine 构建里没有 Bun 全局)
   const exists = (p: string) =>
@@ -42,12 +42,12 @@ async function setupProjectIdEnvironment(workingDir: string): Promise<void> {
     await nodeFs.unlink(localFile).catch(() => {})
   }
 
-  // Belt-and-suspenders: ensure .git/info/exclude lists .mimocode-project-id
+  // Belt-and-suspenders: ensure .git/info/exclude lists .oimo-project-id
   const excludeFile = nodePath.join(mainGit, "info", "exclude")
   await nodeFs.mkdir(nodePath.dirname(excludeFile), { recursive: true })
   const existing = await nodeFs.readFile(excludeFile, "utf-8").catch(() => "")
-  if (!existing.includes(".mimocode-project-id")) {
-    await nodeFs.appendFile(excludeFile, "\n.mimocode-project-id\n")
+  if (!existing.includes(".oimo-project-id")) {
+    await nodeFs.appendFile(excludeFile, "\n.oimo-project-id\n")
   }
 }
 
@@ -223,7 +223,7 @@ export const layer: Layer.Layer<
 
         // Refuse to anchor snapshots at the user's home directory or a filesystem root.
         // Anchoring there makes git's pathspec walk cover the entire user tree on every
-        // turn, which has shipped as a bug for users opening mimocode in $HOME.
+        // turn, which has shipped as a bug for users opening oimo in $HOME.
         const candidate = pathSvc.dirname(dotgit)
         const home = process.env.HOME ?? process.env.USERPROFILE ?? nodeOs.homedir()
         if (candidate === home || nodePath.parse(candidate).root === candidate) {

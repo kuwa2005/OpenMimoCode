@@ -1,4 +1,4 @@
-# MiMoCode Dynamic Workflows Reference
+# Open Mimo Code Dynamic Workflows Reference
 
 Dynamic workflows let you orchestrate many subagents **deterministically** from a small JavaScript script — fan-out, pipelines, nested workflows — instead of driving each subagent by hand. The script runs in a sandbox; you call `agent()` to spawn work and combine results with plain JS.
 
@@ -7,7 +7,7 @@ Dynamic workflows let you orchestrate many subagents **deterministically** from 
 Save a workflow as a `.js` file in either directory (searched nearest-first, walking up from cwd to the worktree root; project overrides parent):
 
 ```
-.mimocode/workflows/<name>.js      # preferred
+.oimo/workflows/<name>.js      # preferred
 .claude/workflows/<name>.js        # also read
 ```
 

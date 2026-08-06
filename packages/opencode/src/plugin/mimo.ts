@@ -76,7 +76,7 @@ function buildAuthorizeUrl(publicKey: string, redirectUri: string): string {
   const params = new URLSearchParams({
     pk: publicKey,
     redirect_uri: redirectUri,
-    kn: "mimocode",
+    kn: "oimo",
     key_name: getKeyName(),
   })
   return `${PLATFORM_URL}/authorize?${params.toString()}`
@@ -196,7 +196,7 @@ export async function MimoAuthPlugin(_input: PluginInput): Promise<Hooks> {
     },
     "chat.headers": async (input, output) => {
       if (input.model.providerID !== "xiaomi") return
-      output.headers["X-Mimo-Source"] = "mimocode-cli"
+      output.headers["X-Mimo-Source"] = "oimo-cli"
     },
   }
 }

@@ -157,7 +157,7 @@ function writerThatWritesCheckpoint(marker: string): SpawnImpl {
   } as SpawnImpl
 }
 
-function mimocodeConfig(baseURL: string) {
+function oimoConfig(baseURL: string) {
   return JSON.stringify({
     $schema: "https://opencode.ai/config.json",
     enabled_providers: ["alibaba"],
@@ -230,7 +230,7 @@ describe("Manual /rebuild: on-the-spot rebuild driven through SessionPrompt.comm
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         await Instance.provide({
@@ -364,7 +364,7 @@ describe("Manual /rebuild: on-the-spot rebuild driven through SessionPrompt.comm
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         await withSpawnRef(writer, () =>
@@ -471,7 +471,7 @@ describe("Manual /rebuild: on-the-spot rebuild driven through SessionPrompt.comm
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         // Force NO writer: with spawnRef unset, tryStartCheckpointWriter cannot
@@ -560,7 +560,7 @@ describe("Manual /rebuild: on-the-spot rebuild driven through SessionPrompt.comm
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         await withSpawnRef(writer, () =>

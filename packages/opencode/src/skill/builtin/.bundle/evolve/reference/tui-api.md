@@ -28,11 +28,11 @@ File extension should be `.tsx` (JSX support for UI components).
 
 Files are auto-discovered from two directories at TUI startup:
 
-- `~/.config/mimocode/tui/*.{ts,tsx,js}` — global
-- `<project>/.mimocode/tui/*.{ts,tsx,js}` — project-local
+- `~/.config/oimo/tui/*.{ts,tsx,js}` — global
+- `<project>/.oimo/tui/*.{ts,tsx,js}` — project-local
 
-Plugins can also be declared in `tui.json` (global `~/.config/mimocode/tui.json`
-or project `.mimocode/tui.json`) via the `plugin` array (file URLs or npm specs).
+Plugins can also be declared in `tui.json` (global `~/.config/oimo/tui.json`
+or project `.oimo/tui.json`) via the `plugin` array (file URLs or npm specs).
 Either way, a **restart is required** — TUI plugins are only scanned at startup.
 
 ## Rendering model — opentui, NOT HTML

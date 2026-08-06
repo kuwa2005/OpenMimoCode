@@ -49,8 +49,8 @@ function detectPlatformAndArch() {
 
 function findBinary() {
   const { platform, arch } = detectPlatformAndArch()
-  const packageName = `@mimo-ai/mimocode-${platform}-${arch}`
-  const binaryName = platform === "windows" ? "omimo.exe" : "omimo"
+  const packageName = `@mimo-ai/oimo-${platform}-${arch}`
+  const binaryName = platform === "windows" ? "oimo.exe" : "oimo"
 
   try {
     // Use require.resolve to find the package
@@ -73,7 +73,7 @@ function printMigrationNotice() {
     ? "irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex"
     : "curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash"
   console.log()
-  console.log("  Recommended: install MiMoCode natively for a better install and upgrade experience:")
+  console.log("  Recommended: install Open Mimo Code natively for a better install and upgrade experience:")
   console.log(`    ${install}`)
   console.log()
 }
@@ -82,15 +82,15 @@ async function main() {
   printMigrationNotice()
 
   if (os.platform() === "win32") {
-    // On Windows the bin/omimo wrapper finds the binary via node_modules traversal.
-    // Skipping the .mimocode cache avoids creating an extensionless PE file that
+    // On Windows the bin/oimo wrapper finds the binary via node_modules traversal.
+    // Skipping the .oimo cache avoids creating an extensionless PE file that
     // may trigger antivirus false-positives.
     return
   }
 
   try {
     const { binaryPath } = findBinary()
-    const target = path.join(__dirname, "bin", ".mimocode")
+    const target = path.join(__dirname, "bin", ".oimo")
     if (fs.existsSync(target)) fs.unlinkSync(target)
     try {
       fs.linkSync(binaryPath, target)
@@ -99,7 +99,7 @@ async function main() {
     }
     fs.chmodSync(target, 0o755)
   } catch (error) {
-    console.error("Failed to setup mimocode binary:", error.message)
+    console.error("Failed to setup oimo binary:", error.message)
     process.exit(1)
   }
 }

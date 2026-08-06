@@ -28,7 +28,7 @@ async function project(source: string) {
       const file = path.join(dir, "plugin.ts")
       await Bun.write(file, source)
       await Bun.write(
-        path.join(dir, "mimocode.json"),
+        path.join(dir, "oimo.json"),
         JSON.stringify(
           {
             $schema: "https://opencode.ai/config.json",

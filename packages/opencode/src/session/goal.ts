@@ -100,7 +100,7 @@ export const Event = {
 
 // ---- Judge prompts  ----
 
-const JUDGE_SYSTEM = `You are evaluating a stop-condition hook in Mimo Code. Read the conversation transcript carefully, then judge whether the user-provided condition is satisfied.
+const JUDGE_SYSTEM = `You are evaluating a stop-condition hook in Open Mimo Code. Read the conversation transcript carefully, then judge whether the user-provided condition is satisfied.
 
 Your response must be a JSON object with one of these shapes:
 - {"ok": true, "reason": "<quote evidence from the transcript that satisfies the condition>"}

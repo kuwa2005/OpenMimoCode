@@ -24,7 +24,7 @@ export const CronTask = Schema.Struct({
 export type CronTask = Schema.Schema.Type<typeof CronTask>
 
 export const getCronFilePath = (dir?: string) =>
-  join(dir ?? process.cwd(), ".mimocode", "scheduled_tasks.json")
+  join(dir ?? process.cwd(), ".oimo", "scheduled_tasks.json")
 
 const isValidTask = (t: unknown): t is CronTask => {
   if (!t || typeof t !== "object") return false

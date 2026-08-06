@@ -51,7 +51,7 @@ export const SessionCommand = cmd({
 
 export const SessionImportClaudeCommand = cmd({
   command: "import-claude",
-  describe: "import Claude Code sessions (~/.claude/projects) into mimocode",
+  describe: "import Claude Code sessions (~/.claude/projects) into oimo",
   builder: (yargs: Argv) =>
     yargs.option("force", {
       describe: "re-sync every session, ignoring the mtime cache",

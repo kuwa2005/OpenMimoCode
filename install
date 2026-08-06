@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
-APP=mimocode
+APP=oimo
 
 MUTED='\033[0;2m'
 RED='\033[0;31m'
@@ -9,7 +9,7 @@ NC='\033[0m' # No Color
 
 usage() {
     cat <<EOF
-OpenMimoCode (omimo) Installer
+OpenMimoCode (oimo) Installer
 
 Usage: install.sh [options]
 
@@ -22,7 +22,7 @@ Options:
 Examples:
     curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
     curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash -s -- --version 0.1.0
-    ./install --binary /path/to/omimo
+    ./install --binary /path/to/oimo
 EOF
 }
 
@@ -65,7 +65,7 @@ while [[ $# -gt 0 ]]; do
     esac
 done
 
-INSTALL_DIR=$HOME/.mimocode/bin
+INSTALL_DIR=$HOME/.oimo/bin
 mkdir -p "$INSTALL_DIR"
 
 # If --binary is provided, skip all download/detection logic
@@ -237,11 +237,11 @@ print_message() {
 }
 
 check_version() {
-    if command -v omimo >/dev/null 2>&1; then
-        omimo_path=$(which omimo)
+    if command -v oimo >/dev/null 2>&1; then
+        oimo_path=$(which oimo)
 
         ## Check the installed version
-        installed_version=$(omimo --version 2>/dev/null || echo "")
+        installed_version=$(oimo --version 2>/dev/null || echo "")
 
         if [[ "$installed_version" != "$specific_version" ]]; then
             print_message info "${MUTED}Installed version: ${NC}$installed_version."
@@ -293,7 +293,7 @@ download_with_progress() {
     fi
 
     local tmp_dir=${TMPDIR:-/tmp}
-    local basename="${tmp_dir}/mimocode_install_$$"
+    local basename="${tmp_dir}/oimo_install_$$"
     local tracefile="${basename}.trace"
 
     rm -f "$tracefile"
@@ -343,8 +343,8 @@ download_with_progress() {
 }
 
 download_and_install() {
-    print_message info "\n${MUTED}Installing ${NC}omimo ${MUTED}version: ${NC}$specific_version"
-    local tmp_dir="${TMPDIR:-/tmp}/mimocode_install_$$"
+    print_message info "\n${MUTED}Installing ${NC}oimo ${MUTED}version: ${NC}$specific_version"
+    local tmp_dir="${TMPDIR:-/tmp}/oimo_install_$$"
     mkdir -p "$tmp_dir"
 
     if [[ "$os" == "windows" ]] || ! [ -t 2 ] || ! download_with_progress "$url" "$tmp_dir/$filename"; then
@@ -358,15 +358,15 @@ download_and_install() {
         unzip -q "$tmp_dir/$filename" -d "$tmp_dir"
     fi
 
-    mv "$tmp_dir/omimo" "$INSTALL_DIR"
-    chmod 755 "${INSTALL_DIR}/omimo"
+    mv "$tmp_dir/oimo" "$INSTALL_DIR"
+    chmod 755 "${INSTALL_DIR}/oimo"
     rm -rf "$tmp_dir"
 }
 
 install_from_binary() {
-    print_message info "\n${MUTED}Installing ${NC}omimo ${MUTED}from: ${NC}$binary_path"
-    cp "$binary_path" "${INSTALL_DIR}/omimo"
-    chmod 755 "${INSTALL_DIR}/omimo"
+    print_message info "\n${MUTED}Installing ${NC}oimo ${MUTED}from: ${NC}$binary_path"
+    cp "$binary_path" "${INSTALL_DIR}/oimo"
+    chmod 755 "${INSTALL_DIR}/oimo"
 }
 
 if [ -n "$binary_path" ]; then
@@ -385,9 +385,9 @@ add_to_path() {
         print_message info "Command already exists in $config_file, skipping write."
         path_written=true
     elif [[ -w $config_file ]]; then
-        echo -e "\n# omimo" >> "$config_file"
+        echo -e "\n# oimo" >> "$config_file"
         echo "$command" >> "$config_file"
-        print_message info "${MUTED}Successfully added ${NC}omimo ${MUTED}to \$PATH in ${NC}$config_file"
+        print_message info "${MUTED}Successfully added ${NC}oimo ${MUTED}to \$PATH in ${NC}$config_file"
         path_written=true
     else
         print_message warning "Manually add the directory to $config_file (or similar):"
@@ -490,12 +490,12 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
         echo -e "export PATH=$INSTALL_DIR:\$PATH"
     fi
         echo -e "cd <project>"
-        echo -e "omimo"
+        echo -e "oimo"
 else
     echo -e "${MUTED}To start:${NC}"
     echo -e ""
     echo -e "cd <project>  ${MUTED}# Open directory${NC}"
-    echo -e "omimo          ${MUTED}# Run command${NC}"
+    echo -e "oimo          ${MUTED}# Run command${NC}"
 fi
 echo -e ""
 echo -e "${MUTED}For more information visit ${NC}https://github.com/kuwa2005/OpenMimoCode"

@@ -4,7 +4,7 @@ import { AppRuntime } from "../../src/effect/app-runtime"
 import { Installation } from "../../src/installation"
 import { SystemPrompt } from "../../src/session/system"
 
-test("Installation.method() works without Instance context (omimo upgrade scenario)", async () => {
+test("Installation.method() works without Instance context (oimo upgrade scenario)", async () => {
   const method = await AppRuntime.runPromise(Installation.Service.use((svc) => svc.method()))
   expect(typeof method).toBe("string")
 })

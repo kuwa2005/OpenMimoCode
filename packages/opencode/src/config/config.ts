@@ -66,7 +66,7 @@ function normalizeLoadedConfig(data: unknown, source: string) {
   delete copy.theme
   delete copy.keybinds
   delete copy.tui
-  log.warn("tui keys in mimocode config are deprecated; move them to tui.json", { path: source })
+  log.warn("tui keys in oimo config are deprecated; move them to tui.json", { path: source })
   return copy
 }
 
@@ -103,7 +103,7 @@ const InfoSchema = Schema.Struct({
   }),
   logLevel: Schema.optional(LogLevelRef).annotate({ description: "Log level" }),
   server: Schema.optional(ConfigServer.Server).annotate({
-    description: "Server configuration for omimo serve and web commands",
+    description: "Server configuration for oimo serve and web commands",
   }),
   command: Schema.optional(Schema.Record(Schema.String, ConfigCommand.Info)).annotate({
     description: "Command configuration, see https://mimo.xiaomi.com/mimocode/commands",
@@ -348,7 +348,7 @@ const InfoSchema = Schema.Struct({
     Schema.Struct({
       cc_index: Schema.optional(Schema.Boolean).annotate({
         description:
-          "Index Claude Code memory (~/.claude/projects/<slug>/memory) and expose under scope='cc'. Default: false. Note: when enabled, every mimocode agent (build/explore/subagents) can search these memories via the builtin `memory` tool — including CC's `type: user` (your role/preferences) and `type: feedback` (your guidance) categories. CC originally writes them for future CC sessions; flipping this on widens the consumer set to mimocode agents on the same machine. Leave disabled (default) if you don't want personal context recallable from a prompt-injection-vulnerable agent.",
+          "Index Claude Code memory (~/.claude/projects/<slug>/memory) and expose under scope='cc'. Default: false. Note: when enabled, every oimo agent (build/explore/subagents) can search these memories via the builtin `memory` tool — including CC's `type: user` (your role/preferences) and `type: feedback` (your guidance) categories. CC originally writes them for future CC sessions; flipping this on widens the consumer set to oimo agents on the same machine. Leave disabled (default) if you don't want personal context recallable from a prompt-injection-vulnerable agent.",
       }),
     }),
   ),
@@ -518,7 +518,7 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@opencode/Config") {}
 
 function globalConfigFile() {
-  const candidates = ["mimocode.jsonc", "mimocode.json", "config.json"].map((file) =>
+  const candidates = ["oimo.jsonc", "oimo.json", "config.json"].map((file) =>
     path.join(Global.Path.config, file),
   )
   for (const file of candidates) {
@@ -617,8 +617,8 @@ export const layer = Layer.effect(
       let result: Info = pipe(
         {},
         mergeDeep(yield* loadFile(path.join(Global.Path.config, "config.json"))),
-        mergeDeep(yield* loadFile(path.join(Global.Path.config, "mimocode.json"))),
-        mergeDeep(yield* loadFile(path.join(Global.Path.config, "mimocode.jsonc"))),
+        mergeDeep(yield* loadFile(path.join(Global.Path.config, "oimo.json"))),
+        mergeDeep(yield* loadFile(path.join(Global.Path.config, "oimo.jsonc"))),
       )
 
       const legacy = path.join(Global.Path.config, "config")
@@ -638,10 +638,10 @@ export const layer = Layer.effect(
       }
 
       // Seed a starter config when no global config file exists yet
-      const globalConfigFile = path.join(Global.Path.config, "mimocode.jsonc")
+      const globalConfigFile = path.join(Global.Path.config, "oimo.jsonc")
       if (
         !existsSync(path.join(Global.Path.config, "config.json")) &&
-        !existsSync(path.join(Global.Path.config, "mimocode.json")) &&
+        !existsSync(path.join(Global.Path.config, "oimo.json")) &&
         !existsSync(globalConfigFile)
       ) {
         const starter = '{\n  "$schema": "https://mimo.xiaomi.com/mimocode/config.json"\n}\n'
@@ -809,7 +809,7 @@ export const layer = Layer.effect(
         }
 
         if (!Flag.MIMOCODE_DISABLE_PROJECT_CONFIG) {
-          for (const file of yield* ConfigPaths.files("mimocode", ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
+          for (const file of yield* ConfigPaths.files("oimo", ctx.directory, ctx.worktree).pipe(Effect.orDie)) {
             yield* merge(file, yield* loadFile(file), "local")
           }
         }
@@ -826,14 +826,14 @@ export const layer = Layer.effect(
 
         const deps: Fiber.Fiber<void, never>[] = []
 
-        // Load Claude Code commands first so .mimocode commands override on name collision.
+        // Load Claude Code commands first so .oimo commands override on name collision.
         for (const dir of yield* ConfigPaths.claudeCommandDirectories(ctx.directory, ctx.worktree)) {
           result.command = mergeDeep(result.command ?? {}, yield* Effect.promise(() => ConfigCommand.load(dir)))
         }
 
         for (const dir of directories) {
-          if (dir.endsWith(".mimocode") || dir === Flag.MIMOCODE_CONFIG_DIR) {
-            for (const file of ["mimocode.json", "mimocode.jsonc"]) {
+          if (dir.endsWith(".oimo") || dir === Flag.MIMOCODE_CONFIG_DIR) {
+            for (const file of ["oimo.json", "oimo.jsonc"]) {
               const source = path.join(dir, file)
               log.debug(`loading config from ${source}`)
               yield* merge(source, yield* loadFile(source))
@@ -871,7 +871,7 @@ export const layer = Layer.effect(
           result.command = mergeDeep(result.command ?? {}, yield* Effect.promise(() => ConfigCommand.load(dir)))
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.load(dir)))
           result.agent = mergeDeep(result.agent ?? {}, yield* Effect.promise(() => ConfigAgent.loadMode(dir)))
-          // Auto-discovered plugins under `.mimocode/plugin(s)` are already local files, so ConfigPlugin.load
+          // Auto-discovered plugins under `.oimo/plugin(s)` are already local files, so ConfigPlugin.load
           // returns normalized Specs and we only need to attach origin metadata here.
           const list = yield* Effect.promise(() => ConfigPlugin.load(dir))
           yield* mergePluginOrigins(dir, list)
@@ -928,7 +928,7 @@ export const layer = Layer.effect(
 
         const managedDir = ConfigManaged.managedConfigDir()
         if (existsSync(managedDir)) {
-          for (const file of ["mimocode.json", "mimocode.jsonc"]) {
+          for (const file of ["oimo.json", "oimo.jsonc"]) {
             const source = path.join(managedDir, file)
             yield* merge(source, yield* loadFile(source), "global")
           }
@@ -965,7 +965,7 @@ export const layer = Layer.effect(
 
         if (Flag.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS || ConfigAutonomy.enabled(result)) {
           // Allow-all base, merged UNDER user config so an explicit deny still
-          // wins. Matches `omimo run --dangerously-skip-permissions`: auto-approve
+          // wins. Matches `oimo run --dangerously-skip-permissions`: auto-approve
           // everything not explicitly denied. Autonomy mode uses the same layer
           // so routine read/edit/bash asks never block; forced-ask stays human-only.
           result.permission = mergeDeep({ "*": "allow" } as ConfigPermission.Info, result.permission ?? {})

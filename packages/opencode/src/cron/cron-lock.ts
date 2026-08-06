@@ -15,7 +15,7 @@ export type LockInfo = {
 
 const PROC_STARTED_AT = Date.now() - Math.floor(process.uptime() * 1000)
 
-export const getLockFilePath = (dir?: string) => join(dir ?? process.cwd(), ".mimocode", ".cron-lock")
+export const getLockFilePath = (dir?: string) => join(dir ?? process.cwd(), ".oimo", ".cron-lock")
 
 const parseLockInfo = (raw: string): LockInfo | null => {
   const obj = Effect.runSync(

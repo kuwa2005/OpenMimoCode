@@ -1,16 +1,16 @@
-<h1 align="center">MiMoCode</h1>
+<h1 align="center">Open Mimo Code</h1>
 
-<p align="center"><strong>MiMo Code: Where Models and Agents Co-Evolve</strong></p>
+<p align="center"><strong>Open Mimo Code: Where Models and Agents Co-Evolve</strong></p>
 
 <p align="center">
-  <a href="https://mimo.xiaomi.com/coder">Website</a> | <a href="https://mimo.xiaomi.com/en/blog/mimo-code-long-horizon">Blog</a> | <a href="https://github.com/XiaomiMiMo/MiMo-Code">GitHub</a>
+  <a href="https://github.com/kuwa2005/OpenMimoCode">GitHub</a> | <a href="https://github.com/kuwa2005/OpenMimoCode/releases">Releases</a>
 </p>
 
 ---
 
-MiMoCode is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while continuously improving itself.
+Open Mimo Code is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while continuously improving itself.
 
-OpenCode Zen is built in as a free default channel, so you can start with zero configuration. MiMoCode also supports connecting to any mainstream LLM provider API.
+OpenCode Zen is built in as a free default channel, so you can start with zero configuration. Open Mimo Code also supports connecting to any mainstream LLM provider API.
 
 ---
 
@@ -39,7 +39,7 @@ Note: mirror registries (e.g. cnpm/taobao) may have delayed platform package syn
 **Run**:
 
 ```bash
-omimo
+oimo
 ```
 
 The first launch guides you through configuration automatically. Supported options:
@@ -74,6 +74,6 @@ For detailed documentation, configuration options, and troubleshooting, see the 
 
 Source code is licensed under the [MIT License](https://github.com/XiaomiMiMo/MiMo-Code/blob/main/LICENSE).
 
-Use of MiMoCode is also subject to the [Use Restrictions](https://github.com/XiaomiMiMo/MiMo-Code/blob/main/USE_RESTRICTIONS.md).
+Use of Open Mimo Code is also subject to the [Use Restrictions](https://github.com/XiaomiMiMo/MiMo-Code/blob/main/USE_RESTRICTIONS.md).
 Use of Xiaomi MiMo-hosted services is subject to the [MiMo Terms of Service](https://platform.xiaomimimo.com/docs/terms/user-agreement).
 Use of the MiMo name, logo, and trademarks is subject to the MiMo Trademark Policy.

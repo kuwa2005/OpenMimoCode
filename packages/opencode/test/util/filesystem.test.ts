@@ -154,20 +154,20 @@ describe("filesystem", () => {
       const nested = path.join(project, "nested")
       await fs.mkdir(nested, { recursive: true })
 
-      await fs.writeFile(path.join(tmp.path, "mimocode.json"), "{}", "utf-8")
-      await fs.writeFile(path.join(tmp.path, "mimocode.jsonc"), "{}", "utf-8")
-      await fs.writeFile(path.join(project, "mimocode.json"), "{}", "utf-8")
-      await fs.writeFile(path.join(project, "mimocode.jsonc"), "{}", "utf-8")
+      await fs.writeFile(path.join(tmp.path, "oimo.json"), "{}", "utf-8")
+      await fs.writeFile(path.join(tmp.path, "oimo.jsonc"), "{}", "utf-8")
+      await fs.writeFile(path.join(project, "oimo.json"), "{}", "utf-8")
+      await fs.writeFile(path.join(project, "oimo.jsonc"), "{}", "utf-8")
 
-      const result = await Filesystem.findUp(["mimocode.json", "mimocode.jsonc"], nested, tmp.path, {
+      const result = await Filesystem.findUp(["oimo.json", "oimo.jsonc"], nested, tmp.path, {
         rootFirst: true,
       })
 
       expect(result).toEqual([
-        path.join(tmp.path, "mimocode.json"),
-        path.join(tmp.path, "mimocode.jsonc"),
-        path.join(project, "mimocode.json"),
-        path.join(project, "mimocode.jsonc"),
+        path.join(tmp.path, "oimo.json"),
+        path.join(tmp.path, "oimo.jsonc"),
+        path.join(project, "oimo.json"),
+        path.join(project, "oimo.jsonc"),
       ])
     })
   })

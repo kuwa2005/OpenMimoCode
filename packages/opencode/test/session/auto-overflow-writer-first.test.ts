@@ -205,7 +205,7 @@ function writerThatFails(): SpawnImpl {
 // usable > 13_000, or SessionPrune.resolveThresholds refuses the window
 // ("too small for checkpoints"). 40_000 satisfies both: usable = 40_000 -
 // 20_100 = 19_900, against the seeded 50_000 tokens.
-function mimocodeConfig(baseURL: string, maxContext = 40_000, checkpoint?: { thresholds: string[]; reserved: number }) {
+function oimoConfig(baseURL: string, maxContext = 40_000, checkpoint?: { thresholds: string[]; reserved: number }) {
   return JSON.stringify({
     $schema: "https://opencode.ai/config.json",
     enabled_providers: ["alibaba"],
@@ -314,7 +314,7 @@ describe("Auto context overflow: write a checkpoint before degrading to compacti
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         await Instance.provide({
@@ -387,8 +387,8 @@ describe("Auto context overflow: write a checkpoint before degrading to compacti
           git: true,
           init: (dir) =>
             Bun.write(
-              path.join(dir, "mimocode.json"),
-              mimocodeConfig(llm.origin, 50_000, { thresholds: ["24K"], reserved: 100 }),
+              path.join(dir, "oimo.json"),
+              oimoConfig(llm.origin, 50_000, { thresholds: ["24K"], reserved: 100 }),
             ),
         })
 
@@ -485,7 +485,7 @@ describe("Auto context overflow: write a checkpoint before degrading to compacti
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         await withSpawnRef(writer, () =>
@@ -567,7 +567,7 @@ describe("Auto context overflow: write a checkpoint before degrading to compacti
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         await withSpawnRef(writer, () =>
@@ -643,7 +643,7 @@ describe("Auto context overflow: write a checkpoint before degrading to compacti
       try {
         await using tmp = await tmpdir({
           git: true,
-          init: (dir) => Bun.write(path.join(dir, "mimocode.json"), mimocodeConfig(llm.origin)),
+          init: (dir) => Bun.write(path.join(dir, "oimo.json"), oimoConfig(llm.origin)),
         })
 
         await withSpawnRef(writer, () =>

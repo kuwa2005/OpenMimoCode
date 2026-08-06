@@ -42,8 +42,8 @@ test("autonomous-loop subsequent fires return short reminder", async () => {
 
 test("loop.md sentinel reads project loop.md and returns fenced content", async () => {
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", "loop.md"), "- check deploy\n- review PRs")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", "loop.md"), "- check deploy\n- review PRs")
   const out = await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
   expect(out).toContain("Loop tasks (from")
   expect(out).toContain("- check deploy")
@@ -53,8 +53,8 @@ test("loop.md sentinel reads project loop.md and returns fenced content", async 
 
 test("loop.md sentinel unchanged content returns short reminder on 2nd fire", async () => {
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", "loop.md"), "tasks here")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", "loop.md"), "tasks here")
   await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
   const out = await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
   expect(out).toMatch(/unchanged/)
@@ -63,8 +63,8 @@ test("loop.md sentinel unchanged content returns short reminder on 2nd fire", as
 
 test("loop.md edited between fires returns full content again", async () => {
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  const p = join(dir, ".mimocode", "loop.md")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  const p = join(dir, ".oimo", "loop.md")
   writeFileSync(p, "v1")
   await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
   writeFileSync(p, "v2")
@@ -83,8 +83,8 @@ test("loop.md absent returns absent-reminder", async () => {
 
 test("loop.md > 25KB is truncated with warning", async () => {
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", "loop.md"), "x".repeat(30_000))
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", "loop.md"), "x".repeat(30_000))
   const out = await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
   expect(out).toContain("truncated to 25000 bytes")
   expect(out.length).toBeLessThan(28_000)
@@ -93,8 +93,8 @@ test("loop.md > 25KB is truncated with warning", async () => {
 
 test("resetOnCompaction clears the cache", async () => {
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", "loop.md"), "content")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", "loop.md"), "content")
   await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
   resetOnCompaction()
   const out = await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
@@ -104,8 +104,8 @@ test("resetOnCompaction clears the cache", async () => {
 
 test("loop.md with backticks gets a longer fence", async () => {
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", "loop.md"), "run ```bash\necho hi\n``` thingy")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", "loop.md"), "run ```bash\necho hi\n``` thingy")
   const out = await resolveAtFireTime(LOOP_FILE_SENTINEL, dir)
   expect(out).toMatch(/````/)
   rmSync(dir, { recursive: true, force: true })
@@ -116,8 +116,8 @@ test("loop.md with backticks gets a longer fence", async () => {
 // "unchanged" reminder if Session A had cached the same content.
 test("loop.md cache does not bleed across sessions", async () => {
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", "loop.md"), "shared content")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", "loop.md"), "shared content")
 
   const a1 = await resolveAtFireTime(LOOP_FILE_SENTINEL, dir, "ses_A")
   expect(a1).toContain("shared content")
@@ -156,8 +156,8 @@ test("autonomous-loop delivery does not bleed across sessions", async () => {
 test("resetOnCompaction(sessionID) is scoped, does not clear sibling sessions", async () => {
   resetOnCompaction() // clean slate
   const dir = mkdtempSync(join(tmpdir(), "sentinel-"))
-  mkdirSync(join(dir, ".mimocode"), { recursive: true })
-  writeFileSync(join(dir, ".mimocode", "loop.md"), "shared body")
+  mkdirSync(join(dir, ".oimo"), { recursive: true })
+  writeFileSync(join(dir, ".oimo", "loop.md"), "shared body")
 
   // Warm the cache for both sessions.
   const a1 = await resolveAtFireTime(LOOP_FILE_SENTINEL, dir, "ses_A")
