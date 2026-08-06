@@ -323,7 +323,10 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
               }
               onMouseOver={() => setTabHover("confirm")}
               onMouseOut={() => setTabHover(null)}
-              onMouseUp={() => selectTab(questions().length)}
+              onMouseUp={() => {
+                if (confirm()) submit()
+                else selectTab(questions().length)
+              }}
             >
               <text fg={confirm() ? selectedForeground(theme, theme.accent) : theme.textMuted}>Confirm</text>
             </box>

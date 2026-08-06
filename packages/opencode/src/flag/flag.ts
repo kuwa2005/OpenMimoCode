@@ -65,6 +65,13 @@ export const Flag = {
     return process.env["MIMOCODE_TOR_PROXY"]
   },
 
+  // Path to a markdown file the TUI appends each completed user→assistant turn
+  // (question + summary) to, set by the `--log` CLI flag. Getter so the CLI
+  // middleware can set MIMOCODE_LOG at parse time before the TUI reads it.
+  get MIMOCODE_LOG() {
+    return process.env["MIMOCODE_LOG"]
+  },
+
   // Defaults to false (rotation enabled). When enabled, the active log file is
   // never archived to <name>.log.<stamp> on hitting MAX_FILE_SIZE — it grows in
   // place. Useful when an external tool tails/manages the single log file.

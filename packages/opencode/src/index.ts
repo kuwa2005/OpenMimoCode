@@ -96,6 +96,10 @@ const cli = yargs(args)
     describe: "route all network traffic through a Tor SOCKS5 proxy",
     type: "boolean",
   })
+  .option("log", {
+    describe: "append each question and its summary from a TUI session to a markdown file",
+    type: "string",
+  })
   .middleware(async (opts) => {
     if (opts.pure) {
       process.env.MIMOCODE_PURE = "1"
@@ -103,6 +107,10 @@ const cli = yargs(args)
 
     if (opts.tor) {
       process.env.MIMOCODE_TOR = "1"
+    }
+
+    if (opts.log) {
+      process.env.MIMOCODE_LOG = path.resolve(opts.log)
     }
 
     await Log.init({

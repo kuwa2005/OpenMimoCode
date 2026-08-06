@@ -4,6 +4,7 @@ import type {
   Provider,
   Session,
   Part,
+  TextPart,
   Config,
   Todo,
   SessionTaskResponse,
@@ -33,6 +34,7 @@ import { Log } from "@/util"
 import { isDirectoryDeniedError } from "@/server/routes/instance/access"
 import { useToastOptional } from "../ui/toast"
 import { emptyConsoleState, type ConsoleState } from "@/config/console-state"
+import { appendSessionLog } from "../session-log"
 
 /**
  * The SDK regenerated the task list as an inline anonymous array on
@@ -216,6 +218,19 @@ export function selectMessages<M extends { id: string }>(
   return newest?.[1] ?? []
 }
 
+// Turns already appended to the --log file (keyed by assistant message id), so
+// repeated message.updated events for the same message never double-write.
+const loggedTurns = new Set<string>()
+
+function textOfParts(parts: Part[] | undefined): string {
+  if (!parts) return ""
+  return parts
+    .filter((p): p is TextPart => p.type === "text" && !p.synthetic && !p.ignored)
+    .map((p) => p.text)
+    .join("\n\n")
+    .trim()
+}
+
 export const { use: useSync, provider: SyncProvider } = createSimpleContext({
   name: "Sync",
   init: () => {
@@ -345,6 +360,19 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
     const fullSyncedSessions = new Set<string>()
     let syncedWorkspace = project.workspace.current()
     let syncedDirectory = sdk.directory
+
+    const maybeAppendSessionLog = (sid: string, aid: string, info: Message) => {
+      if (info.role !== "assistant") return
+      if (!info.time.completed) return
+      if (loggedTurns.has(info.id)) return
+      loggedTurns.add(info.id)
+      const user = store.message[sid]?.[aid]?.findLast((m) => m.role === "user" && m.id < info.id)
+      if (!user) return
+      const question = textOfParts(store.part[user.id])
+      const answer = textOfParts(store.part[info.id])
+      if (!question || !answer) return
+      void appendSessionLog({ question, answer, time: info.time.completed })
+    }
 
     event.subscribe((event) => {
       switch (event.type) {
@@ -579,16 +607,19 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           const aid = event.properties.info.agentID ?? "main"
           if (!store.message[sid]) {
             setStore("message", sid, { [aid]: [event.properties.info] })
+            maybeAppendSessionLog(sid, aid, event.properties.info)
             break
           }
           if (!store.message[sid][aid]) {
             setStore("message", sid, aid, [event.properties.info])
+            maybeAppendSessionLog(sid, aid, event.properties.info)
             break
           }
           const messages = store.message[sid][aid]
           const result = Binary.search(messages, event.properties.info.id, (m) => m.id)
           if (result.found) {
             setStore("message", sid, aid, result.index, reconcile(event.properties.info))
+            maybeAppendSessionLog(sid, aid, event.properties.info)
             break
           }
           setStore(
@@ -619,6 +650,7 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               )
             })
           }
+          maybeAppendSessionLog(sid, aid, event.properties.info)
           break
         }
         case "message.removed": {
