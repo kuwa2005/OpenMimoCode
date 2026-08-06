@@ -55,7 +55,7 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
       },
       keywords: ["ai", "cli", "code", "xiaomi", "mimo", "mimocode"],
       bin: {
-        mimo: "./bin/mimo",
+        omimo: "./bin/omimo",
       },
       scripts: {
         postinstall: "bun ./postinstall.mjs || node ./postinstall.mjs",

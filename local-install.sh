@@ -42,7 +42,7 @@ esac
   bun run build:local
 )
 
-binary="$package_dir/dist/mimocode-$platform-$arch/bin/mimo"
+binary="$package_dir/dist/mimocode-$platform-$arch/bin/omimo"
 if [[ ! -f "$binary" ]]; then
   echo "Built binary not found: $binary" >&2
   exit 1
@@ -52,8 +52,8 @@ mkdir -p "$install_dir"
 temporary="$install_dir/.mimo.$$"
 trap 'rm -f "$temporary"' EXIT
 install -m 755 "$binary" "$temporary"
-mv -f "$temporary" "$install_dir/mimo"
+mv -f "$temporary" "$install_dir/omimo"
 trap - EXIT
 
-echo "Installed mimo to $install_dir/mimo"
-"$install_dir/mimo" --version
+echo "Installed omimo to $install_dir/omimo"
+"$install_dir/omimo" --version

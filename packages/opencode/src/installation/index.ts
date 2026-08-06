@@ -185,7 +185,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         if (downloadResult.code !== 0) return downloadResult
 
         // Replace in-place: Windows allows renaming a running exe
-        const stagedExe = path.join(stageDir, "mimo.exe")
+        const stagedExe = path.join(stageDir, "omimo.exe")
         if (!existsSync(stagedExe))
           return { code: 1 as ChildProcessSpawner.ExitCode, stdout: "", stderr: "staged binary not found at " + stagedExe }
         const oldExe = targetExe + `.old_${pid}`

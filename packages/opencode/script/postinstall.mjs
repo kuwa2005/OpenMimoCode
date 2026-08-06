@@ -50,7 +50,7 @@ function detectPlatformAndArch() {
 function findBinary() {
   const { platform, arch } = detectPlatformAndArch()
   const packageName = `@mimo-ai/mimocode-${platform}-${arch}`
-  const binaryName = platform === "windows" ? "mimo.exe" : "mimo"
+  const binaryName = platform === "windows" ? "omimo.exe" : "omimo"
 
   try {
     // Use require.resolve to find the package
@@ -82,7 +82,7 @@ async function main() {
   printMigrationNotice()
 
   if (os.platform() === "win32") {
-    // On Windows the bin/mimo wrapper finds the binary via node_modules traversal.
+    // On Windows the bin/omimo wrapper finds the binary via node_modules traversal.
     // Skipping the .mimocode cache avoids creating an extensionless PE file that
     // may trigger antivirus false-positives.
     return

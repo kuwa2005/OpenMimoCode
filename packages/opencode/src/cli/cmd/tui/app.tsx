@@ -522,7 +522,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     // gates the actual switch (race-free: uses the freshly-resolved dir, not the
     // async-populated signal).
     // A `-s <orchestratorSessionID>` launch from OUTSIDE orchestratorDir (the
-    // common case: user runs `mimo -s <id>` from a project dir) navigates the
+    // common case: user runs `omimo -s <id>` from a project dir) navigates the
     // route to that session (app.tsx onMount) and auto-restores agent=orchestrator
     // from the session's last message. That drives us here with sdk.directory !==
     // dir. We suppress the view, switch+bootstrap, then navigate ONCE directly to

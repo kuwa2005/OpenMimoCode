@@ -9,7 +9,7 @@ const SCRIPT_PATH = path.join(import.meta.dirname, "../../script/postinstall.mjs
 describe("postinstall", () => {
   const platform = os.platform() === "win32" ? "windows" : os.platform() === "darwin" ? "darwin" : "linux"
   const arch = os.arch()
-  const binaryName = platform === "windows" ? "mimo.exe" : "mimo"
+  const binaryName = platform === "windows" ? "omimo.exe" : "omimo"
   const packageName = `@mimo-ai/mimocode-${platform}-${arch}`
 
   test("creates .mimocode binary cache from platform package", async () => {

@@ -63,7 +63,7 @@ const CLI_EXIT = Symbol("CLI_EXIT")
 
 function show(out: string) {
   const text = out.trimStart()
-  if (!text.startsWith("mimo ")) {
+  if (!text.startsWith("omimo ")) {
     process.stderr.write(UI.logo() + EOL + EOL)
     process.stderr.write(UI.withTrailingEOL(text))
     return
@@ -73,7 +73,7 @@ function show(out: string) {
 
 const cli = yargs(args)
   .parserConfiguration({ "populate--": true })
-  .scriptName("mimo")
+  .scriptName("omimo")
   .wrap(100)
   .help("help", "show help")
   .alias("help", "h")
@@ -184,7 +184,7 @@ const cli = yargs(args)
       try {
         const binDir = path.dirname(process.execPath)
         for (const entry of readdirSync(binDir)) {
-          if (entry.startsWith("mimo.exe.old_")) {
+          if (entry.startsWith("omimo.exe.old_")) {
             try { unlinkSync(path.join(binDir, entry)) } catch {}
           }
         }

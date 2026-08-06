@@ -36,7 +36,7 @@ export function DialogSubagent(props: { sessionID: string }) {
           }
         } else {
           // peer mode: attach to the child's OWN session as a full writable session
-          // (no agentID → its own `main` view, like `mimo -c <id>`), not a read-only slice.
+          // (no agentID → its own `main` view, like `omimo -c <id>`), not a read-only slice.
           route.navigate({ type: "session", sessionID: a.session_id })
         }
         dialog.clear()

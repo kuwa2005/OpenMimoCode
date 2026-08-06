@@ -8,7 +8,7 @@ Config is JSON or JSONC. MiMoCode discovers it by walking up from the cwd to the
 - Global: `~/.config/mimocode/mimocode.jsonc` or `mimocode.json` (XDG config dir). New installs seed `mimocode.jsonc`.
 - Extra config dirs are also searched via `$MIMOCODE_CONFIG_DIR`.
 
-Project config merges **over** global. Always include `"$schema": "https://mimo.xiaomi.com/mimocode/config.json"` for validation.
+Project config merges **over** global. Always include `"$schema": "https://omimo.xiaomi.com/mimocode/config.json"` for validation.
 
 ## On-disk data layout
 
@@ -30,7 +30,7 @@ Memory files live under `~/.local/share/mimocode/memory/`:
 
 - `MIMOCODE_HOME` — override all base dirs (absolute path).
 - `MIMOCODE_CONFIG_DIR` — extra config directory to search.
-- `MIMOCODE_PURE` — run without external plugins (same as `mimo --pure`). Does **not** change models or Claude Code inheritance.
+- `MIMOCODE_PURE` — run without external plugins (same as `omimo --pure`). Does **not** change models or Claude Code inheritance.
 - `MIMOCODE_MIMO_ONLY` — pure-MiMo mode: don't inherit Claude Code settings (CLAUDE.md, `~/.claude/skills`), don't read provider API keys from env, fall back to the mimo-auto model.
 - `MIMOCODE_DISABLE_LOG_ROTATION` — keep a single growing log file instead of rotating.
 - `MIMOCODE_TEXT_TOOL_CALL_RETRY_LIMIT` — retries when a model emits a tool call as prose markup instead of a structured call (default 2).
@@ -61,7 +61,7 @@ Each group maps a name to either a single default model (string shorthand) or an
 
 ```jsonc
 {
-  "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
+  "$schema": "https://omimo.xiaomi.com/mimocode/config.json",
   "model_groups": {
     // string shorthand: the group IS its default model
     "lite": "anthropic/claude-haiku",
@@ -111,7 +111,7 @@ Prefer a markdown file (`.mimocode/agent/<name>.md`, body = system prompt) for d
 
 As context fills, MiMoCode auto-checkpoints (a background writer distills the conversation into `checkpoint.md`) and, near the limit, **rebuilds**: it inserts a boundary at the last successful checkpoint so earlier messages collapse to the checkpoint summary while recent messages are kept verbatim. If a checkpoint writer is still running when a rebuild is needed, the rebuild waits for it (with a visible "Preparing conversation context…" status) — briefly when a usable checkpoint already exists, longer for the very first one — then proceeds; if no checkpoint can be produced it falls back to lossy compaction. You can trigger a rebuild yourself any time with the `/rebuild` slash command.
 
-The trigger is the model's prompt capacity (`limit.input` when the provider publishes one, else `limit.context`) minus the reserves, optionally lowered by `compaction.max_context`. `mimo models <provider>` prints the resolved window and the trigger per model, and `/status` shows both plus the current usage. Two things users hit here: a model's usable window depends on the route (ChatGPT/Codex subscription vs direct API key vs a reseller like OpenRouter can all differ for the same model name, and a 1M catalog figure does not mean the route serves 1M), and providers may price very long prompts higher (OpenAI charges 2x input / 1.5x output for GPT-5.6 requests above 272K input) — `compaction.max_context` is the knob for both.
+The trigger is the model's prompt capacity (`limit.input` when the provider publishes one, else `limit.context`) minus the reserves, optionally lowered by `compaction.max_context`. `omimo models <provider>` prints the resolved window and the trigger per model, and `/status` shows both plus the current usage. Two things users hit here: a model's usable window depends on the route (ChatGPT/Codex subscription vs direct API key vs a reseller like OpenRouter can all differ for the same model name, and a 1M catalog figure does not mean the route serves 1M), and providers may price very long prompts higher (OpenAI charges 2x input / 1.5x output for GPT-5.6 requests above 272K input) — `compaction.max_context` is the knob for both.
 
 | Key | Purpose |
 |-----|---------|
@@ -153,7 +153,7 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 | `autonomy.judge_max_retries` | Judge retries before `judge_failed` stop (default 2) |
 | `experimental.auto_continue` | **Deprecated** — alias for `autonomy.enabled` (does not auto-submit predicted prompts) |
 
-CLI: `mimo --autonomy` or `mimo --se` starts this mode (compose agent, hearing-first). After a `Requirements Lock` approval, never-ask engages for non-stop implementation.
+CLI: `omimo --autonomy` or `omimo --se` starts this mode (compose agent, hearing-first). After a `Requirements Lock` approval, never-ask engages for non-stop implementation.
 
 High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) still require explicit user approval even in autonomy mode.
 
@@ -174,14 +174,14 @@ High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) stil
 | `share` | `"manual"` / `"auto"` / `"disabled"` |
 | `snapshot` | Filesystem snapshot tracking for undo/redo (default true) |
 | `logLevel` | Log verbosity |
-| `server` | Config for `mimo serve` |
+| `server` | Config for `omimo serve` |
 | `enterprise.url` | Enterprise endpoint |
 
 ## Example: common tweaks
 
 ```jsonc
 {
-  "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
+  "$schema": "https://omimo.xiaomi.com/mimocode/config.json",
   "model": "anthropic/claude-opus-4-8",
   "model_groups": { "lite": "anthropic/claude-haiku" },
   "dream": { "auto": true, "interval_days": 3 },

@@ -172,25 +172,25 @@ export const dict = {
   "tui.tips.plugin_protect":
     "Crea un plugin que impida a MiMoCode leer archivos sensibles",
   "tui.tips.run":
-    "Usa {highlight}mimo run{/highlight} para scripting no interactivo",
+    "Usa {highlight}omimo run{/highlight} para scripting no interactivo",
   "tui.tips.continue":
-    "Usa {highlight}mimo --continue{/highlight} para retomar la última sesión",
+    "Usa {highlight}omimo --continue{/highlight} para retomar la última sesión",
   "tui.tips.attach_cli":
-    "Usa {highlight}mimo run -f file.ts{/highlight} para adjuntar archivos vía CLI",
+    "Usa {highlight}omimo run -f file.ts{/highlight} para adjuntar archivos vía CLI",
   "tui.tips.format_json":
     "Usa {highlight}--format json{/highlight} para obtener salida legible por máquina en scripts",
   "tui.tips.serve":
-    "Ejecuta {highlight}mimo serve{/highlight} para acceso headless a la API de MiMoCode",
+    "Ejecuta {highlight}omimo serve{/highlight} para acceso headless a la API de MiMoCode",
   "tui.tips.attach_server":
-    "Usa {highlight}mimo run --attach{/highlight} para conectarte a un servidor en ejecución",
+    "Usa {highlight}omimo run --attach{/highlight} para conectarte a un servidor en ejecución",
   "tui.tips.upgrade":
-    "Ejecuta {highlight}mimo upgrade{/highlight} para actualizar a la última versión",
+    "Ejecuta {highlight}omimo upgrade{/highlight} para actualizar a la última versión",
   "tui.tips.auth_list":
-    "Ejecuta {highlight}mimo auth list{/highlight} para ver todos los proveedores configurados",
+    "Ejecuta {highlight}omimo auth list{/highlight} para ver todos los proveedores configurados",
   "tui.tips.agent_create":
-    "Ejecuta {highlight}mimo agent create{/highlight} para crear un agente con asistente guiado",
+    "Ejecuta {highlight}omimo agent create{/highlight} para crear un agente con asistente guiado",
   "tui.tips.github_install":
-    "Ejecuta {highlight}mimo github install{/highlight} para configurar el workflow de GitHub",
+    "Ejecuta {highlight}omimo github install{/highlight} para configurar el workflow de GitHub",
   "tui.tips.github_oc":
     "Comenta {highlight}/oc{/highlight} en líneas de código de un PR para revisiones puntuales",
   "tui.tips.theme_system":
@@ -226,7 +226,7 @@ export const dict = {
   "tui.tips.external_dir":
     "El permiso {highlight}external_directory{/highlight} protege archivos fuera del proyecto",
   "tui.tips.debug_config":
-    "Ejecuta {highlight}mimo debug config{/highlight} para diagnosticar problemas de configuración",
+    "Ejecuta {highlight}omimo debug config{/highlight} para diagnosticar problemas de configuración",
   "tui.tips.print_logs":
     "Usa la opción {highlight}--print-logs{/highlight} para ver logs detallados en stderr",
   "tui.tips.timeline":

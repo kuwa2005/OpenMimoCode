@@ -7,7 +7,7 @@
 <p align="center"><strong>MiMo Code: Where Models and Agents Co-Evolve</strong></p>
 
 <p align="center">
-  中文 | <a href="README.md">English</a>
+  <a href="README.md">日本語</a> | 中文 | <a href="README.en.md">English</a>
 </p>
 
 <p align="center">
@@ -35,7 +35,7 @@ powershell -ep Bypass -c "irm https://mimo.xiaomi.com/install.ps1 | iex"
 npm install -g @mimo-ai/cli
 
 # 运行
-mimo
+omimo
 ```
 
 首次启动自动引导配置。支持：
@@ -72,13 +72,13 @@ brew install --cask iterm2
 
 ```bash
 # 远端主机
-mimo serve --port 4096
+omimo serve --port 4096
 
 # 本地主机：建立 SSH 端口转发
 ssh -N -L 4096:127.0.0.1:4096 user@remote-host
 
 # 本地主机：在另一个终端连接远端 MiMoCode
-mimo attach http://127.0.0.1:4096
+omimo attach http://127.0.0.1:4096
 ```
 
 如果卡顿来自装饰性动画，可以运行 `/vivid`，或在 `ctrl+p` 命令面板中设置“丰富显示”，根据实际情况在丰富视觉模式和简洁模式间切换。
@@ -473,13 +473,13 @@ Max Mode（并行 best-of-N 推理 + 裁判选优）可通过配置中的 `exper
 
 ```bash
 # TUI —— 启动时会弹出一次红色警告，需你明确接受风险
-mimo --dangerously-skip-permissions
+omimo --dangerously-skip-permissions
 
 # 无头模式
-mimo run --dangerously-skip-permissions "你的提示词"
+omimo run --dangerously-skip-permissions "你的提示词"
 
 # 或通过环境变量（任意入口）
-MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS=1 mimo
+MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS=1 omimo
 ```
 
 它会在你的配置**下方**注入一条“全部放行”的基础规则，因此没有任何规则的工具会自动放行——但你写下的

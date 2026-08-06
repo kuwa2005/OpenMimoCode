@@ -4,9 +4,9 @@ How-to for the features users most often ask about. For config keys see @config.
 
 ## Getting started & auth
 
-1. **Sign in** — `mimo account login <url>` runs a device flow: it prints a URL + code and opens your browser. `/connect` does the same from inside the TUI (e.g. to add OpenRouter). OAuth logins are available for Xiaomi MiMo, Codex (ChatGPT Pro/Plus), and xAI (Grok); Claude Code auth can be imported from `~/.claude/settings*.json`. Other account subcommands: `logout`, `switch`, `orgs`, `open`, `console`.
+1. **Sign in** — `omimo account login <url>` runs a device flow: it prints a URL + code and opens your browser. `/connect` does the same from inside the TUI (e.g. to add OpenRouter). OAuth logins are available for Xiaomi MiMo, Codex (ChatGPT Pro/Plus), and xAI (Grok); Claude Code auth can be imported from `~/.claude/settings*.json`. Other account subcommands: `logout`, `switch`, `orgs`, `open`, `console`.
 2. **Pick a model** — set `"model": "provider/model"` in config, or switch live in the TUI model dialog. Provider API keys are auto-detected from environment variables (unless `MIMOCODE_MIMO_ONLY=1`).
-3. **List what's available** — `mimo models`, `mimo providers`.
+3. **List what's available** — `omimo models`, `omimo providers`.
 
 For a custom base URL, API key, or OpenAI-/Anthropic-compatible model, read @providers.md before editing config; it covers protocol selection, adapter names, provider reuse, secret handling, and local verification.
 
@@ -22,13 +22,13 @@ brew install --cask iterm2
 
 ```bash
 # Remote host
-mimo serve --port 4096
+omimo serve --port 4096
 
 # Local host: keep this tunnel open
 ssh -N -L 4096:127.0.0.1:4096 user@remote-host
 
 # Local host: connect from another terminal
-mimo attach http://127.0.0.1:4096
+omimo attach http://127.0.0.1:4096
 ```
 
 **Decorative animation** — run `/vivid`, or configure the visual-mode option in `ctrl+p`, to switch between Vivid and Minimal visuals as needed. The separate animation override can stop high-frequency motion without changing the selected visual mode.
@@ -96,7 +96,7 @@ Frontmatter fields (all optional except that the body should be non-empty):
 
 **How it reaches the model:** for a primary agent the body is used as the base system prompt in place of the model's default prompt; the usual environment/skills/instructions blocks are still appended. Selecting the mode is session-scoped — the TUI `Tab` picker or, over the SDK, the `agent` field on `session.prompt`. So a desktop/SDK client switches modes by sending `agent: "general"` vs `agent: "build"` per session; the prompt itself lives in the file, server-side.
 
-Verify a file loaded with `mimo agent list` — your agent shows up with its `(primary)` / `(subagent)` mode.
+Verify a file loaded with `omimo agent list` — your agent shows up with its `(primary)` / `(subagent)` mode.
 
 Config-file alternative: instead of a `.md` file you can inline an agent under the `agent` config key (`agent.<name>.prompt`, plus `model`, `mode`, …); the markdown form is preferred for anything beyond a couple of lines.
 
@@ -127,7 +127,7 @@ Add servers under the `mcp` key. Two kinds:
 }
 ```
 
-Inspect/manage with `mimo mcp`. Request timeout defaults to 5000ms (`timeout` per server, or `experimental.mcp_timeout` globally).
+Inspect/manage with `omimo mcp`. Request timeout defaults to 5000ms (`timeout` per server, or `experimental.mcp_timeout` globally).
 
 ## Compose mode
 

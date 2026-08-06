@@ -173,25 +173,25 @@ export const dict = {
   "tui.tips.plugin_protect":
     "Создайте плагин, который запретит MiMoCode читать чувствительные файлы",
   "tui.tips.run":
-    "Используйте {highlight}mimo run{/highlight} для неинтерактивных скриптов",
+    "Используйте {highlight}omimo run{/highlight} для неинтерактивных скриптов",
   "tui.tips.continue":
-    "Используйте {highlight}mimo --continue{/highlight}, чтобы продолжить последнюю сессию",
+    "Используйте {highlight}omimo --continue{/highlight}, чтобы продолжить последнюю сессию",
   "tui.tips.attach_cli":
-    "Используйте {highlight}mimo run -f file.ts{/highlight}, чтобы прикрепить файлы из командной строки",
+    "Используйте {highlight}omimo run -f file.ts{/highlight}, чтобы прикрепить файлы из командной строки",
   "tui.tips.format_json":
     "Используйте {highlight}--format json{/highlight} для машинно-читаемого вывода в скриптах",
   "tui.tips.serve":
-    "Запустите {highlight}mimo serve{/highlight} для headless-доступа к API MiMoCode",
+    "Запустите {highlight}omimo serve{/highlight} для headless-доступа к API MiMoCode",
   "tui.tips.attach_server":
-    "Используйте {highlight}mimo run --attach{/highlight}, чтобы подключиться к запущенному серверу",
+    "Используйте {highlight}omimo run --attach{/highlight}, чтобы подключиться к запущенному серверу",
   "tui.tips.upgrade":
-    "Выполните {highlight}mimo upgrade{/highlight}, чтобы обновиться до последней версии",
+    "Выполните {highlight}omimo upgrade{/highlight}, чтобы обновиться до последней версии",
   "tui.tips.auth_list":
-    "Выполните {highlight}mimo auth list{/highlight}, чтобы увидеть всех настроенных провайдеров",
+    "Выполните {highlight}omimo auth list{/highlight}, чтобы увидеть всех настроенных провайдеров",
   "tui.tips.agent_create":
-    "Выполните {highlight}mimo agent create{/highlight}, чтобы создать агента в пошаговом режиме",
+    "Выполните {highlight}omimo agent create{/highlight}, чтобы создать агента в пошаговом режиме",
   "tui.tips.github_install":
-    "Выполните {highlight}mimo github install{/highlight}, чтобы настроить GitHub-workflow",
+    "Выполните {highlight}omimo github install{/highlight}, чтобы настроить GitHub-workflow",
   "tui.tips.github_oc":
     "Оставьте {highlight}/oc{/highlight} в комментарии к строке PR для точечного код-ревью",
   "tui.tips.theme_system":
@@ -228,7 +228,7 @@ export const dict = {
   "tui.tips.external_dir":
     "Разрешение {highlight}external_directory{/highlight} защищает файлы вне проекта",
   "tui.tips.debug_config":
-    "Выполните {highlight}mimo debug config{/highlight}, чтобы диагностировать проблемы конфигурации",
+    "Выполните {highlight}omimo debug config{/highlight}, чтобы диагностировать проблемы конфигурации",
   "tui.tips.print_logs":
     "Используйте флаг {highlight}--print-logs{/highlight}, чтобы видеть подробные логи в stderr",
   "tui.tips.timeline":
@@ -585,7 +585,7 @@ export const dict = {
   "cli.providers.mimo_free.failed": "Не удалось проверить MiMo Auto (free)",
   "cli.providers.mimo_free.default_set": "Модель по умолчанию: mimo/mimo-auto (контекст 1M, бесплатно)",
   "cli.providers.mimo_free.usage_hint":
-    "Вход не требуется — просто запустите mimo. Для платных/премиум-моделей выберите вход через браузер MiMo.",
+    "Вход не требуется — просто запустите omimo. Для платных/премиум-моделей выберите вход через браузер MiMo.",
   "cli.providers.mimo_login.decrypt_retry": "Ошибка расшифровки, повторите попытку (осталось попыток: {remaining})",
   "cli.providers.mimo_login.decrypt_exhausted": "Ошибка расшифровки, превышено максимальное число попыток",
 

@@ -92,7 +92,7 @@ export const Flag = {
   // allow-all base ruleset is injected UNDER the user's config permission so
   // every tool auto-approves unless the user explicitly denied it.
   MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS: truthy("MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS"),
-  // Set by `mimo --autonomy` / `mimo --se`. Forces autonomy.enabled for this process.
+  // Set by `omimo --autonomy` / `omimo --se`. Forces autonomy.enabled for this process.
   MIMOCODE_AUTONOMY: truthy("MIMOCODE_AUTONOMY"),
   MIMOCODE_DISABLE_DEFAULT_PLUGINS: truthy("MIMOCODE_DISABLE_DEFAULT_PLUGINS"),
   MIMOCODE_DISABLE_LSP_DOWNLOAD: truthy("MIMOCODE_DISABLE_LSP_DOWNLOAD"),

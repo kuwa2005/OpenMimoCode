@@ -103,7 +103,7 @@ const InfoSchema = Schema.Struct({
   }),
   logLevel: Schema.optional(LogLevelRef).annotate({ description: "Log level" }),
   server: Schema.optional(ConfigServer.Server).annotate({
-    description: "Server configuration for mimo serve and web commands",
+    description: "Server configuration for omimo serve and web commands",
   }),
   command: Schema.optional(Schema.Record(Schema.String, ConfigCommand.Info)).annotate({
     description: "Command configuration, see https://mimo.xiaomi.com/mimocode/commands",
@@ -965,7 +965,7 @@ export const layer = Layer.effect(
 
         if (Flag.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS || ConfigAutonomy.enabled(result)) {
           // Allow-all base, merged UNDER user config so an explicit deny still
-          // wins. Matches `mimo run --dangerously-skip-permissions`: auto-approve
+          // wins. Matches `omimo run --dangerously-skip-permissions`: auto-approve
           // everything not explicitly denied. Autonomy mode uses the same layer
           // so routine read/edit/bash asks never block; forced-ask stays human-only.
           result.permission = mergeDeep({ "*": "allow" } as ConfigPermission.Info, result.permission ?? {})

@@ -9,7 +9,7 @@ You are MiMoCode. This skill lets you explain your own features, tell users how 
 
 ## Identity
 
-MiMoCode (CLI binary `mimo`) is an agentic coding tool with a terminal UI, built as a fork of OpenCode. Beyond OpenCode's core (multi-provider, TUI, LSP, MCP, plugins) it adds: persistent memory, intelligent context management, subagent orchestration, goal-driven autonomous loops, compose workflows, and self-improvement via dream/distill.
+MiMoCode (CLI binary `omimo`) is an agentic coding tool with a terminal UI, built as a fork of OpenCode. Beyond OpenCode's core (multi-provider, TUI, LSP, MCP, plugins) it adds: persistent memory, intelligent context management, subagent orchestration, goal-driven autonomous loops, compose workflows, and self-improvement via dream/distill.
 
 ## Feature Map
 
@@ -30,7 +30,7 @@ MiMoCode (CLI binary `mimo`) is an agentic coding tool with a terminal UI, built
 | **Dynamic workflows** | JS scripts that orchestrate many subagents deterministically (fan-out, pipelines, nesting); built-ins include `compose`, `deep-research`, `fact-check`, and `research-experiment` | `.mimocode/workflows/*.js` + `workflow` tool |
 | **Skills / self-extension** | Add tools, hooks, skills under `.mimocode/` | see the `evolve` skill |
 | **Skill discovery** | `/skill-name` slash invocation (2+ in one message auto-load with an orchestration plan); `skill_search` tool matches by exact name/alias + BM25 and auto-loads high-confidence hits; some builtins (`claude-code`, `codex`) only appear when their CLI is installed | `/` autocomplete · automatic |
-| **MCP** | Local & remote Model Context Protocol servers | `mcp` config + `mimo mcp` |
+| **MCP** | Local & remote Model Context Protocol servers | `mcp` config + `omimo mcp` |
 
 ## Configuration Basics
 
@@ -38,11 +38,11 @@ Config file (JSON or JSONC), discovered by walking up from cwd:
 - **Project**: `.mimocode/mimocode.json` (or `.jsonc`)
 - **Global**: `~/.config/mimocode/mimocode.jsonc` (preferred for new files) or `mimocode.json`
 
-Add `"$schema": "https://mimo.xiaomi.com/mimocode/config.json"` for editor validation. All top-level keys are optional; project config merges over global.
+Add `"$schema": "https://omimo.xiaomi.com/mimocode/config.json"` for editor validation. All top-level keys are optional; project config merges over global.
 
 ```jsonc
 {
-  "$schema": "https://mimo.xiaomi.com/mimocode/config.json",
+  "$schema": "https://omimo.xiaomi.com/mimocode/config.json",
   "model": "provider/model",
   "permission": { "external_directory": { "/tmp/**": "allow" } }
 }
@@ -77,7 +77,7 @@ Base dirs follow `MIMOCODE_HOME` (if set, absolute) else XDG. Data typically liv
 
 ## Commands
 
-`mimo` subcommands (`mcp`, `run`, `agent`, `models`, `providers`, `upgrade`, `stats`, `export`/`import`, `github`/`pr`, `serve`, …) and slash commands (`/goal`, `/dream`, `/distill`, `/vivid`, `/voice`, `/loop`, `/connect`, `/<skill-name>`) are documented in @reference/commands.md.
+`omimo` subcommands (`mcp`, `run`, `agent`, `models`, `providers`, `upgrade`, `stats`, `export`/`import`, `github`/`pr`, `serve`, …) and slash commands (`/goal`, `/dream`, `/distill`, `/vivid`, `/voice`, `/loop`, `/connect`, `/<skill-name>`) are documented in @reference/commands.md.
 
 ## Helping the User Configure
 

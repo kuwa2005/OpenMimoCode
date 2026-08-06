@@ -1,37 +1,37 @@
 # MiMoCode Commands Reference
 
-## CLI (`mimo <command>`)
+## CLI (`omimo <command>`)
 
-Invoked from the shell. `mimo` with no command opens the TUI.
+Invoked from the shell. `omimo` with no command opens the TUI.
 
 | Command | Purpose |
 |---------|---------|
-| `mimo` | Launch the interactive TUI |
-| `mimo run` | Headless, non-interactive run (scripting/eval) |
-| `mimo mcp` | Manage / inspect MCP servers |
-| `mimo agent` | Manage agents |
-| `mimo models` | List available models |
-| `mimo providers` | List / manage providers |
-| `mimo account` (console) | Account / login console |
-| `mimo upgrade` | Update to the latest version |
-| `mimo uninstall` | Uninstall MiMoCode |
-| `mimo serve` | Run the server |
-| `mimo stats` | Usage statistics |
-| `mimo export` / `mimo import` | Export / import sessions |
-| `mimo session` | Manage sessions |
-| `mimo github` / `mimo pr` | GitHub / pull-request integration |
-| `mimo generate` | Code generation entry |
-| `mimo plugin` (plug) | Manage plugins |
-| `mimo db` | Database utilities |
-| `mimo acp` / `mimo attach` | ACP / attach to a running session |
-| `mimo debug` | Debug utilities |
-| `mimo completion` | Generate shell completion script |
+| `omimo` | Launch the interactive TUI |
+| `omimo run` | Headless, non-interactive run (scripting/eval) |
+| `omimo mcp` | Manage / inspect MCP servers |
+| `omimo agent` | Manage agents |
+| `omimo models` | List available models |
+| `omimo providers` | List / manage providers |
+| `omimo account` (console) | Account / login console |
+| `omimo upgrade` | Update to the latest version |
+| `omimo uninstall` | Uninstall MiMoCode |
+| `omimo serve` | Run the server |
+| `omimo stats` | Usage statistics |
+| `omimo export` / `omimo import` | Export / import sessions |
+| `omimo session` | Manage sessions |
+| `omimo github` / `omimo pr` | GitHub / pull-request integration |
+| `omimo generate` | Code generation entry |
+| `omimo plugin` (plug) | Manage plugins |
+| `omimo db` | Database utilities |
+| `omimo acp` / `omimo attach` | ACP / attach to a running session |
+| `omimo debug` | Debug utilities |
+| `omimo completion` | Generate shell completion script |
 
-Run `mimo <command> --help` for flags on any command.
+Run `omimo <command> --help` for flags on any command.
 
 Notable TUI flags: `--continue`/`-c` (resume last session), `--session`/`-s`, `--model`/`-m`, `--agent`, `--never-ask`, `--trust`, and `--dangerously-skip-permissions` (auto-approve everything not explicitly denied; prompts once for confirmation — see permissions.md).
 
-For terminal compatibility, TUI rendering or lag, and local rendering over SSH with `mimo serve` + `mimo attach`, see @guide.md.
+For terminal compatibility, TUI rendering or lag, and local rendering over SSH with `omimo serve` + `omimo attach`, see @guide.md.
 
 ## Slash commands (inside the TUI)
 

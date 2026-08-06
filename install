@@ -22,7 +22,7 @@ Options:
 Examples:
     curl -fsSL https://mimo.xiaomi.com/install | bash
     curl -fsSL https://mimo.xiaomi.com/install | bash -s -- --version 0.1.0
-    ./install --binary /path/to/mimo
+    ./install --binary /path/to/omimo
 EOF
 }
 
@@ -227,11 +227,11 @@ print_message() {
 }
 
 check_version() {
-    if command -v mimo >/dev/null 2>&1; then
-        mimo_path=$(which mimo)
+    if command -v omimo >/dev/null 2>&1; then
+        omimo_path=$(which omimo)
 
         ## Check the installed version
-        installed_version=$(mimo --version 2>/dev/null || echo "")
+        installed_version=$(omimo --version 2>/dev/null || echo "")
 
         if [[ "$installed_version" != "$specific_version" ]]; then
             print_message info "${MUTED}Installed version: ${NC}$installed_version."
@@ -348,15 +348,15 @@ download_and_install() {
         unzip -q "$tmp_dir/$filename" -d "$tmp_dir"
     fi
 
-    mv "$tmp_dir/mimo" "$INSTALL_DIR"
-    chmod 755 "${INSTALL_DIR}/mimo"
+    mv "$tmp_dir/omimo" "$INSTALL_DIR"
+    chmod 755 "${INSTALL_DIR}/omimo"
     rm -rf "$tmp_dir"
 }
 
 install_from_binary() {
     print_message info "\n${MUTED}Installing ${NC}mimocode ${MUTED}from: ${NC}$binary_path"
-    cp "$binary_path" "${INSTALL_DIR}/mimo"
-    chmod 755 "${INSTALL_DIR}/mimo"
+    cp "$binary_path" "${INSTALL_DIR}/omimo"
+    chmod 755 "${INSTALL_DIR}/omimo"
 }
 
 if [ -n "$binary_path" ]; then
@@ -479,13 +479,13 @@ if [[ ":$PATH:" != *":$INSTALL_DIR:"* ]]; then
     else
         echo -e "export PATH=$INSTALL_DIR:\$PATH"
     fi
-    echo -e "cd <project>"
-    echo -e "mimo"
+        echo -e "cd <project>"
+        echo -e "omimo"
 else
     echo -e "${MUTED}To start:${NC}"
     echo -e ""
     echo -e "cd <project>  ${MUTED}# Open directory${NC}"
-    echo -e "mimo          ${MUTED}# Run command${NC}"
+    echo -e "omimo          ${MUTED}# Run command${NC}"
 fi
 echo -e ""
 echo -e "${MUTED}For more information visit ${NC}https://mimo.xiaomi.com/coder/docs"
