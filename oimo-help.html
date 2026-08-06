@@ -189,6 +189,8 @@
   tr:last-child td { border-bottom: none; }
   td.flag { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; color: var(--purple); width: 34%; }
   td .def { color: var(--muted); font-size: 12px; }
+  td .why { display: block; margin-top: 4px; color: var(--ink-soft); font-size: 12.5px; }
+  td .why::before { content: "用途: "; color: var(--purple-soft); font-weight: 700; }
   tbody tr:hover { background: #faf8fd; }
 
   pre.ex {
@@ -355,7 +357,8 @@
       <p>
         コマンドは基本 <code>oimo &lt;コマンド&gt; [引数..] [オプション..]</code> の形式です。
         引数を省略して <code>oimo</code> だけを実行すると、カレントディレクトリをプロジェクトとして
-        対話 UI（TUI）が起動します。
+        対話 UI（TUI）が起動します。オプション（<code>--</code> で始まる指定）は、そのコマンドの
+        動作を細かく調整するために使います。
       </p>
       <h3 class="sub">コマンド一覧</h3>
       <table>
@@ -401,6 +404,7 @@
       <p>
         詳しいヘルプはいつでも <code>oimo --help</code>（コマンド全体）または
         <code>oimo &lt;コマンド&gt; --help</code>（個別コマンド）で表示できます。
+        また、このマニュアル内では各オプションに「用途」として、いつ・何のために使うのかを補足しています。
       </p>
     </section>
 
@@ -416,42 +420,42 @@
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">-h, --help</td><td>ヘルプを表示</td></tr>
-          <tr><td class="flag">-v, --version</td><td>バージョンを表示</td></tr>
-          <tr><td class="flag">--print-logs</td><td>ログを stderr に出力</td></tr>
-          <tr><td class="flag">--log-level</td><td>ログレベル <span class="def">DEBUG / INFO / WARN / ERROR</span></td></tr>
-          <tr><td class="flag">--pure</td><td>外部プラグインなしで実行</td></tr>
-          <tr><td class="flag">--tor</td><td>全通信を Tor SOCKS5 プロキシ経由にルーティング</td></tr>
-          <tr><td class="flag">--log &lt;file&gt;</td><td>TUI セッションの質問と要約を Markdown ファイルに追記</td></tr>
+          <tr><td class="flag">-h, --help</td><td>ヘルプを表示<span class="why">コマンド名・オプション名を忘れたときにその場で確認するために使います。<code>oimo run --help</code> のように個別コマンドにも付けられます。</span></td></tr>
+          <tr><td class="flag">-v, --version</td><td>バージョンを表示<span class="why">今のバージョンを知るために使います。不具合報告やアップグレードの要否判断、<code>oimo upgrade</code> でどこまで上げるか確認する際に便利です。</span></td></tr>
+          <tr><td class="flag">--print-logs</td><td>ログを stderr に出力<span class="why">トラブルシューティング用です。ログファイルを開かなくても、起動中の oimo の内部ログをそのまま画面に出して原因を追えます。</span></td></tr>
+          <tr><td class="flag">--log-level</td><td>ログレベル <span class="def">DEBUG / INFO / WARN / ERROR</span><span class="why">ログの出力量を制御します。原因調査で詳細が見たいときは <code>DEBUG</code>、普段は <code>WARN</code> や <code>ERROR</code> に絞る、といった使い分けをします。</span></td></tr>
+          <tr><td class="flag">--pure</td><td>外部プラグインなしで実行<span class="why">プラグインの影響を切り分けるためのモードです。「プラグインを入れてから挙動がおかしくなった」という場合に、これを付けて起動すると素の状態と比較できます。</span></td></tr>
+          <tr><td class="flag">--tor</td><td>全通信を Tor SOCKS5 プロキシ経由にルーティング<span class="why">通信先に自分の IP アドレスを知られたくない場合に使います（匿名化）。ローカルに Tor デーモン（既定 <code>socks5h://127.0.0.1:9050</code>）を起動しておく必要があります。モデル API 呼び出しなど oimo の通信全体が対象です。</span></td></tr>
+          <tr><td class="flag">--log &lt;file&gt;</td><td>TUI セッションの質問と要約を Markdown ファイルに追記<span class="why">作業の記録・振り返り用です。会話の全文ではなく、質問と最終的な要約だけが指定ファイルに追記されていくので、日報や議事録の材料として使えます。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">ネットワークオプション（TUI / serve / acp 共通）</h3>
       <table>
         <thead><tr><th>オプション</th><th>説明</th><th>既定値</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--port</td><td>リッスンポート</td><td class="def">0（自動）</td></tr>
-          <tr><td class="flag">--hostname</td><td>リッスンするホスト名</td><td class="def">127.0.0.1</td></tr>
-          <tr><td class="flag">--mdns</td><td>mDNS サービスディスカバリを有効化（hostname が 0.0.0.0 になる）</td><td class="def">false</td></tr>
-          <tr><td class="flag">--mdns-domain</td><td>mDNS 用のカスタムドメイン</td><td class="def">oimo.local</td></tr>
-          <tr><td class="flag">--cors</td><td>CORS を許可する追加ドメイン（複数指定可）</td><td class="def">[]</td></tr>
-          <tr><td class="flag">--no-auth</td><td>非ループバックアドレスで認証なし起動を許可（危険）</td><td class="def">false</td></tr>
+          <tr><td class="flag">--port</td><td>リッスンポート<span class="why">サーバーとして公開するポートを固定したいときに指定します。既定は 0（自動で空きポートを選択）。ポートフォワードやファイアウォールの設定に合わせて固定します。</span></td><td class="def">0（自動）</td></tr>
+          <tr><td class="flag">--hostname</td><td>リッスンするホスト名<span class="why"><code>0.0.0.0</code> にすると LAN 上の他のマシンからもアクセスできます（その場合 <code>MIMOCODE_SERVER_PASSWORD</code> による認証が必須）。既定の 127.0.0.1 はローカル専用です。</span></td><td class="def">127.0.0.1</td></tr>
+          <tr><td class="flag">--mdns</td><td>mDNS サービスディスカバリを有効化<span class="why">同じネットワーク内の他のマシンから、サーバーの存在を自動検出（Bonjour / Zeroconf 相当）できるようにします。有効にすると hostname が 0.0.0.0 になります。</span></td><td class="def">false</td></tr>
+          <tr><td class="flag">--mdns-domain</td><td>mDNS 用のカスタムドメイン<span class="why">mDNS で探すときの検索ドメインを変更したい場合に使います。複数サーバーをドメインで区別したいときなど。</span></td><td class="def">oimo.local</td></tr>
+          <tr><td class="flag">--cors</td><td>CORS を許可する追加ドメイン（複数指定可）<span class="why">Web クライアントなど、別オリジンからサーバー API を呼び出す場合に許可ドメインを追加します。ブラウザからのアクセスを想定した開発時などに使います。</span></td><td class="def">[]</td></tr>
+          <tr><td class="flag">--no-auth</td><td>非ループバックアドレスで認証なし起動を許可（危険）<span class="why">テストや信頼できるネットワーク内でのみ使う危険なオプションです。通常は非ループバックで起動する場合、<code>MIMOCODE_SERVER_PASSWORD</code> の設定が必須ですが、これを付けると認証なしで公開できます。</span></td><td class="def">false</td></tr>
         </tbody>
       </table>
       <h3 class="sub">TUI 起動オプション</h3>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span></td></tr>
-          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続</td></tr>
-          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続</td></tr>
-          <tr><td class="flag">--fork</td><td>継続時にセッションをフォーク <span class="def">（--continue または --session と併用）</span></td></tr>
-          <tr><td class="flag">--prompt</td><td>使用するプロンプト</td></tr>
-          <tr><td class="flag">--agent</td><td>使用するエージェント</td></tr>
-          <tr><td class="flag">--never-ask</td><td>never-ask モードで開始（権限系は対象外。実行中は /never-ask で切替）</td></tr>
-          <tr><td class="flag">--autonomy, --se</td><td>SE 型自律実行モード（要件を聞いてロック → 証跡付きでノンストップ開発。compose エージェントを暗黙指定）</td></tr>
-          <tr><td class="flag">--trust</td><td>ワークスペース信頼確認をスキップしてそのディレクトリを信頼</td></tr>
-          <tr><td class="flag">--dangerously-skip-permissions</td><td>明示的に拒否されていない権限を自動承認（危険）</td></tr>
-          <tr><td class="flag">--auto</td><td>上記と同じ自動承認に加え、ワークスペース信頼確認もスキップ（危険）</td></tr>
+          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span><span class="why">デフォルトモデル以外を使いたいときに指定します。例: <code>oimo -m openai/gpt-5.6</code>。選択できるモデルは <code>oimo models</code> で確認できます。</span></td></tr>
+          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続<span class="why">前回の会話の続きから再開したいときに使います。中断した作業の再開が主な用途です。</span></td></tr>
+          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続<span class="why">特定の過去セッションを選んで再開したいときに使います。<code>oimo session list</code> で ID を確認できます。</span></td></tr>
+          <tr><td class="flag">--fork</td><td>継続時にセッションをフォーク <span class="def">（--continue または --session と併用）</span><span class="why">元のセッションを変えずに、分岐したコピー上で別の進め方を試したいときに使います。「やり直し」「別アプローチを試す」に適しています。</span></td></tr>
+          <tr><td class="flag">--prompt</td><td>使用するプロンプト<span class="why">最初の入力をコマンドラインから指定したいときに使います。標準入力（パイプ）で渡すこともできます。例: <code>oimo --prompt "README を作成して"</code>。</span></td></tr>
+          <tr><td class="flag">--agent</td><td>使用するエージェント<span class="why">エージェント（build / plan / compose など）を選びたいときに指定します。TUI では起動後も <code>/agent</code> コマンドで切り替えられます。</span></td></tr>
+          <tr><td class="flag">--never-ask</td><td>never-ask モードで開始（権限系は対象外）<span class="why">AI 側からの確認質問を省略して先へ進めるモードです。ただし危険な権限（bash の実行など）は対象外で、通常どおり確認されます。実行中は <code>/never-ask</code> でオン/オフを切り替えられます。</span></td></tr>
+          <tr><td class="flag">--autonomy, --se</td><td>SE 型自律実行モード<span class="why">「ソフトウェアエンジニア型の自律実行」をしたいときに使います。要件をヒアリングしてロックした後、書類証跡（要件・テスト基準・検証結果）を残しながらノンストップで実装を進めます。compose エージェントを暗黙指定します。</span></td></tr>
+          <tr><td class="flag">--trust</td><td>ワークスペース信頼確認をスキップ<span class="why">起動時に毎回出る「このディレクトリを信頼しますか?」をスキップして即作業に入りたいときに使います。自分が管理するディレクトリで便利です。</span></td></tr>
+          <tr><td class="flag">--dangerously-skip-permissions</td><td>明示的に拒否されていない権限を自動承認（危険）<span class="why">CI や自動実行など、確認を挟まず進めたい場合の危険なオプションです。ファイル削除やコマンド実行の都度確認が出なくなるため、内容を把握した上で使います。</span></td></tr>
+          <tr><td class="flag">--auto</td><td>自動承認 + ワークスペース信頼確認もスキップ（危険）<span class="why"><code>--dangerously-skip-permissions</code> と同等の自動承認に加え、ワークスペースの信頼確認もスキップします。完全に自動で走らせたいとき（CI など）のためのショートカットです。</span></td></tr>
         </tbody>
       </table>
     </section>
@@ -462,12 +466,12 @@
         <h2><span class="kw">oimo</span> [project]</h2>
         <span class="tag">既定コマンド</span>
       </div>
-      <p class="cmd-desc">対話 UI（TUI）を起動します。</p>
+      <p class="cmd-desc">対話 UI（TUI）を起動します。ターミナル上でエージェントと会話しながら作業する、最も基本的な使い方です。</p>
       <div class="term"><span class="p">$</span> oimo [project] [options]</div>
       <table>
         <thead><tr><th>引数</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">project</td><td>作業を開始するディレクトリのパス（省略時はカレントディレクトリ）</td></tr>
+          <tr><td class="flag">project</td><td>作業を開始するディレクトリのパス（省略時はカレントディレクトリ）<span class="why">複数のプロジェクトを行き来する場合、対象ディレクトリを明示します。例: <code>oimo ~/work/app-a</code>。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -502,35 +506,35 @@ oimo --tor --auto</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo run</span> [message..]</h2>
       </div>
-      <p class="cmd-desc">メッセージを渡して非対話で 1 回だけ実行します。パイプ入力された標準入力もメッセージとして扱われます。また <code>--</code> 以降のトークンはメッセージに追加されます。</p>
+      <p class="cmd-desc">メッセージを渡して非対話で 1 回だけ実行します。対話 UI を開かずに「この指示を 1 回処理する」用途です。スクリプト・CI・パイプ処理と組み合わせやすいのが特徴です。</p>
       <div class="term"><span class="p">$</span> oimo run [message..] [options]</div>
       <table>
         <thead><tr><th>引数</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">message..</td><td>送信するメッセージ（複数指定すると連結）</td></tr>
+          <tr><td class="flag">message..</td><td>送信するメッセージ（複数指定すると連結）<span class="why">「何をやるか」をその場で渡します。複数指定した場合はスペース区切りで連結されます。<code>--</code> 以降に書いた単語もメッセージ末尾に追加されます。</span></td></tr>
         </tbody>
       </table>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--command</td><td>実行するコマンド（引数は message で渡す）</td></tr>
-          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続</td></tr>
-          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続</td></tr>
-          <tr><td class="flag">--fork</td><td>継続前にセッションをフォーク <span class="def">（--continue / --session 必須）</span></td></tr>
-          <tr><td class="flag">--share</td><td>セッションを共有（共有 URL を生成）</td></tr>
-          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span></td></tr>
-          <tr><td class="flag">--agent</td><td>使用するエージェント</td></tr>
-          <tr><td class="flag">--format</td><td>出力形式 <span class="def">default（整形済み）/ json（生の JSON イベント）</span></td></tr>
-          <tr><td class="flag">-f, --file</td><td>メッセージに添付するファイル（複数指定可）</td></tr>
-          <tr><td class="flag">--title</td><td>セッションのタイトル（省略時はプロンプト先頭から自動生成）</td></tr>
-          <tr><td class="flag">--attach &lt;url&gt;</td><td>実行中の oimo サーバーに接続して実行 <span class="def">例: http://localhost:4096</span></td></tr>
-          <tr><td class="flag">-p, --password</td><td>Basic 認証パスワード <span class="def">（既定: MIMOCODE_SERVER_PASSWORD）</span></td></tr>
-          <tr><td class="flag">--dir &lt;path&gt;</td><td>実行ディレクトリ（アタッチ時はリモート上のパス）</td></tr>
-          <tr><td class="flag">--port</td><td>ローカルサーバーのポート（省略時はランダム）</td></tr>
-          <tr><td class="flag">--variant</td><td>モデルバリアント（プロバイダ固有の reasoning effort 等）</td></tr>
-          <tr><td class="flag">--thinking</td><td>thinking ブロックを表示</td></tr>
-          <tr><td class="flag">--role</td><td>注入メッセージのロール <span class="def">user / assistant（assistant はテキストをモデル出力として注入して継続）</span></td></tr>
-          <tr><td class="flag">--auto</td><td>明示的に拒否されていない権限を自動承認（危険）</td></tr>
+          <tr><td class="flag">--command</td><td>実行するコマンド（引数は message で渡す）<span class="why">定型の指示を変数化して使い回したいときに使います。例: <code>oimo run --command "テストを実行して" --dir packages/opencode</code>。</span></td></tr>
+          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続<span class="why">前回の <code>run</code> の続きをやりたいときに使います。文脈を引き継いで続行できます。</span></td></tr>
+          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続<span class="why">特定の過去セッションを選んで続きを実行したいときに使います。</span></td></tr>
+          <tr><td class="flag">--fork</td><td>継続前にセッションをフォーク <span class="def">（--continue / --session 必須）</span><span class="why">元のセッションを汚さず、分岐したコピーで試行したいときに使います。</span></td></tr>
+          <tr><td class="flag">--share</td><td>セッションを共有（共有 URL を生成）<span class="why">実行結果を共有 URL として公開し、レビュワーや別の開発者に見せたいときに使います。他人が <code>oimo import</code> で取り込んで続きを引き継ぐこともできます。</span></td></tr>
+          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span><span class="why">この 1 回だけ別のモデルで実行したいときに使います。</span></td></tr>
+          <tr><td class="flag">--agent</td><td>使用するエージェント<span class="why">plan（調査・設計）で先に検討させてから build で実装する、といったエージェントの使い分けをしたいときに使います。</span></td></tr>
+          <tr><td class="flag">--format</td><td>出力形式 <span class="def">default（整形済み）/ json（生の JSON イベント）</span><span class="why"><code>json</code> は <code>tool_use</code> / <code>step_start</code> / <code>step_finish</code> / <code>text</code> などのイベントが NDJSON で流れるため、<code>jq</code> などで機械的に処理したいときに使います。</span></td></tr>
+          <tr><td class="flag">-f, --file</td><td>メッセージに添付するファイル（複数指定可）<span class="why">特定のファイルを対象にレビューや修正を依頼するときに使います。例: <code>oimo run -f src/main.ts "このファイルをレビューして"</code>。</span></td></tr>
+          <tr><td class="flag">--title</td><td>セッションのタイトル<span class="why">セッション一覧で見分けやすいように名前を付けておきたいときに使います。省略時はプロンプトの先頭から自動生成されます。</span></td></tr>
+          <tr><td class="flag">--attach &lt;url&gt;</td><td>実行中の oimo サーバーに接続して実行 <span class="def">例: http://localhost:4096</span><span class="why">重い処理をリモートの <code>oimo serve</code> で実行したいときに使います。ローカルでは接続するだけなので、マシンが変わっても同じ環境で実行できます。</span></td></tr>
+          <tr><td class="flag">-p, --password</td><td>Basic 認証パスワード <span class="def">（既定: MIMOCODE_SERVER_PASSWORD）</span><span class="why"><code>--attach</code> で接続するサーバーがパスワード認証付きの場合に使います。環境変数でも設定できます。</span></td></tr>
+          <tr><td class="flag">--dir &lt;path&gt;</td><td>実行ディレクトリ<span class="why">別のディレクトリを対象に実行したいときに使います。<code>--attach</code> 時は、そのパスはリモートサーバー上のパスとして扱われます。</span></td></tr>
+          <tr><td class="flag">--port</td><td>ローカルサーバーのポート<span class="why">内部で起動するローカルサーバーのポートを固定したいときに使います。省略時はランダムです。</span></td></tr>
+          <tr><td class="flag">--variant</td><td>モデルバリアント（reasoning effort 等）<span class="why">モデルごとの「考える深さ」を指定したいときに使います。プロバイダ固有の値（high / max / minimal など）を渡します。複雑なタスクは high、手早く済ませたいときは minimal、といった使い分けです。</span></td></tr>
+          <tr><td class="flag">--thinking</td><td>thinking ブロックを表示<span class="why">モデルの思考過程（回答に至るまでの推論）を画面に出したいときに使います。結果が腑に落ちないときの確認に有効です。</span></td></tr>
+          <tr><td class="flag">--role</td><td>注入メッセージのロール <span class="def">user / assistant</span><span class="why"><code>assistant</code> を指定すると、渡したテキストが「AI がすでに言ったこと」として注入され、その続きの生成を促します。会話を途中から再現・誘導したい特殊な用途です。</span></td></tr>
+          <tr><td class="flag">--auto</td><td>明示的に拒否されていない権限を自動承認（危険）<span class="why">CI や夜間実行など、対話なしで完結させたいときに使います。コマンド実行の都度の確認がなくなるため、対象を限定して使います。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -561,22 +565,22 @@ oimo run --attach http://127.0.0.1:4096 "リモートで実行して"</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo attach</span> &lt;url&gt;</h2>
       </div>
-      <p class="cmd-desc">実行中の oimo サーバーに接続し、そのサーバーに対して対話 UI（TUI）を起動します。</p>
+      <p class="cmd-desc">実行中の oimo サーバーに接続し、そのサーバーに対して対話 UI（TUI）を起動します。表示はローカル、処理はリモートという使い方のためのコマンドです。</p>
       <div class="term"><span class="p">$</span> oimo attach &lt;url&gt; [options]</div>
       <table>
         <thead><tr><th>引数</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">url</td><td>接続先サーバーの URL <span class="def">例: http://localhost:4096</span></td></tr>
+          <tr><td class="flag">url</td><td>接続先サーバーの URL <span class="def">例: http://localhost:4096</span><span class="why">SSH ポートフォワードでつないだリモートのサーバーや、LAN 上の <code>oimo serve</code> を指定します。</span></td></tr>
         </tbody>
       </table>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--dir</td><td>作業ディレクトリ（ローカルに無ければリモート上のパスとして送信）</td></tr>
-          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続</td></tr>
-          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続</td></tr>
-          <tr><td class="flag">--fork</td><td>継続時にセッションをフォーク <span class="def">（--continue / --session と併用）</span></td></tr>
-          <tr><td class="flag">-p, --password</td><td>Basic 認証パスワード <span class="def">（既定: MIMOCODE_SERVER_PASSWORD）</span></td></tr>
+          <tr><td class="flag">--dir</td><td>作業ディレクトリ<span class="why">ローカルとリモートでディレクトリ構成が違う場合に、リモート側で作業するパスを指定します。ローカルに存在する場合はローカルで作業、無ければリモート上のパスとして送られます。</span></td></tr>
+          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続<span class="why">サーバー上の直前セッションを続けたいときに使います。</span></td></tr>
+          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続<span class="why">サーバー上の特定セッションを選んで再開したいときに使います。</span></td></tr>
+          <tr><td class="flag">--fork</td><td>継続時にセッションをフォーク <span class="def">（--continue / --session と併用）</span><span class="why">元を残して別ブランチで進めたいときに使います。</span></td></tr>
+          <tr><td class="flag">-p, --password</td><td>Basic 認証パスワード <span class="def">（既定: MIMOCODE_SERVER_PASSWORD）</span><span class="why">接続先サーバーがパスワード認証付きの場合に使います。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -587,6 +591,9 @@ oimo attach http://127.0.0.1:4096
 <span class="cm"># SSH ポートフォワードでリモートのサーバーに接続</span>
 ssh -N -L 4096:127.0.0.1:4096 user@remote-host
 oimo attach http://127.0.0.1:4096</pre>
+      <div class="note info">
+        TUI が遅くなる環境（SSH 直打ちなど）では、表示をローカル、実行をリモートに分離すると快適です。
+      </div>
     </section>
 
     <!-- ======================= SERVE ======================= -->
@@ -594,7 +601,7 @@ oimo attach http://127.0.0.1:4096</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo serve</span></h2>
       </div>
-      <p class="cmd-desc">ヘッドレス（UI なし）の oimo サーバーを起動します。リモートホストや CI 環境でサーバーだけを立ち上げ、別のマシンから <code>oimo attach</code> / <code>oimo run --attach</code> で接続する用途に使います。</p>
+      <p class="cmd-desc">ヘッドレス（UI なし）の oimo サーバーを起動します。TUI を持たないマシン（リモートサーバー・CI 環境）で「処理する側」を立て、別のマシンから接続するためのコマンドです。</p>
       <div class="term"><span class="p">$</span> oimo serve [options]</div>
       <h3 class="sub">例</h3>
       <pre class="ex"><span class="cm"># ポート 4096 でサーバーを起動</span>
@@ -617,18 +624,26 @@ oimo serve --mdns --port 4096</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo acp</span></h2>
       </div>
-      <p class="cmd-desc">ACP（Agent Client Protocol）サーバーを起動します。ヘッドレスサーバーを起動し、標準入出力を NDJSON ストリームで ACP エージェントとして橋渡しします。</p>
+      <p class="cmd-desc">ACP（Agent Client Protocol）サーバーを起動します。ACP 対応のホスト（IDE やエージェントクライアント）から oimo をエージェントとして使うためのコマンドです。</p>
+      <p class="cmd-desc" style="margin-top:-6px">
+        <strong>ACP とは</strong> — エージェントとクライアントを標準入出力（NDJSON ストリーム）で接続するためのプロトコルです。
+        <code>oimo acp</code> は oimo をヘッドレスサーバーとして起動し、そのやり取りを ACP の規格に変換します。
+        そのため、ACP を話せるクライアントからは oimo を「差し替え可能なエージェント」として組み込めます。
+      </p>
       <div class="term"><span class="p">$</span> oimo acp [network-options] [--cwd &lt;dir&gt;]</div>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--cwd</td><td>作業ディレクトリ <span class="def">（既定: カレントディレクトリ）</span></td></tr>
-          <tr><td class="flag">--port / --hostname / --mdns / --mdns-domain / --cors / --no-auth</td><td>ネットワークオプション（前掲の共通オプション参照）</td></tr>
+          <tr><td class="flag">--cwd</td><td>作業ディレクトリ<span class="why">ACP クライアントから渡される作業場所を上書きしたい場合に使います。既定はカレントディレクトリです。</span><span class="def">（既定: カレント）</span></td></tr>
+          <tr><td class="flag">--port / --hostname / --mdns / --mdns-domain / --cors / --no-auth</td><td>ネットワークオプション<span class="why">内部で起動するサーバーの公開方法を制御します。前掲の「ネットワークオプション」参照。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
       <pre class="ex"><span class="cm"># ACP サーバーをポート 4096 で起動</span>
-oimo acp --port 4096</pre>
+oimo acp --port 4096
+
+<span class="cm"># 特定ディレクトリを作業場所にして起動</span>
+oimo acp --cwd /path/to/project</pre>
     </section>
 
     <!-- ======================= SESSION ======================= -->
@@ -636,7 +651,7 @@ oimo acp --port 4096</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo session</span> &lt;list|delete|import-claude&gt;</h2>
       </div>
-      <p class="cmd-desc">セッションの管理を行います。</p>
+      <p class="cmd-desc">セッション（会話の履歴）の管理を行います。過去の作業の一覧・削除、他ツールからの取り込みに使います。</p>
       <div class="term"><span class="p">$</span> oimo session list [options]</div>
       <div class="term"><span class="p">$</span> oimo session delete &lt;sessionID&gt;</div>
       <div class="term"><span class="p">$</span> oimo session import-claude [--force]</div>
@@ -644,17 +659,17 @@ oimo acp --port 4096</pre>
       <table>
         <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">list</td><td>セッションの一覧を表示。<code>--format json</code> で JSON 出力、TTY では対話ピッカー（矢印キー + Enter でそのセッションを TUI で再開）</td></tr>
-          <tr><td class="flag">delete &lt;sessionID&gt;</td><td>セッションを削除</td></tr>
-          <tr><td class="flag">import-claude</td><td>Claude Code のセッション（~/.claude/projects）を oimo に取り込み</td></tr>
+          <tr><td class="flag">list</td><td>セッションの一覧を表示<span class="why">どのセッションを再開するか探すための入口です。ターミナルでは一覧が対話ピッカーになり、矢印キー + Enter でそのセッションを TUI でそのまま再開できます。スクリプト用に <code>--format json</code> も使えます。</span></td></tr>
+          <tr><td class="flag">delete &lt;sessionID&gt;</td><td>セッションを削除<span class="why">不要になった履歴を消してデータを整理したいときに使います。ID は <code>session list</code> で確認します。</span></td></tr>
+          <tr><td class="flag">import-claude</td><td>Claude Code のセッションを oimo に取り込み<span class="why">Claude Code（~/.claude/projects）で過去にやった作業の履歴を oimo に引き継ぎ、続きの作業を始めたいときに使います。</span></td></tr>
         </tbody>
       </table>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">-n, --max-count</td><td>直近 N 件に制限 <span class="def">（list）</span></td></tr>
-          <tr><td class="flag">--format</td><td>出力形式 <span class="def">table / json（既定: table）</span></td></tr>
-          <tr><td class="flag">--force</td><td>mtime キャッシュを無視して全セッションを再同期 <span class="def">（import-claude）</span></td></tr>
+          <tr><td class="flag">-n, --max-count</td><td>直近 N 件に制限 <span class="def">（list）</span><span class="why">セッションが大量にあって直近分だけ見たいときに使います。</span></td></tr>
+          <tr><td class="flag">--format</td><td>出力形式 <span class="def">table / json（既定: table）</span><span class="why"><code>json</code> は <code>jq</code> などで処理しやすいため、スクリプト連携時に使います。</span></td></tr>
+          <tr><td class="flag">--force</td><td>mtime キャッシュを無視して全セッションを再同期 <span class="def">（import-claude）</span><span class="why">前回からの差分だけではなく全部を取り込み直したいときに使います。取り込み漏れが疑われる場合など。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -677,14 +692,14 @@ oimo session import-claude --force</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo models</span> [provider]</h2>
       </div>
-      <p class="cmd-desc">利用可能なモデルの一覧を表示します。各モデルの解決済みウィンドウと、どのトークン数で圧縮されるかも表示されます。</p>
+      <p class="cmd-desc">利用可能なモデルの一覧を表示します。各モデルの解決済みウィンドウ（コンテキスト上限）と、どのトークン数で圧縮されるかも表示されるため、「このモデルは実際どれだけのコンテキストが使えるか」の確認にも使えます。</p>
       <div class="term"><span class="p">$</span> oimo models [provider] [options]</div>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">provider</td><td>モデルを絞り込むプロバイダ ID <span class="def">（位置引数）</span></td></tr>
-          <tr><td class="flag">--verbose</td><td>コスト等のメタデータを含む詳細出力</td></tr>
-          <tr><td class="flag">--refresh</td><td>models.dev のキャッシュを再取得して表示</td></tr>
+          <tr><td class="flag">provider</td><td>モデルを絞り込むプロバイダ ID <span class="def">（位置引数）</span><span class="why">特定プロバイダのモデルだけを見たいときに使います。例: <code>oimo models openai</code>。</span></td></tr>
+          <tr><td class="flag">--verbose</td><td>コスト等のメタデータを含む詳細出力<span class="why">モデルごとのコスト情報まで確認したいときに使います。料金比較の参考になります。</span></td></tr>
+          <tr><td class="flag">--refresh</td><td>models.dev のキャッシュを再取得して表示<span class="why">新モデルの追加などでキャッシュを最新化したいときに使います。通常は自動取得されるため、明示的に更新したい場合のみ。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -697,7 +712,7 @@ oimo models openai
 <span class="cm"># キャッシュを更新して詳細表示</span>
 oimo models --refresh --verbose</pre>
       <div class="note">
-        設定の検証にも使えます。プロバイダが未設定で不正な設定をしていると、ここでモデルが解決できずに分かります。
+        設定の検証にも使えます。プロバイダの設定が誤っていると、ここでモデルが解決できずに原因に気づけます。
       </div>
     </section>
 
@@ -706,15 +721,15 @@ oimo models --refresh --verbose</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo stats</span></h2>
       </div>
-      <p class="cmd-desc">トークン使用量とコストの統計を表示します（OVERVIEW / COST &amp; TOKENS / MODEL USAGE / TOOL USAGE のセクションで構成）。</p>
+      <p class="cmd-desc">トークン使用量とコストの統計を表示します（OVERVIEW / COST &amp; TOKENS / MODEL USAGE / TOOL USAGE のセクションで構成）。月々の利用状況の把握や、コストの見直しに使います。</p>
       <div class="term"><span class="p">$</span> oimo stats [options]</div>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--days &lt;N&gt;</td><td>直近 N 日分を表示 <span class="def">（0 は今日。既定: 全期間）</span></td></tr>
-          <tr><td class="flag">--tools &lt;N&gt;</td><td>ツール使用量の上位 N 件を表示 <span class="def">（既定: 全部）</span></td></tr>
-          <tr><td class="flag">--models [N]</td><td>モデル統計を表示（既定は非表示。数値を渡すと上位 N 件）</td></tr>
-          <tr><td class="flag">--project &lt;name&gt;</td><td>プロジェクトで絞り込み <span class="def">（既定: 全プロジェクト。空文字で現在のプロジェクトのみ）</span></td></tr>
+          <tr><td class="flag">--days &lt;N&gt;</td><td>直近 N 日分を表示 <span class="def">（0 は今日。既定: 全期間）</span><span class="why">期間を絞って「今週どれくらい使ったか」を確認したいときに使います。</span></td></tr>
+          <tr><td class="flag">--tools &lt;N&gt;</td><td>ツール使用量の上位 N 件を表示 <span class="def">（既定: 全部）</span><span class="why">どのツール（ファイル読み書き・bash 実行など）にトークンを使っているかを見たいときに使います。</span></td></tr>
+          <tr><td class="flag">--models [N]</td><td>モデル統計を表示（既定は非表示。数値を渡すと上位 N 件）<span class="why">モデルごとの利用量・コスト内訳を見たいときに使います。モデル選定の参考になります。</span></td></tr>
+          <tr><td class="flag">--project &lt;name&gt;</td><td>プロジェクトで絞り込み <span class="def">（既定: 全プロジェクト。空文字で現在のプロジェクトのみ）</span><span class="why">プロジェクト単位で費用を把握して配分したいときに使います。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -734,23 +749,23 @@ oimo stats --project ""</pre>
         <h2><span class="kw">oimo providers</span> &lt;list|login|logout|whoami&gt;</h2>
         <span class="tag">エイリアス: oimo auth</span>
       </div>
-      <p class="cmd-desc">AI プロバイダと資格情報（API キー・OAuth）を管理します。</p>
+      <p class="cmd-desc">AI プロバイダと資格情報（API キー・OAuth）を管理します。モデルを使うための「接続先と認証情報の管理窓口」です。</p>
       <div class="term"><span class="p">$</span> oimo providers &lt;list|login|logout|whoami&gt; [options]</div>
       <h3 class="sub">サブコマンド</h3>
       <table>
         <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">list <span class="def">(ls)</span></td><td>プロバイダと資格情報の一覧（auth.json の内容と、環境に見つかったプロバイダ向け環境変数）</td></tr>
-          <tr><td class="flag">login [url]</td><td>プロバイダにログイン。URL を渡すとその OAuth サーバー（.well-known/opencode）から認証フローを取得</td></tr>
-          <tr><td class="flag">logout</td><td>設定済みプロバイダからログアウト（対話で選択）</td></tr>
-          <tr><td class="flag">whoami</td><td>現在のログインユーザー情報を表示</td></tr>
+          <tr><td class="flag">list <span class="def">(ls)</span></td><td>プロバイダと資格情報の一覧<span class="why">今どのプロバイダにログイン済みかを確認するのに使います。登録済みの資格情報に加え、環境に見つかったプロバイダ向け環境変数（OPENAI_API_KEY 等）も表示されます。</span></td></tr>
+          <tr><td class="flag">login [url]</td><td>プロバイダにログイン<span class="why">モデルを使い始めるための最初のステップです。URL を渡すと、その OAuth サーバー（.well-known/opencode）から認証フローを取得して認証します。</span></td></tr>
+          <tr><td class="flag">logout</td><td>設定済みプロバイダからログアウト<span class="why">資格情報を削除して再設定したいとき、または使わなくなったプロバイダを整理したいときに使います。</span></td></tr>
+          <tr><td class="flag">whoami</td><td>現在のログインユーザー情報を表示<span class="why">ログイン状態やアカウント情報を確認したいときに使います。</span></td></tr>
         </tbody>
       </table>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">-p, --provider</td><td>ログインするプロバイダ ID <span class="def">（選択をスキップ）</span></td></tr>
-          <tr><td class="flag">-m, --method</td><td>ログインメソッドのラベル <span class="def">（選択をスキップ）</span></td></tr>
+          <tr><td class="flag">-p, --provider</td><td>ログインするプロバイダ ID <span class="def">（選択をスキップ）</span><span class="why">どのプロバイダか分かっているときに、対話での選択を飛ばして直接指定します。</span></td></tr>
+          <tr><td class="flag">-m, --method</td><td>ログインメソッドのラベル <span class="def">（選択をスキップ）</span><span class="why">ログイン方式（OAuth / API キー入力など）が分かっているときに選択をスキップします。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -774,17 +789,17 @@ oimo auth logout</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo agent</span> &lt;create|list&gt;</h2>
       </div>
-      <p class="cmd-desc">エージェントの作成・一覧表示を行います。エージェントは役割（build / plan / compose 等）と権限（ツールセット）を持ちます。</p>
+      <p class="cmd-desc">エージェントの作成・一覧表示を行います。エージェントは「役割（build / plan / compose など）」と「権限（ツールセット）」の組み合わせで、作業の進め方をカスタマイズするための仕組みです。</p>
       <div class="term"><span class="p">$</span> oimo agent create [options]</div>
       <div class="term"><span class="p">$</span> oimo agent list</div>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--path &lt;dir&gt;</td><td>エージェントファイルを生成するディレクトリ</td></tr>
-          <tr><td class="flag">--description</td><td>エージェントが何をするか</td></tr>
-          <tr><td class="flag">--mode</td><td>エージェントモード <span class="def">all / primary / subagent</span></td></tr>
-          <tr><td class="flag">--tools</td><td>有効化するツールのカンマ区切り <span class="def">（既定: all。bash, read, write, edit, glob, grep, webfetch, actor, task）</span></td></tr>
-          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span></td></tr>
+          <tr><td class="flag">--path &lt;dir&gt;</td><td>エージェントファイルを生成するディレクトリ<span class="why">作成するエージェント定義（Markdown）を置く場所を指定します。プロジェクト固有にしたい場合はそのプロジェクト内を指定します。</span></td></tr>
+          <tr><td class="flag">--description</td><td>エージェントが何をするか<span class="why">エージェントの役割を言葉で定義します。この内容がシステムプロンプトに反映され、AI の振る舞いを決めます。</span></td></tr>
+          <tr><td class="flag">--mode</td><td>エージェントモード <span class="def">all / primary / subagent</span><span class="why">メインで切り替えて使う（primary）、別エージェントから呼び出される専門担当（subagent）など、使われ方を指定します。</span></td></tr>
+          <tr><td class="flag">--tools</td><td>有効化するツールのカンマ区切り <span class="def">（既定: all。bash, read, write, edit, glob, grep, webfetch, actor, task）</span><span class="why">エージェントに使わせる道具を絞りたいときに使います。調査専用エージェントなら読み取り系だけ、といった制限ができます。</span></td></tr>
+          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span><span class="why">そのエージェントが使うモデルを固定したいときに使います。安価なモデルで足りる定型業務に割り当てる、などの使い分けができます。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -807,17 +822,17 @@ oimo agent create</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo mcp</span> &lt;list|auth|logout|add|debug&gt;</h2>
       </div>
-      <p class="cmd-desc">MCP（Model Context Protocol）サーバーの管理を行います。</p>
+      <p class="cmd-desc">MCP（Model Context Protocol）サーバーの管理を行います。MCP は外部ツール（GitHub、データベース、Slack など）をエージェントから使うための接続規格で、このコマンドでその接続を追加・認証・調査します。</p>
       <div class="term"><span class="p">$</span> oimo mcp &lt;list|auth|logout|add|debug&gt; [options]</div>
       <h3 class="sub">サブコマンド</h3>
       <table>
         <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">list <span class="def">(ls)</span></td><td>MCP サーバーとその状態を一覧表示</td></tr>
-          <tr><td class="flag">add</td><td>MCP サーバーを追加（対話形式。スコープ・名前・種別 local/remote・コマンド・URL・OAuth 設定を入力）</td></tr>
-          <tr><td class="flag">auth [name]</td><td>OAuth 対応 MCP サーバーで認証。<code>auth list</code> で認証状態を確認</td></tr>
-          <tr><td class="flag">logout [name]</td><td>MCP サーバーの OAuth 資格情報を削除</td></tr>
-          <tr><td class="flag">debug &lt;name&gt;</td><td>OAuth 接続をデバッグ（initialize ハンドシェイク、HTTP ステータス、OAuth ディスカバリ等）</td></tr>
+          <tr><td class="flag">list <span class="def">(ls)</span></td><td>MCP サーバーとその状態を一覧表示<span class="why">今どの MCP サーバーが設定され、使える状態かを確認するのに使います。</span></td></tr>
+          <tr><td class="flag">add</td><td>MCP サーバーを追加（対話形式）<span class="why">外部ツール連携を始めるときの最初のステップです。スコープ（プロジェクト/グローバル）・名前・種別（local: ローカルコマンド / remote: URL）・OAuth 設定を順に聞かれて入力します。</span></td></tr>
+          <tr><td class="flag">auth [name]</td><td>OAuth 対応 MCP サーバーで認証<span class="why">GitHub など OAuth 認証が必要なリモート MCP サーバーを使うときに、トークン発行のために実行します。<code>auth list</code> で認証状態を確認できます。</span></td></tr>
+          <tr><td class="flag">logout [name]</td><td>MCP サーバーの OAuth 資格情報を削除<span class="why">認証をやり直したいとき、または使わなくなったサーバーの資格情報を消したいときに使います。</span></td></tr>
+          <tr><td class="flag">debug &lt;name&gt;</td><td>OAuth 接続をデバッグ<span class="why">「認証したのに接続できない」というトラブル時に使います。initialize ハンドシェイク、HTTP ステータス、WWW-Authenticate ヘッダー、OAuth ディスカバリ結果などを調べて原因を特定します。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -846,13 +861,13 @@ oimo mcp logout github-mcp</pre>
         <h2><span class="kw">oimo plugin</span> &lt;module&gt;</h2>
         <span class="tag">エイリアス: oimo plug</span>
       </div>
-      <p class="cmd-desc">npm のプラグインモジュールをインストールし、設定（oimo.json）を自動で更新します。</p>
+      <p class="cmd-desc">npm のプラグインモジュールをインストールし、設定（oimo.json）を自動で更新します。プラグインはテーマや機能拡張を追加する仕組みです。</p>
       <div class="term"><span class="p">$</span> oimo plugin &lt;module&gt; [options]</div>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">-g, --global</td><td>グローバル設定にインストール <span class="def">（既定: プロジェクト）</span></td></tr>
-          <tr><td class="flag">-f, --force</td><td>既存のプラグインバージョンを置き換え</td></tr>
+          <tr><td class="flag">-g, --global</td><td>グローバル設定にインストール <span class="def">（既定: プロジェクト）</span><span class="why">すべてのプロジェクトで使いたいプラグインはグローバル、特定プロジェクトだけで使うものはプロジェクト単位、と使い分けます。</span></td></tr>
+          <tr><td class="flag">-f, --force</td><td>既存のプラグインバージョンを置き換え<span class="why">同じプラグインを更新・再インストールしたいときに使います。バージョン競合の解消にも有効です。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -869,12 +884,12 @@ oimo plugin @some/plugin -f</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo export</span> [sessionID]</h2>
       </div>
-      <p class="cmd-desc">セッションデータを JSON（<code>{info, messages}</code>）として標準出力に書き出します。sessionID を省略すると対話で選択します（パイプ時は最新）。</p>
+      <p class="cmd-desc">セッションデータを JSON（<code>{info, messages}</code>）として標準出力に書き出します。バックアップ、共有、別環境への移行が目的です。</p>
       <div class="term"><span class="p">$</span> oimo export [sessionID] [--sanitize]</div>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--sanitize</td><td>会話本文・ファイルパス・ツール入出力等の機微情報を <code>[redacted:...]</code> に置き換えてマスク</td></tr>
+          <tr><td class="flag">--sanitize</td><td>機微情報をマスクして出力<span class="why">会話本文・ファイルパス・ツール入出力などを <code>[redacted:...]</code> に置き換えます。第三者に見せるデータや、リポジトリに添付するデータを作るときに使います。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -893,12 +908,12 @@ oimo export</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo import</span> &lt;file&gt;</h2>
       </div>
-      <p class="cmd-desc">エクスポートされたセッション JSON、または共有 URL からセッションを取り込みます。</p>
+      <p class="cmd-desc">エクスポートされたセッション JSON、または共有 URL からセッションを取り込みます。他環境からの移行や、他人が共有したセッションの引き継ぎに使います。</p>
       <div class="term"><span class="p">$</span> oimo import &lt;file|share-url&gt;</div>
       <table>
         <thead><tr><th>引数</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">file</td><td>JSON ファイルのパス、または <code>https://…/share/&lt;slug&gt;</code> 形式の共有 URL</td></tr>
+          <tr><td class="flag">file</td><td>JSON ファイルのパス、または共有 URL<span class="why"><code>oimo export</code> の成果物、または <code>oimo run --share</code> で作った <code>https://…/share/&lt;slug&gt;</code> 形式の URL を指定します。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -914,22 +929,22 @@ oimo import https://opncd.ai/share/abc123</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo github</span> &lt;install|run&gt;</h2>
       </div>
-      <p class="cmd-desc">GitHub Agent を管理・実行します。</p>
+      <p class="cmd-desc">GitHub Agent を管理・実行します。PR へのコメントや issue に oimo が自動で反応して作業する仕組みを、GitHub Actions 上で構築・実行するためのコマンドです。</p>
       <div class="term"><span class="p">$</span> oimo github install</div>
       <div class="term"><span class="p">$</span> oimo github run [--event &lt;type&gt;] [--token &lt;pat&gt;]</div>
       <h3 class="sub">サブコマンド</h3>
       <table>
         <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">install</td><td>GitHub Agent をインストール。GitHub の origin リモートを持つリポジトリ内で実行し、opencode-agent App を導入して <code>.github/workflows/opencode.yml</code> を生成</td></tr>
-          <tr><td class="flag">run</td><td>GitHub Agent を実行（ワークフロー内で使用）</td></tr>
+          <tr><td class="flag">install</td><td>GitHub Agent をインストール<span class="why">リポジトリに GitHub Agent をセットアップする最初のステップです。opencode-agent の GitHub App を導入し、<code>.github/workflows/opencode.yml</code> を生成します。「PR に <code>/oc summarize</code> とコメントすると oimo が要約を返す」といった自動化の土台を作ります。</span></td></tr>
+          <tr><td class="flag">run</td><td>GitHub Agent を実行<span class="why">GitHub Actions のワークフロー内で実行される本体です。通常は人が直接実行するものではなく、イベント（issue_comment や pull_request など）に応じて Actions がこのコマンドを呼び出します。</span></td></tr>
         </tbody>
       </table>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">--event</td><td>実行する GitHub モックイベント（issue_comment / pull_request 等）</td></tr>
-          <tr><td class="flag">--token</td><td>GitHub の personal access token</td></tr>
+          <tr><td class="flag">--event</td><td>実行する GitHub モックイベント<span class="why">ローカルで動作確認するときに、GitHub からの実際のイベントの代わりとして渡します（issue_comment / pull_request など）。</span></td></tr>
+          <tr><td class="flag">--token</td><td>GitHub の personal access token<span class="why">ローカル実行時など、OIDC による自動認証が使えない場面で手動で渡すためのトークンです。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -949,14 +964,21 @@ MODEL=openai/gpt-5.6 GITHUB_RUN_ID=1 oimo github run --event pull_request</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo pr</span> &lt;number&gt;</h2>
       </div>
-      <p class="cmd-desc">指定した GitHub PR のブランチをチェックアウトして oimo（TUI）を起動します。PR 本文に共有 URL が含まれる場合は、そのセッションを取り込んで続行します。</p>
+      <p class="cmd-desc">指定した GitHub PR のブランチをチェックアウトして oimo（TUI）を起動します。「レビュー対象の PR を確認する」ためのコマンドです。</p>
       <div class="term"><span class="p">$</span> oimo pr &lt;number&gt;</div>
+      <p class="cmd-desc" style="margin-top:-6px">
+        PR ブランチに切り替えた状態で oimo が起動するので、そのままコードの調査・レビュー・修正を依頼できます。
+        PR 本文に共有 URL（<code>https://opncd.ai/s/&lt;id&gt;</code>）が含まれる場合は、そのセッションを取り込んで続きから作業します。
+      </p>
       <div class="note">
         <code>gh</code> CLI と git リポジトリが必要です。フォークからの PR は自動でリモートを追加します。
       </div>
       <h3 class="sub">例</h3>
       <pre class="ex"><span class="cm"># PR #42 のブランチで作業を開始</span>
-oimo pr 42</pre>
+oimo pr 42
+
+<span class="cm"># チェックアウト後にモデルを指定して起動</span>
+oimo pr 42 -m openai/gpt-5.6</pre>
     </section>
 
     <!-- ======================= DB ======================= -->
@@ -964,7 +986,7 @@ oimo pr 42</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo db</span> &lt;[query]|path|migrate&gt;</h2>
       </div>
-      <p class="cmd-desc">SQLite データベースの操作ツールです。</p>
+      <p class="cmd-desc">SQLite データベースの操作ツールです。oimo の履歴は SQLite（セッション・メッセージ・プロジェクト等）に保存されており、その中身を直接確認・操作したいときに使います。統計やトラブル調査が主な用途です。</p>
       <div class="term"><span class="p">$</span> oimo db [query] [--format &lt;json|tsv&gt;]</div>
       <div class="term"><span class="p">$</span> oimo db path</div>
       <div class="term"><span class="p">$</span> oimo db migrate</div>
@@ -972,9 +994,9 @@ oimo pr 42</pre>
       <table>
         <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">[query]</td><td>SQL クエリを実行して結果を出力（既定: tsv）。クエリなしで実行すると対話式 sqlite3 シェルを起動</td></tr>
-          <tr><td class="flag">path</td><td>データベースファイルのパスを表示</td></tr>
-          <tr><td class="flag">migrate</td><td>旧 JSON データを SQLite に移行（既存データとマージ）</td></tr>
+          <tr><td class="flag">[query]</td><td>SQL クエリを実行して結果を出力<span class="why">「セッションが何件あるか」など、標準のコマンドでは出てこない情報を直接取り出したいときに使います。クエリなしで実行すると対話式の sqlite3 シェルが開きます。</span></td></tr>
+          <tr><td class="flag">path</td><td>データベースファイルのパスを表示<span class="why">バックアップを取るときや、別のツールで DB を開きたいときに場所を確認します。</span></td></tr>
+          <tr><td class="flag">migrate</td><td>旧 JSON データを SQLite に移行<span class="why">旧バージョン（JSON 保存時代）のデータを SQLite 形式へ移行したいときに使います。既存データとはマージされます。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -996,21 +1018,21 @@ oimo db</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo debug</span> &lt;subcommand&gt;</h2>
       </div>
-      <p class="cmd-desc">デバッグ・トラブルシューティング用の各種ユーティリティです。</p>
+      <p class="cmd-desc">デバッグ・トラブルシューティング用の各種ユーティリティです。「何かがおかしい」ときの調査ツールとして使い、<code>oimo debug config</code> や <code>oimo debug paths</code> で環境を確認し、各サブコマンドで内部状態を調べます。</p>
       <div class="term"><span class="p">$</span> oimo debug &lt;subcommand&gt; [options]</div>
       <table>
         <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">config</td><td>解決済み設定（JSON）を表示</td></tr>
-          <tr><td class="flag">lsp</td><td>LSP デバッグ: <code>diagnostics &lt;file&gt;</code> / <code>symbols &lt;query&gt;</code> / <code>document-symbols &lt;uri&gt;</code></td></tr>
-          <tr><td class="flag">rg</td><td>ripgrep デバッグ: <code>tree</code> / <code>files [--query --glob --limit]</code> / <code>search &lt;pattern&gt; [--glob --limit]</code></td></tr>
-          <tr><td class="flag">file</td><td>ファイルシステムデバッグ: <code>read &lt;path&gt;</code> / <code>status</code> / <code>list &lt;path&gt;</code> / <code>search &lt;query&gt;</code> / <code>tree [dir]</code></td></tr>
-          <tr><td class="flag">scrap</td><td>既知の全プロジェクトを表示</td></tr>
-          <tr><td class="flag">skill</td><td>利用可能な全スキルを表示</td></tr>
-          <tr><td class="flag">snapshot</td><td>スナップショットデバッグ: <code>track</code> / <code>patch &lt;hash&gt;</code> / <code>diff &lt;hash&gt;</code></td></tr>
-          <tr><td class="flag">agent &lt;name&gt;</td><td>エージェント設定の詳細を表示。<code>--tool</code> / <code>--params</code> でツールを直接実行</td></tr>
-          <tr><td class="flag">paths</td><td>グローバルパス（data / config / cache / state）を表示</td></tr>
-          <tr><td class="flag">wait</td><td>無期限に待機（デバッグ用）</td></tr>
+          <tr><td class="flag">config</td><td>解決済み設定（JSON）を表示<span class="why">設定の誤り（モデル名、プロバイダなど）を確認するときに使います。実際に有効になっている最終的な設定値が見られます。</span></td></tr>
+          <tr><td class="flag">lsp</td><td>LSP デバッグ: <code>diagnostics &lt;file&gt;</code> / <code>symbols &lt;query&gt;</code> / <code>document-symbols &lt;uri&gt;</code><span class="why">コード解析（LSP）が正しく動いているか確認するための内部ユーティリティです。</span></td></tr>
+          <tr><td class="flag">rg</td><td>ripgrep デバッグ: <code>tree</code> / <code>files</code> / <code>search &lt;pattern&gt;</code><span class="why">ファイル検索（ripgrep）の挙動を単体で確認したいときに使います。エージェントの検索が思うように動かない場合の調査用です。</span></td></tr>
+          <tr><td class="flag">file</td><td>ファイルシステムデバッグ: <code>read</code> / <code>status</code> / <code>list</code> / <code>search</code> / <code>tree</code><span class="why">oimo から見たファイルの読み書き・状態を確認したいときに使います。</span></td></tr>
+          <tr><td class="flag">scrap</td><td>既知の全プロジェクトを表示<span class="why">oimo が認識しているプロジェクトの一覧を確認したいときに使います。</span></td></tr>
+          <tr><td class="flag">skill</td><td>利用可能な全スキルを表示<span class="why">スキル（作業手順のテンプレート）が正しく読み込まれているか確認したいときに使います。</span></td></tr>
+          <tr><td class="flag">snapshot</td><td>スナップショットデバッグ: <code>track</code> / <code>patch &lt;hash&gt;</code> / <code>diff &lt;hash&gt;</code><span class="why">ファイル変更のスナップショット機構の状態確認・差分調査に使います。</span></td></tr>
+          <tr><td class="flag">agent &lt;name&gt;</td><td>エージェント設定の詳細表示、ツールの直接実行<span class="why">エージェントの権限や設定を確認するほか、<code>--tool</code> でそのエージェントのツールを単体で実行して動作確認できます。</span></td></tr>
+          <tr><td class="flag">paths</td><td>グローバルパス（data / config / cache / state）を表示<span class="why">設定やデータがどこにあるか確認するのに使います。バックアップや、設定ファイルを直接編集したいときに便利です。</span></td></tr>
+          <tr><td class="flag">wait</td><td>無期限に待機（デバッグ用）<span class="why">起動直後の挙動を調査したいときなど、プロセスを生かしたまま止めておくための内部ツールです。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -1036,13 +1058,13 @@ oimo debug snapshot track</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo upgrade</span> [target]</h2>
       </div>
-      <p class="cmd-desc">oimo を最新版、または指定バージョンへアップグレードします。インストール方法（curl / npm / brew 等）を自動検出します。</p>
+      <p class="cmd-desc">oimo を最新版、または指定バージョンへアップグレードします。インストール方法（curl / npm / brew 等）を自動検出するため、導入方法に関わらず同じコマンドで更新できます。</p>
       <div class="term"><span class="p">$</span> oimo upgrade [target] [options]</div>
       <table>
         <thead><tr><th>引数 / オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">target</td><td>アップグレード先のバージョン <span class="def">例: 0.1.48 または v0.1.48（省略時は最新）</span></td></tr>
-          <tr><td class="flag">-m, --method</td><td>インストール方法を明示 <span class="def">curl / npm / pnpm / bun / brew / choco / scoop</span></td></tr>
+          <tr><td class="flag">target</td><td>アップグレード先のバージョン <span class="def">例: 0.1.48 または v0.1.48（省略時は最新）</span><span class="why">「とりあえず最新」ではなく特定版に揃えたいとき（検証環境と本番を揃える等）に指定します。</span></td></tr>
+          <tr><td class="flag">-m, --method</td><td>インストール方法を明示 <span class="def">curl / npm / pnpm / bun / brew / choco / scoop</span><span class="why">自動検出がうまくいかない場合や、複数の入れ方が混在している場合に、更新に使う方法を明示します。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -1061,15 +1083,15 @@ oimo upgrade -m brew</pre>
       <div class="cmd-head">
         <h2><span class="kw">oimo uninstall</span></h2>
       </div>
-      <p class="cmd-desc">oimo をアンインストールし、関連ファイルを削除します。何が削除されるか事前に確認できます。</p>
+      <p class="cmd-desc">oimo をアンインストールし、関連ファイルを削除します。導入時のまま綺麗に戻したいときのためのコマンドで、削除前に何が消えるかを確認できます。</p>
       <div class="term"><span class="p">$</span> oimo uninstall [options]</div>
       <table>
         <thead><tr><th>オプション</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">-c, --keep-config</td><td>設定ファイルを残す</td></tr>
-          <tr><td class="flag">-d, --keep-data</td><td>セッションデータとスナップショットを残す</td></tr>
-          <tr><td class="flag">--dry-run</td><td>削除せずに削除対象だけを表示</td></tr>
-          <tr><td class="flag">-f, --force</td><td>確認プロンプトをスキップ</td></tr>
+          <tr><td class="flag">-c, --keep-config</td><td>設定ファイルを残す<span class="why">再インストール後に設定を引き継ぎたいときに使います。</span></td></tr>
+          <tr><td class="flag">-d, --keep-data</td><td>セッションデータとスナップショットを残す<span class="why">履歴や作業データを残して再インストール後に戻したいときに使います。</span></td></tr>
+          <tr><td class="flag">--dry-run</td><td>削除せずに削除対象だけを表示<span class="why">実行前に何が消えるかを確認するための安全策です。削除前に必ず一度試すのがおすすめです。</span></td></tr>
+          <tr><td class="flag">-f, --force</td><td>確認プロンプトをスキップ<span class="why">CI や一括処理など、対話なしで削除を完了させたいときに使います。</span></td></tr>
         </tbody>
       </table>
       <h3 class="sub">例</h3>
@@ -1089,17 +1111,35 @@ oimo uninstall -f</pre>
         <h2><span class="kw">oimo completion</span> [shell]</h2>
       </div>
       <p class="cmd-desc">シェル補完スクリプトを生成します。</p>
+      <p class="cmd-desc" style="margin-top:-6px">
+        <strong>これは何のためにあるか</strong> — シェル補完とは、ターミナルで <code>oimo</code> に続けて
+        <kbd>Tab</kbd> キーを押すと、使えるコマンド名・サブコマンド・オプションの候補が自動で表示される機能です。
+        oimo はコマンドと <code>--</code> オプションが非常に多いため、これを設定しておくと
+        「オプション名を覚えていなくても Tab で候補を見ながら入力できる」「タイプ量が減る」という利点があります。
+        生成したスクリプトは一度シェルの設定に読み込ませれば、以後のセッションで毎回有効になります。
+      </p>
       <div class="term"><span class="p">$</span> oimo completion [bash|zsh|fish]</div>
+      <table>
+        <thead><tr><th>引数</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">[shell]</td><td>補完スクリプトを生成する対象シェル <span class="def">bash / zsh / fish（省略時は現在のシェルを検出）</span><span class="why">使っているシェルに合わせて選びます。シェルごとに読み込み方（source / fpath など）が異なるため、生成後にシェルの設定ファイルへ反映する必要があります。</span></td></tr>
+        </tbody>
+      </table>
       <h3 class="sub">例</h3>
       <pre class="ex"><span class="cm"># bash: 出力を設定ファイルに追記</span>
 oimo completion bash &gt; ~/.oimo/completion.bash
 echo "source ~/.oimo/completion.bash" &gt;&gt; ~/.bashrc
+<span class="cm"># 反映後: oimo &lt;Tab&gt; でコマンド候補、oimo run --&lt;Tab&gt; でオプション候補が表示される</span>
 
-<span class="cm"># zsh / fish</span>
-oimo completion zsh &gt; ~/.zfunc/_oimo
+<span class="cm"># zsh</span>
+oimo completion zsh &gt; "${fpath[1]}/_oimo"
+<span class="cm"># 補完を有効化（未設定の場合）: 通常は compinit を ~/.zshrc に記述</span>
+
+<span class="cm"># fish</span>
 oimo completion fish &gt; ~/.config/fish/completions/oimo.fish</pre>
       <div class="note info">
-        シェルの補完設定への反映方法は、お使いのシェルによって異なります。上記は一般的な例です。
+        反映方法はお使いのシェルによって異なります。上記は一般的な例です。設定後はターミナルを開き直すか
+        <code>source ~/.bashrc</code>（bash）などで反映します。
       </div>
     </section>
 
@@ -1110,7 +1150,7 @@ oimo completion fish &gt; ~/.config/fish/completions/oimo.fish</pre>
       <table>
         <thead><tr><th>環境変数</th><th>説明</th></tr></thead>
         <tbody>
-          <tr><td class="flag">MIMOCODE_SERVER_PASSWORD</td><td>サーバーの Basic 認証パスワード（serve / attach / run --attach で使用）</td></tr>
+          <tr><td class="flag">MIMOCODE_SERVER_PASSWORD</td><td>サーバーの Basic 認証パスワード<span class="why">serve / attach / run --attach で使用します。非ループバックに公開する場合は必須です。</span></td></tr>
           <tr><td class="flag">MIMOCODE_SERVER_USERNAME</td><td>認証ユーザー名 <span class="def">（既定: oimo）</span></td></tr>
           <tr><td class="flag">MIMOCODE_TOR</td><td><code>1</code> で全通信を Tor SOCKS5 経由に <span class="def">（--tor と同じ）</span></td></tr>
           <tr><td class="flag">MIMOCODE_TOR_PROXY</td><td>Tor プロキシの指定 <span class="def">（既定: socks5h://127.0.0.1:9050）</span></td></tr>
