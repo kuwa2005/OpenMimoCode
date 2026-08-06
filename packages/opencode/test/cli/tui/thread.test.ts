@@ -66,6 +66,7 @@ describe("tui thread", () => {
       trust: true,
       "dangerously-skip-permissions": false,
       dangerouslySkipPermissions: false,
+      auto: false,
       port: 0,
       hostname: "127.0.0.1",
       mdns: false,

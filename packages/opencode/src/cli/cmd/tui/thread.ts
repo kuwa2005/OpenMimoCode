@@ -212,6 +212,11 @@ export const TuiThreadCommand = cmd({
         type: "boolean",
         describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
         default: false,
+      })
+      .option("auto", {
+        type: "boolean",
+        describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
+        default: false,
       }),
   handler: async (args) => {
     // Keep ENABLE_PROCESSED_INPUT cleared even if other code flips it.
@@ -254,7 +259,7 @@ export const TuiThreadCommand = cmd({
         }
       }
 
-      if (args["dangerously-skip-permissions"]) {
+      if (args.auto || args["dangerously-skip-permissions"]) {
         // Require an explicit accept when interactive; skip the gate with no TTY
         // (CI / piped stdin) so automation still works.
         if (process.stdin.isTTY) {
