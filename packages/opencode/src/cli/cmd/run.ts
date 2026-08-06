@@ -289,13 +289,24 @@ export const RunCommand = cmd({
         choices: ["user", "assistant"],
         describe: "role for the injected message (assistant injects text as model output then triggers continuation)",
       })
-      .option("dangerously-skip-permissions", {
+      .option("auto", {
         type: "boolean",
         describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
         default: false,
       })
+      .option("yolo", {
+        type: "boolean",
+        hidden: true,
+        default: false,
+      })
+      .option("dangerously-skip-permissions", {
+        type: "boolean",
+        hidden: true,
+        default: false,
+      })
   },
   handler: async (args) => {
+    const auto = args.auto || args.yolo || args["dangerously-skip-permissions"]
     let message = [...args.message, ...(args["--"] || [])]
       .map((arg) => (arg.includes(" ") ? `"${arg.replace(/"/g, '\\"')}"` : arg))
       .join(" ")
@@ -539,7 +550,7 @@ export const RunCommand = cmd({
               const permission = event.properties
               if (permission.sessionID !== sessionID) continue
 
-              if (args["dangerously-skip-permissions"]) {
+              if (auto) {
                 await sdk.permission.reply({
                   requestID: permission.id,
                   reply: "once",
