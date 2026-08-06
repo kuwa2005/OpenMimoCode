@@ -26,7 +26,7 @@ function nonNegativeNumber(key: string) {
 
 const MIMOCODE_EXPERIMENTAL = truthy("MIMOCODE_EXPERIMENTAL")
 
-// Defaults to false. When enabled, mimocode runs in pure-mimo mode:
+// Defaults to false. When enabled, oimo runs in pure-mimo mode:
 //   — does NOT inherit Claude Code's settings (CLAUDE.md, ~/.claude/skills, etc.)
 //   — does NOT pick up provider API keys from environment variables
 //   — falls back to the mimo-auto model as the default
@@ -53,7 +53,7 @@ export const Flag = {
 
   MIMOCODE_DISABLE_AUTOUPDATE: truthy("MIMOCODE_DISABLE_AUTOUPDATE"),
 
-  // Defaults to false. When enabled, omimo's own network traffic (model and
+  // Defaults to false. When enabled, oimo's own network traffic (model and
   // API calls) is routed through a Tor SOCKS5 proxy. Requires a local Tor
   // daemon; the proxy address defaults to socks5h://127.0.0.1:9050 and can be
   // overridden with MIMOCODE_TOR_PROXY. Getters so the CLI middleware can set
@@ -70,9 +70,9 @@ export const Flag = {
   // place. Useful when an external tool tails/manages the single log file.
   MIMOCODE_DISABLE_LOG_ROTATION: truthy("MIMOCODE_DISABLE_LOG_ROTATION"),
 
-  // Defaults to true (analytics enabled). Set MIMOCODE_ENABLE_ANALYSIS=false
-  // to opt out of POSTing model_call/tool_call/agent_request metrics.
-  MIMOCODE_ENABLE_ANALYSIS: !falsy("MIMOCODE_ENABLE_ANALYSIS"),
+  // Defaults to false (analytics disabled). Set MIMOCODE_ENABLE_ANALYSIS=true
+  // to opt in to POSTing model_call/tool_call/agent_request metrics.
+  MIMOCODE_ENABLE_ANALYSIS: truthy("MIMOCODE_ENABLE_ANALYSIS"),
   MIMOCODE_ALWAYS_NOTIFY_UPDATE: truthy("MIMOCODE_ALWAYS_NOTIFY_UPDATE"),
   MIMOCODE_DISABLE_PRUNE: truthy("MIMOCODE_DISABLE_PRUNE"),
   MIMOCODE_DISABLE_TERMINAL_TITLE: truthy("MIMOCODE_DISABLE_TERMINAL_TITLE"),
@@ -92,7 +92,7 @@ export const Flag = {
   // allow-all base ruleset is injected UNDER the user's config permission so
   // every tool auto-approves unless the user explicitly denied it.
   MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS: truthy("MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS"),
-  // Set by `omimo --autonomy` / `omimo --se`. Forces autonomy.enabled for this process.
+  // Set by `oimo --autonomy` / `oimo --se`. Forces autonomy.enabled for this process.
   MIMOCODE_AUTONOMY: truthy("MIMOCODE_AUTONOMY"),
   MIMOCODE_DISABLE_DEFAULT_PLUGINS: truthy("MIMOCODE_DISABLE_DEFAULT_PLUGINS"),
   MIMOCODE_DISABLE_LSP_DOWNLOAD: truthy("MIMOCODE_DISABLE_LSP_DOWNLOAD"),
@@ -270,8 +270,8 @@ export const Flag = {
   MIMOCODE_DISABLE_EMBEDDED_WEB_UI: truthy("MIMOCODE_DISABLE_EMBEDDED_WEB_UI"),
   MIMOCODE_DB: process.env["MIMOCODE_DB"],
 
-  // Defaults to true — all channels share a single mimocode.db. The per-channel
-  // DB isolation (mimocode-{channel}.db) is unnecessary for mimocode since we
+  // Defaults to true — all channels share a single oimo.db. The per-channel
+  // DB isolation (oimo-{channel}.db) is unnecessary for oimo since we
   // don't ship multiple release channels yet. Use MIMOCODE_HOME to isolate dev
   // environments instead. Set MIMOCODE_DISABLE_CHANNEL_DB=false to restore
   // per-channel isolation.
