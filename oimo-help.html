@@ -329,6 +329,7 @@
 
       <div class="group">リファレンス</div>
       <a href="#env">環境変数</a>
+      <a href="#skills">スキル</a>
       <a href="#workflows">ワークフロー例</a>
     </nav>
   </aside>
@@ -452,7 +453,7 @@
           <tr><td class="flag">--prompt</td><td>使用するプロンプト<span class="why">最初の入力をコマンドラインから指定したいときに使います。標準入力（パイプ）で渡すこともできます。例: <code>oimo --prompt "README を作成して"</code>。</span></td></tr>
           <tr><td class="flag">--agent</td><td>使用するエージェント<span class="why">エージェント（build / plan / compose など）を選びたいときに指定します。TUI では起動後も <code>/agent</code> コマンドで切り替えられます。</span></td></tr>
           <tr><td class="flag">--never-ask</td><td>never-ask モードで開始（権限系は対象外）<span class="why">AI 側からの確認質問を省略して先へ進めるモードです。ただし危険な権限（bash の実行など）は対象外で、通常どおり確認されます。実行中は <code>/never-ask</code> でオン/オフを切り替えられます。</span></td></tr>
-          <tr><td class="flag">--autonomy, --se</td><td>SE 型自律実行モード<span class="why">「ソフトウェアエンジニア型の自律実行」をしたいときに使います。要件をヒアリングしてロックした後、書類証跡（要件・テスト基準・検証結果）を残しながらノンストップで実装を進めます。compose エージェントを暗黙指定します。</span></td></tr>
+          <tr><td class="flag">--autonomy, --se</td><td>SE 型自律実行モード<span class="def">（詳細は「ワークフロー例」3 参照）</span><span class="why">「ソフトウェアエンジニア型の自律実行」をしたいときに使います。要件をヒアリングしてロックした後、書類証跡（要件・テスト基準・検証結果）を残しながらノンストップで実装を進めます。compose エージェントを暗黙指定し、安全な権限は自動承認します。</span></td></tr>
           <tr><td class="flag">--trust</td><td>ワークスペース信頼確認をスキップ<span class="why">起動時に毎回出る「このディレクトリを信頼しますか?」をスキップして即作業に入りたいときに使います。自分が管理するディレクトリで便利です。</span></td></tr>
           <tr><td class="flag">--dangerously-skip-permissions</td><td>明示的に拒否されていない権限を自動承認（危険）<span class="why">CI や自動実行など、確認を挟まず進めたい場合の危険なオプションです。ファイル削除やコマンド実行の都度確認が出なくなるため、内容を把握した上で使います。</span></td></tr>
           <tr><td class="flag">--auto</td><td>自動承認 + ワークスペース信頼確認もスキップ（危険）<span class="why"><code>--dangerously-skip-permissions</code> と同等の自動承認に加え、ワークスペースの信頼確認もスキップします。完全に自動で走らせたいとき（CI など）のためのショートカットです。</span></td></tr>
@@ -1162,6 +1163,10 @@ oimo completion fish &gt; ~/.config/fish/completions/oimo.fish</pre>
           <tr><td class="flag">MIMOCODE_ENABLE_MIMO_FREE</td><td><code>true</code> で xiaomimimo 無料チャネルを明示的に有効化 <span class="def">（既定: 無効。中国サーバーへの送信を遮断）</span></td></tr>
           <tr><td class="flag">MIMOCODE_AUTO_SHARE</td><td><code>oimo run</code> でセッションを自動共有</td></tr>
           <tr><td class="flag">MIMOCODE_DISABLE_CLAUDE_IMPORT</td><td>初回起動時の Claude Code セッション取り込みを無効化</td></tr>
+          <tr><td class="flag">MIMOCODE_DISABLE_BUILTIN_SKILLS</td><td><code>true</code> ですべての組み込みスキルを無効化</td></tr>
+          <tr><td class="flag">MIMOCODE_DISABLE_OFFICIAL_SKILLS</td><td><code>true</code> でオフィス/メディア系スキル（docx / pdf / pptx / xlsx / html-to-video）のみ無効化</td></tr>
+          <tr><td class="flag">MIMOCODE_DISABLE_COMPOSE_SKILLS</td><td><code>true</code> で compose エージェント内部のスキルを無効化</td></tr>
+          <tr><td class="flag">MIMOCODE_DISABLE_SLASH_SKILLS</td><td><code>true</code> でスキルを TUI の <code>/</code> オートコンプリートから非表示（無効化はしない）</td></tr>
           <tr><td class="flag">GH_REPO</td><td>アップグレード取得元リポジトリ <span class="def">（既定: kuwa2005/OpenMimoCode）</span></td></tr>
           <tr><td class="flag">MIMOCODE_INSTALL_SCRIPT_URL</td><td>インストーラースクリプトの URL を上書き</td></tr>
           <tr><td class="flag">MIMOCODE_UNINSTALL_DIR</td><td>アンインストール対象ディレクトリ <span class="def">（既定: ~/.oimo/bin）</span></td></tr>
@@ -1172,6 +1177,105 @@ oimo completion fish &gt; ~/.config/fish/completions/oimo.fish</pre>
         <code>GITHUB_RUN_ID</code> / <code>PROMPT</code> / <code>MENTIONS</code> /
         <code>GITHUB_TOKEN</code> などの環境変数を読みます。詳細は <code>oimo github run --help</code> を確認してください。
       </div>
+    </section>
+
+    <!-- ======================= SKILLS ======================= -->
+    <section id="skills">
+      <h2 class="cmd-head" style="display:block"><span style="font-family:var(--mono)">スキル（インストール時に同梱されるもの）</span></h2>
+      <p>
+        スキルとは、特定の作業（PDF 処理、調査、設計、自動リファクタリングなど）の手順を
+        <code>SKILL.md</code> にまとめた「作業手順書」です。エージェントがタスクに合うスキルを
+        見つけると <code>skill</code> ツールで読み込んで、その手順に従って作業します。
+      </p>
+      <p>
+        oimo を標準インストーラーで導入すると、このスキルは<strong>バイナリに同梱されており、追加の
+        インストール手順は不要</strong>です。初回起動時に oimo が組み込みスキル（builtin）と
+        compose スキルを自動でデータディレクトリへ展開します（バージョン管理されたマーカー付き）。
+        つまり「標準インストーラーでインストールされるスキル」＝ この同梱スキル一式ということになります。
+      </p>
+      <div class="term lg">
+<span class="p">$</span> curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash   <span class="c"># macOS / Linux</span>
+<span class="p">$</span> irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex              <span class="c"># Windows PowerShell</span>
+<span class="p">$</span> npm install -g @mimo-ai/cli                                        <span class="c"># npm 版（同梱バイナリをリンク）</span>
+<span class="p">$</span> oimo debug skill                                               <span class="c"># 読み込まれている全スキルを確認</span>
+      </div>
+
+      <h3 class="sub">組み込みスキル（builtin）</h3>
+      <table>
+        <thead><tr><th>スキル</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">arxiv</td><td>arXiv 論文の検索・読解・引用・ダウンロード・分析</td></tr>
+          <tr><td class="flag">claude-code</td><td>コーディング等のタスクを Claude Code CLI へ委任 <span class="def">（<code>claude</code> 実行ファイルが必要）</span></td></tr>
+          <tr><td class="flag">codex</td><td>Codex CLI をヘッドレス・CI・コンテナ・リモートで実行・トラブルシュート <span class="def">（<code>codex</code> 実行ファイルが必要）</span></td></tr>
+          <tr><td class="flag">compose-next</td><td>推奨の spec→ship デリバリー ワークフロー（grill → spec → implement → verify → review → finish）。<code>/compose-next</code> で明示起動</td></tr>
+          <tr><td class="flag">data-analytics</td><td>データ品質・KPI・ダッシュボード・レポート等の製品/ビジネスデータ分析</td></tr>
+          <tr><td class="flag">deep-research</td><td>並列サブエージェントで引用付きのマルチソース調査レポートを生成</td></tr>
+          <tr><td class="flag">design-blueprint</td><td>ビジュアル成果物の実装前に設計仕様（DESIGN.md + Decision Trace）を作成</td></tr>
+          <tr><td class="flag">docx-official</td><td>Word（.docx）文書の作成・読み取り・変換・テンプレート適用</td></tr>
+          <tr><td class="flag">drive-mimo</td><td>別の oimo プロセスをヘッドレス / TUI モードでスクリプト化・自動化（テスト・検証用途）</td></tr>
+          <tr><td class="flag">evolve</td><td>自己改変 — ツール・動作フック・知識・ワークフロー・UI などあらゆる層を書き換え</td></tr>
+          <tr><td class="flag">frontend-design</td><td>Web サイト・UI コンポーネントなど「見えるもの」を作る際のデザインガイダンス</td></tr>
+          <tr><td class="flag">grok-build</td><td>Grok Build CLI の参照・運用ガイダンス（明示的に要求されたときのみ）</td></tr>
+          <tr><td class="flag">html-to-video-pipeline</td><td>ヘッドレスブラウザ + ffmpeg による HTML から MP4 への確実なレンダリング</td></tr>
+          <tr><td class="flag">learn-everything</td><td>PDF・論文・書籍・URL・トピックを、演習・採点・進捗付きの学習コースに変換</td></tr>
+          <tr><td class="flag">loop</td><td>「◯分ごとに実行」など固定周期の反復プロンプトを cron でスケジュール</td></tr>
+          <tr><td class="flag">mimocode-docs</td><td>oimo 自身の機能・コマンド・設定・トラブル対応の自己文書化リファレンス</td></tr>
+          <tr><td class="flag">modern-python-toolchain</td><td>uv + Ruff + Pyright によるモダンな Python プロジェクトのセットアップ</td></tr>
+          <tr><td class="flag">pdf-official</td><td>PDF の作成・読み取り・抽出・変換・OCR・フォーム入力</td></tr>
+          <tr><td class="flag">playwright</td><td>実ブラウザの自動化（ナビゲーション・フォーム入力・スクリーンショット・データ抽出）</td></tr>
+          <tr><td class="flag">pptx-official</td><td>PowerPoint（.pptx）デッキの作成・読み取り・変換</td></tr>
+          <tr><td class="flag">product-design</td><td>プロダクトデザイン調査・UX 監査・ビジュアル実装・デザイン QA</td></tr>
+          <tr><td class="flag">research-paper-writing</td><td>学術論文（ML/CV/NLP スタイル）の執筆・推敲・レビュー・PDF 化</td></tr>
+          <tr><td class="flag">sales</td><td>営業リサーチ・ミーティング準備・アカウント優先順位・取引戦略・CRM</td></tr>
+          <tr><td class="flag">skill-creator</td><td>スキル（SKILL.md）の作成・改善・動作確認のための対話型ガイド</td></tr>
+          <tr><td class="flag">super-research</td><td>長期的な研究・実験ループ・ベンチマーク・根因調査・引用検証（8 モード）</td></tr>
+          <tr><td class="flag">xlsx-official</td><td>スプレッドシート（.xlsx/.xlsm/.csv）の作成・整形・変換・数式計算</td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        前提コマンドが必要なスキルは、その実行ファイルが無いと展開されません（例: <code>claude-code</code> /
+        <code>codex</code>）。またオフィス/メディア系スキル（<code>docx-official</code> など）には
+        <code>pandoc</code> 等のタスク固有ツールが必要な場合があります。
+      </div>
+
+      <h3 class="sub">compose スキル（compose エージェント / --se 用の内部スキル）</h3>
+      <p>
+        <code>--se</code> / <code>--autonomy</code> や compose エージェントが使うワークフローオーケストレーション
+        スキルです。通常の一覧には表示されず、ユーザーが直接呼び出すものではありません。
+        実装フェーズで <code>compose:brainstorm → compose:plan → compose:tdd → compose:verify → compose:review →
+        compose:report</code> の順に使われます。
+      </p>
+      <table>
+        <thead><tr><th>スキル</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">compose:ask</td><td>ユーザーに判断・確認を求める（question ツールの使い方）</td></tr>
+          <tr><td class="flag">compose:brainstorm</td><td>創作作業の前に要件・意図・設計を探る</td></tr>
+          <tr><td class="flag">compose:plan</td><td>仕様に対して、コードに触れる前に実装計画を立てる</td></tr>
+          <tr><td class="flag">compose:tdd</td><td>テスト駆動開発 — 実装コードの前にテストを書く</td></tr>
+          <tr><td class="flag">compose:execute</td><td>レビューチェックポイント付きで計画を別セッションで実行</td></tr>
+          <tr><td class="flag">compose:subagent</td><td>独立したタスクをサブエージェントで並列実行</td></tr>
+          <tr><td class="flag">compose:parallel</td><td>依存関係の無い 2 件以上の独立タスクを並列化</td></tr>
+          <tr><td class="flag">compose:debug</td><td>バグ・テスト失敗を修正前に調査</td></tr>
+          <tr><td class="flag">compose:feedback</td><td>レビュー指摘への対処（盲従せず検証して判断）</td></tr>
+          <tr><td class="flag">compose:verify</td><td>完了・修正・コミット前に検証コマンドを実行して合格を確認</td></tr>
+          <tr><td class="flag">compose:review</td><td>マージ前に成果物が要件を満たすか検証</td></tr>
+          <tr><td class="flag">compose:report</td><td>実装成果を最終状態レポートに統合し教訓を記録</td></tr>
+          <tr><td class="flag">compose:merge</td><td>実装完了後のマージ / PR / 後片付けの選択肢を提示</td></tr>
+          <tr><td class="flag">compose:worktree</td><td>機能作業用に作業ツリー（git worktree）で環境を分離</td></tr>
+        </tbody>
+      </table>
+
+      <h3 class="sub">スキルの上書きと無効化</h3>
+      <ul class="flat">
+        <li><strong>上書き:</strong> プロジェクトの <code>.oimo/skills/&lt;name&gt;/SKILL.md</code>、または個人スキル
+        ディレクトリ（<code>~/.claude/skills/</code>、<code>~/.opencode/skills/</code> など）に同じ
+        <code>name</code> の SKILL.md を置くと、組み込みスキルを上書きできます。設定の
+        <code>skills.paths</code> / <code>skills.urls</code> で追加フォルダや外部 URL からも読み込めます。</li>
+        <li><strong>確認:</strong> TUI で <code>/skills</code>、または <code>oimo debug skill</code> で一覧表示。</li>
+        <li><strong>無効化:</strong> <code>MIMOCODE_DISABLE_BUILTIN_SKILLS</code> /
+        <code>MIMOCODE_DISABLE_OFFICIAL_SKILLS</code> / <code>MIMOCODE_DISABLE_COMPOSE_SKILLS</code> を
+        参照（前掲「環境変数」）。</li>
+      </ul>
     </section>
 
     <!-- ======================= WORKFLOWS ======================= -->
@@ -1198,7 +1302,65 @@ oimo --tor
 oimo run --tor "リポジトリを調査して"</pre>
 
       <h3 class="sub">3. SE 型自律実行（要件ロック → 証跡付き自動開発）</h3>
-      <pre class="ex">oimo --se ~/my-project</pre>
+      <p>
+        <code>--se</code>（別名 <code>--autonomy</code>）は「優秀なソフトウェアエンジニアが曖昧な依頼を受けたら
+        どう進めるか」を AI に強制するモードです。compose エージェントを暗黙指定し、要件をヒアリングして
+        「要件ロック」するまで実装を始めず、その後は証跡（書類）を残しながらノンストップで実装・テスト・検証を
+        完遂します。権限の自動承認（安全なもの）も同時に有効になるため、<code>--auto</code> は不要です。
+      </p>
+      <pre class="ex"><span class="cm"># 起動</span>
+oimo --se ~/my-project
+
+<span class="cm"># 環境変数でも同じ</span>
+MIMOCODE_AUTONOMY=1 oimo ~/my-project</pre>
+
+      <p><strong>Phase A — ヒアリング（要件ロックまで）:</strong> 実装コードは一切書かず、以下を進めます。</p>
+      <ul class="flat">
+        <li>文脈と隠れた要望を調査し、顧客（ユーザー）が考えていない前提を質問で引き出す</li>
+        <li>確認はすべて <code>question</code> ツール（compose:ask）経由。散文だけで質問してターンを終えない</li>
+        <li>各質問を<strong>ヒアリングログ</strong>に記録（なぜ聞いたか・背景・回答結果）</li>
+        <li>複雑さに応じた要件・機能仕様を作成。<strong>テスト基準は仕様の中に含める</strong></li>
+        <li>最後にヘッダーがちょうど <code>Requirements Lock</code> の質問を投げ、<code>Approved</code> /
+        <code>Changes needed</code> で確定させる</li>
+      </ul>
+
+      <p><strong>Phase B — 実行（ノンストップ）:</strong> ロック後は以下を止まらずに完了まで進めます。</p>
+      <ul class="flat">
+        <li>実装 → テスト仕様で定義したテストプログラムを<strong>実際に作成・実行</strong> → pass/fail を
+        <code>reports/</code> に記録。テストは必須成果物です（index.html 1 枚でも、コアロジックを分離して実行する）</li>
+        <li>実装フェーズでは <code>compose:brainstorm → compose:plan → compose:tdd → compose:verify → compose:review →
+        compose:report</code> の順でスキルを使う</li>
+        <li>独立した judge モデルがトランスクリプト（履歴）だけを読んで「完了」または「不可能」を判定するまで継続</li>
+      </ul>
+
+      <p><strong>書類証跡:</strong> このモードの成果物はコードだけでなく書類です。後から読んだ人が
+        意思決定の理由を書類だけで追えることが要件になります（既定の保存先 <code>docs/compose/</code>）。</p>
+      <pre class="ex">docs/compose/
+├── specs/     <span class="cm"># 要件・機能仕様・テスト仕様</span>
+├── plans/     <span class="cm"># 実装計画</span>
+└── reports/   <span class="cm"># テスト実行結果・検証エビデンス・最終レポート</span></pre>
+
+      <p><strong>停止条件と予算:</strong> judge の判定に加え、以下の上限に達すると停止します
+        （停止理由: <code>completed</code> / <code>impossible</code> / <code>cancelled</code> /
+        <code>budget_turns</code> / <code>budget_duration</code> / <code>budget_cost</code> /
+        <code>judge_failed</code>）。既定値は oimo.json の <code>autonomy</code> ブロックで変更できます。</p>
+      <table>
+        <thead><tr><th>設定項目</th><th>既定値</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">enabled</td><td class="def">false</td><td>自律モード有効化（<code>--se</code> フラグまたは MIMOCODE_AUTONOMY=1 と同等）</td></tr>
+          <tr><td class="flag">hearing_first</td><td class="def">true</td><td>要件ロックまで実装しない（false なら即 execute フェーズ）</td></tr>
+          <tr><td class="flag">docs_evidence</td><td class="def">true</td><td>停止条件に書類証跡を含める</td></tr>
+          <tr><td class="flag">max_turns</td><td class="def">50</td><td>judge 主導の再入場回数の上限</td></tr>
+          <tr><td class="flag">max_duration_ms</td><td class="def">7200000（2 時間）</td><td>1 タスクの実行時間の上限</td></tr>
+          <tr><td class="flag">max_cost_usd</td><td class="def">10</td><td>1 タスクの累計コスト上限（各モデル呼び出し前にチェック）</td></tr>
+          <tr><td class="flag">judge_max_retries</td><td class="def">2</td><td>judge 判定失敗時のリトライ回数（超えると judge_failed で停止）</td></tr>
+        </tbody>
+      </table>
+      <div class="note">
+        <code>--se</code> は TUI 起動オプションです。<code>oimo run</code> にはありません。
+        実行中に止めたい場合は通常どおり Ctrl+C などで中断（<code>cancelled</code>）できます。
+        権限の強制確認（forced-ask）は自動承認されないため、重要な操作は引き続き確認が入ります。
+      </div>
 
       <h3 class="sub">4. セッションの共有と引き継ぎ</h3>
       <pre class="ex"><span class="cm"># 実行結果を共有 URL にする</span>
