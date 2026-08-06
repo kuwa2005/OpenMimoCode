@@ -184,13 +184,19 @@ else
     #   https://github.com/$repo/releases/latest             -> redirects to the latest release tag
     #   https://github.com/$repo/releases/download/v<version>/<filename>
     repo="${GH_REPO:-kuwa2005/OpenMimoCode}"
+    specific_version=""
 
     if [ -z "$requested_version" ]; then
+        # /releases/latest redirects to the latest tag. Repos without releases
+        # redirect to the plain /releases listing instead, so only trust the
+        # redirect when it actually points at a tag.
         latest_url=$(curl -fsSI -o /dev/null -w '%{redirect_url}' "https://github.com/$repo/releases/latest" 2>/dev/null || true)
-        specific_version=$(basename "${latest_url%/}" | sed 's/^v//')
+        if [[ "$latest_url" == */releases/tag/* ]]; then
+            specific_version=$(basename "${latest_url%/}" | sed 's/^v//')
+        fi
 
         if [ -z "$specific_version" ]; then
-            specific_version=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null | grep -oE '"tag_name": "[^"]+"' | head -1 | sed -E 's/.*"v?([^"]+)"/\1/')
+            specific_version=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null | grep -oE '"tag_name": "[^"]+"' | head -1 | sed -E 's/.*"v?([^"]+)"/\1/') || true
         fi
 
         if [ -z "$specific_version" ]; then
