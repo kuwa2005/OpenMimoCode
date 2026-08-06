@@ -80,6 +80,14 @@ export const Flag = {
   // Defaults to false (analytics disabled). Set MIMOCODE_ENABLE_ANALYSIS=true
   // to opt in to POSTing model_call/tool_call/agent_request metrics.
   MIMOCODE_ENABLE_ANALYSIS: truthy("MIMOCODE_ENABLE_ANALYSIS"),
+  // Defaults to false. The Xiaomi free tier (api.xiaomimimo.com) is a
+  // China-hosted anonymous API kept for future free models, but the route stays
+  // closed unless explicitly opted in. Set MIMOCODE_ENABLE_MIMO_FREE=true to
+  // register the mimo/mimo-auto provider and allow it to contact the API. Read
+  // dynamically so the gate can be flipped at runtime and tested.
+  get MIMOCODE_ENABLE_MIMO_FREE() {
+    return truthy("MIMOCODE_ENABLE_MIMO_FREE")
+  },
   MIMOCODE_ALWAYS_NOTIFY_UPDATE: truthy("MIMOCODE_ALWAYS_NOTIFY_UPDATE"),
   MIMOCODE_DISABLE_PRUNE: truthy("MIMOCODE_DISABLE_PRUNE"),
   MIMOCODE_DISABLE_TERMINAL_TITLE: truthy("MIMOCODE_DISABLE_TERMINAL_TITLE"),

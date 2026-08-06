@@ -1,12 +1,18 @@
 import type { Hooks, PluginInput } from "@mimo-ai/plugin"
 import { Log } from "../util"
 import { Global } from "../global"
+import { Flag } from "../flag/flag"
 import crypto from "crypto"
 import os from "os"
 import path from "path"
 import fs from "fs"
 
 const log = Log.create({ service: "plugin.mimo-free" })
+
+// Under --tor the source IP already rotates, so a stable device fingerprint
+// would re-link every request to the same machine. Rotate it on this interval
+// (hourly) so each window is a fresh, unlinkable identifier.
+const FINGERPRINT_ROTATE_INTERVAL_MS = 60 * 60 * 1000
 
 const DEFAULT_BASE_URL = "https://api.xiaomimimo.com/"
 const BASE_URL = (process.env.MIMO_FREE_BASE_URL || DEFAULT_BASE_URL).replace(/\/+$/, "")
@@ -17,12 +23,6 @@ const CHAT_BASE_URL = `${BASE_URL}/api/free-ai/openai`
 // limit per-device without any account. Derived from non-PII host attributes.
 let fingerprintCache: string | undefined
 function fingerprint(): string {
-  if (fingerprintCache) return fingerprintCache
-  const file = path.join(Global.Path.data, "mimo-free-client")
-  try {
-    const existing = fs.readFileSync(file, "utf-8").trim()
-    if (existing) return (fingerprintCache = existing)
-  } catch {}
   const cpu = os.cpus()[0]?.model ?? "unknown-cpu"
   const user = (() => {
     try {
@@ -32,6 +32,18 @@ function fingerprint(): string {
     }
   })()
   const seed = [os.hostname(), "linux", "x64", cpu, user].join("|")
+
+  if (Flag.MIMOCODE_TOR) {
+    const window = Math.floor(Date.now() / FINGERPRINT_ROTATE_INTERVAL_MS)
+    return crypto.createHash("sha256").update(`${seed}|${window}`).digest("hex")
+  }
+
+  if (fingerprintCache) return fingerprintCache
+  const file = path.join(Global.Path.data, "mimo-free-client")
+  try {
+    const existing = fs.readFileSync(file, "utf-8").trim()
+    if (existing) return (fingerprintCache = existing)
+  } catch {}
   const digest = crypto.createHash("sha256").update(seed).digest("hex")
   try {
     fs.writeFileSync(file, digest, { mode: 0o600 })
@@ -60,6 +72,12 @@ function jwtExpiry(jwt: string): number {
 }
 
 async function bootstrap(): Promise<Token> {
+  // The China-hosted route stays closed unless explicitly opted in, so nothing
+  // is ever sent to api.xiaomimimo.com by default. Future free models can be
+  // re-enabled without touching this code via MIMOCODE_ENABLE_MIMO_FREE=true.
+  if (!Flag.MIMOCODE_ENABLE_MIMO_FREE) {
+    throw new Error("MiMo free API is disabled. Set MIMOCODE_ENABLE_MIMO_FREE=true to enable.")
+  }
   const res = await fetch(BOOTSTRAP_URL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -119,6 +137,9 @@ export const MimoFree = {
 }
 
 export async function MimoFreeAuthPlugin(_input: PluginInput): Promise<Hooks> {
+  // Without the explicit opt-in the provider is not registered at all, so the
+  // mimo/mimo-auto model never appears in the picker and the route is dead.
+  if (!Flag.MIMOCODE_ENABLE_MIMO_FREE) return {}
   return {
     config: async (input) => {
       input.provider ??= {}
