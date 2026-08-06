@@ -18,7 +18,7 @@
 
 MiMoCode 是一个终端原生的 AI 编程助手。它能读写代码、执行命令、管理 Git，通过持久化记忆系统，在多次会话间保持对你项目的深度理解，并自我进化。
 
-内置 MiMo Auto 限时免费通道——零配置即可开始使用。也支持接入各家主流 LLM 厂商 API。
+内置 OpenCode Zen 免费默认通道——零配置即可开始使用。也支持接入各家主流 LLM 厂商 API。
 
 ---
 
@@ -49,7 +49,7 @@ omimo
 ```
 
 首次启动自动引导配置。支持：
-- **MiMo Auto（限时免费）** — 匿名通道，零配置
+- **OpenCode Zen（Big Pickle）** — 免费默认通道，零配置
 - **小米 MiMo 平台** — OAuth 登录
 - **Codex（ChatGPT Pro/Plus）** — OpenAI OAuth 登录
 - **从 Claude Code 导入** — 一键迁移已有认证
