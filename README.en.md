@@ -1,7 +1,7 @@
 <h1 align="center">Open Mimo Code</h1>
 
 <p align="center">
-  <img src="assets/readme/oimo-banner.png" alt="Open Mimo Code" width="700">
+  <img src="assets/readme/OpenMimoCode.png" alt="Open Mimo Code" width="700">
 </p>
 
 <p align="center"><strong>Open Mimo Code: Where Models and Agents Co-Evolve</strong></p>
