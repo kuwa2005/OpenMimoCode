@@ -42,6 +42,7 @@ import { PluginCommand } from "./cli/cmd/plug"
 import { Heap } from "./cli/heap"
 import { drizzle } from "drizzle-orm/bun-sqlite"
 import { ensureProcessMetadata } from "./util/mimo-process"
+import { initTor } from "./util/tor"
 
 const processMetadata = ensureProcessMetadata("main")
 
@@ -91,9 +92,17 @@ const cli = yargs(args)
     describe: "run without external plugins",
     type: "boolean",
   })
+  .option("tor", {
+    describe: "route all network traffic through a Tor SOCKS5 proxy",
+    type: "boolean",
+  })
   .middleware(async (opts) => {
     if (opts.pure) {
       process.env.MIMOCODE_PURE = "1"
+    }
+
+    if (opts.tor) {
+      process.env.MIMOCODE_TOR = "1"
     }
 
     await Log.init({
@@ -107,6 +116,8 @@ const cli = yargs(args)
     })
 
     Heap.start()
+
+    await initTor()
 
     process.env.AGENT = "1"
     process.env.MIMOCODE = "1"

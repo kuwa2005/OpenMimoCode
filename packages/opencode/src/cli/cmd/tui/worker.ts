@@ -13,6 +13,7 @@ import { Heap } from "@/cli/heap"
 import { AppRuntime } from "@/effect/app-runtime"
 import { SessionCheckpoint } from "@/session/checkpoint"
 import { ensureProcessMetadata } from "@/util/mimo-process"
+import { initTor } from "@/util/tor"
 
 ensureProcessMetadata("worker")
 
@@ -24,6 +25,8 @@ await Log.init({
     return "INFO"
   })(),
 })
+
+await initTor()
 
 Heap.start()
 

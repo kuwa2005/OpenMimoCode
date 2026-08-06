@@ -53,6 +53,18 @@ export const Flag = {
 
   MIMOCODE_DISABLE_AUTOUPDATE: truthy("MIMOCODE_DISABLE_AUTOUPDATE"),
 
+  // Defaults to false. When enabled, omimo's own network traffic (model and
+  // API calls) is routed through a Tor SOCKS5 proxy. Requires a local Tor
+  // daemon; the proxy address defaults to socks5h://127.0.0.1:9050 and can be
+  // overridden with MIMOCODE_TOR_PROXY. Getters so the CLI middleware can set
+  // MIMOCODE_TOR at parse time before workers/tests read it.
+  get MIMOCODE_TOR() {
+    return truthy("MIMOCODE_TOR")
+  },
+  get MIMOCODE_TOR_PROXY() {
+    return process.env["MIMOCODE_TOR_PROXY"]
+  },
+
   // Defaults to false (rotation enabled). When enabled, the active log file is
   // never archived to <name>.log.<stamp> on hitting MAX_FILE_SIZE — it grows in
   // place. Useful when an external tool tails/manages the single log file.
