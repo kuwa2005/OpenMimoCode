@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>oimo — Open Mimo Code CLI マニュアル</title>
+<style>
+  :root {
+    --ink: #1a1626;
+    --ink-soft: #4a4460;
+    --paper: #faf9fc;
+    --panel: #ffffff;
+    --purple: #6d28d9;
+    --purple-soft: #8b5cf6;
+    --purple-tint: #f3effb;
+    --terminal: #17151f;
+    --terminal-ink: #e9e4f5;
+    --muted: #6b6680;
+    --line: #e5e1ee;
+    --code-bg: #f4f1fa;
+    --warn-bg: #fff7e8;
+    --warn-ink: #8a5a12;
+    --warn-line: #f2ddb0;
+    --shadow: 0 1px 2px rgba(26, 22, 38, .06), 0 8px 24px rgba(26, 22, 38, .06);
+    --body: "Hiragino Kaku Gothic ProN", "Noto Sans JP", "Yu Gothic UI", "Yu Gothic", "Segoe UI", system-ui, sans-serif;
+    --mono: "SF Mono", "Cascadia Code", "JetBrains Mono", Consolas, "Noto Sans Mono CJK JP", ui-monospace, monospace;
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; scroll-padding-top: 24px; }
+  body {
+    margin: 0;
+    font-family: var(--body);
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink);
+    background: var(--paper);
+  }
+  a { color: var(--purple); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+
+  /* ---------- Layout ---------- */
+  .layout { display: flex; }
+  .sidebar {
+    width: 288px;
+    flex: 0 0 288px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    overflow-y: auto;
+    border-right: 1px solid var(--line);
+    background: var(--panel);
+    padding: 28px 20px 48px;
+  }
+  .sidebar .brand {
+    display: flex; align-items: baseline; gap: 8px;
+    margin: 0 8px 4px;
+    font-family: var(--mono);
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--purple);
+  }
+  .sidebar .brand-sub {
+    margin: 0 8px 20px;
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .sidebar nav .group {
+    margin: 0 0 6px;
+    padding: 10px 8px 2px;
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: .08em;
+    color: var(--muted);
+    text-transform: uppercase;
+  }
+  .sidebar nav a {
+    display: block;
+    padding: 5px 8px;
+    border-radius: 6px;
+    font-size: 13.5px;
+    color: var(--ink-soft);
+    border-left: 2px solid transparent;
+  }
+  .sidebar nav a:hover { background: var(--purple-tint); text-decoration: none; color: var(--purple); }
+  .sidebar nav a.active { background: var(--purple-tint); color: var(--purple); border-left-color: var(--purple); font-weight: 600; }
+  .sidebar nav a .mono { font-family: var(--mono); font-size: 12.5px; }
+
+  .main {
+    flex: 1;
+    min-width: 0;
+    max-width: 880px;
+    padding: 48px 48px 120px;
+  }
+
+  /* ---------- Hero ---------- */
+  .hero { margin-bottom: 48px; }
+  .hero .kicker {
+    font-family: var(--mono);
+    font-size: 12px;
+    letter-spacing: .14em;
+    text-transform: uppercase;
+    color: var(--purple);
+    margin: 0 0 8px;
+  }
+  .hero h1 {
+    font-family: var(--mono);
+    font-size: 44px;
+    line-height: 1.1;
+    margin: 0 0 10px;
+    letter-spacing: -.02em;
+  }
+  .hero h1 .prompt { color: var(--purple-soft); }
+  .hero p.sub { font-size: 16px; color: var(--ink-soft); margin: 0 0 20px; max-width: 60ch; }
+
+  .quick { margin-top: 8px; }
+
+  /* ---------- Terminal block (signature) ---------- */
+  .term {
+    background: var(--terminal);
+    color: var(--terminal-ink);
+    border-radius: 10px;
+    padding: 14px 18px;
+    margin: 12px 0;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 13.5px;
+    line-height: 1.75;
+    box-shadow: var(--shadow);
+  }
+  .term .p { color: var(--purple-soft); font-weight: 700; user-select: none; }
+  .term .c { color: #8a85a0; }
+  .term .o { color: #c4b5fd; }
+  .term.lg { white-space: pre; }
+
+  /* ---------- Sections ---------- */
+  section { margin-bottom: 56px; }
+  .cmd-head { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; margin-bottom: 4px; }
+  .cmd-head h2 {
+    font-family: var(--mono);
+    font-size: 21px;
+    margin: 0;
+    letter-spacing: -.01em;
+  }
+  .cmd-head h2 .kw { color: var(--purple); }
+  .tag {
+    font-size: 11.5px;
+    font-weight: 600;
+    color: var(--purple);
+    background: var(--purple-tint);
+    border: 1px solid #ddd3f1;
+    border-radius: 999px;
+    padding: 2px 10px;
+    white-space: nowrap;
+  }
+  .cmd-desc { color: var(--ink-soft); margin: 6px 0 14px; max-width: 72ch; }
+
+  h3.sub {
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: .1em;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin: 26px 0 10px;
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 6px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13.5px;
+    margin: 8px 0 4px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  th {
+    text-align: left;
+    background: var(--purple-tint);
+    color: var(--purple);
+    font-weight: 700;
+    font-size: 12px;
+    letter-spacing: .04em;
+    padding: 8px 14px;
+    border-bottom: 1px solid #ddd3f1;
+  }
+  td { padding: 8px 14px; border-bottom: 1px solid var(--line); vertical-align: top; }
+  tr:last-child td { border-bottom: none; }
+  td.flag { font-family: var(--mono); font-size: 12.5px; white-space: nowrap; color: var(--purple); width: 34%; }
+  td .def { color: var(--muted); font-size: 12px; }
+  tbody tr:hover { background: #faf8fd; }
+
+  pre.ex {
+    background: var(--code-bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    padding: 12px 16px;
+    overflow-x: auto;
+    font-family: var(--mono);
+    font-size: 12.5px;
+    line-height: 1.75;
+    margin: 6px 0;
+  }
+  pre.ex .cm { color: var(--muted); }
+
+  .note {
+    background: var(--warn-bg);
+    border: 1px solid var(--warn-line);
+    border-left: 3px solid #d99a2b;
+    border-radius: 6px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: var(--warn-ink);
+    margin: 12px 0;
+  }
+  .note .mono { font-family: var(--mono); font-size: 12px; }
+  .note.info {
+    background: var(--purple-tint);
+    border-color: #ddd3f1;
+    border-left-color: var(--purple);
+    color: var(--ink);
+  }
+
+  ul.flat { padding-left: 20px; margin: 6px 0; }
+  ul.flat li { margin: 3px 0; }
+
+  .cmd-chip {
+    font-family: var(--mono);
+    font-size: 12px;
+    background: var(--purple-tint);
+    border: 1px solid #ddd3f1;
+    color: var(--purple);
+    border-radius: 6px;
+    padding: 1px 7px;
+  }
+
+  footer {
+    margin-top: 64px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--muted);
+    font-size: 12.5px;
+  }
+
+  /* ---------- Mobile ---------- */
+  .topbar {
+    display: none;
+    position: sticky; top: 0; z-index: 20;
+    background: var(--panel);
+    border-bottom: 1px solid var(--line);
+    padding: 10px 16px;
+    font-family: var(--mono);
+    font-weight: 700;
+    color: var(--purple);
+  }
+  .topbar button {
+    background: none; border: 1px solid var(--line); border-radius: 6px;
+    font-size: 13px; color: var(--purple); padding: 4px 10px; cursor: pointer;
+  }
+  .topbar button:hover { background: var(--purple-tint); }
+  .topbar .sp { display: inline-block; width: 12px; }
+
+  @media (max-width: 900px) {
+    .topbar { display: flex; align-items: center; gap: 10px; }
+    .layout { display: block; }
+    .sidebar {
+      display: none;
+      width: 100%;
+      height: auto;
+      position: static;
+      border-right: none;
+      border-bottom: 1px solid var(--line);
+    }
+    .sidebar.open { display: block; }
+    .main { max-width: 100%; padding: 24px 20px 80px; }
+    .hero h1 { font-size: 34px; }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    html { scroll-behavior: auto; }
+  }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <button id="nav-toggle" aria-label="目次を開く">目次</button>
+  <span class="sp"></span>
+  <span>oimo — CLI マニュアル</span>
+</div>
+
+<div class="layout">
+
+  <!-- ======================= SIDEBAR ======================= -->
+  <aside class="sidebar" id="sidebar">
+    <div class="brand">oimo</div>
+    <div class="brand-sub">Open Mimo Code CLI マニュアル</div>
+    <nav id="toc">
+      <div class="group">はじめに</div>
+      <a href="#overview">概要</a>
+      <a href="#quickstart">クイックスタート</a>
+      <a href="#global-options">グローバルオプション</a>
+
+      <div class="group">コマンドリファレンス</div>
+      <a href="#cmd-default"><span class="mono">oimo</span>（TUI）</a>
+      <a href="#cmd-run"><span class="mono">oimo run</span></a>
+      <a href="#cmd-attach"><span class="mono">oimo attach</span></a>
+      <a href="#cmd-serve"><span class="mono">oimo serve</span></a>
+      <a href="#cmd-acp"><span class="mono">oimo acp</span></a>
+      <a href="#cmd-session"><span class="mono">oimo session</span></a>
+      <a href="#cmd-models"><span class="mono">oimo models</span></a>
+      <a href="#cmd-stats"><span class="mono">oimo stats</span></a>
+      <a href="#cmd-providers"><span class="mono">oimo providers</span></a>
+      <a href="#cmd-agent"><span class="mono">oimo agent</span></a>
+      <a href="#cmd-mcp"><span class="mono">oimo mcp</span></a>
+      <a href="#cmd-plugin"><span class="mono">oimo plugin</span></a>
+      <a href="#cmd-export"><span class="mono">oimo export</span></a>
+      <a href="#cmd-import"><span class="mono">oimo import</span></a>
+      <a href="#cmd-github"><span class="mono">oimo github</span></a>
+      <a href="#cmd-pr"><span class="mono">oimo pr</span></a>
+      <a href="#cmd-db"><span class="mono">oimo db</span></a>
+      <a href="#cmd-debug"><span class="mono">oimo debug</span></a>
+      <a href="#cmd-upgrade"><span class="mono">oimo upgrade</span></a>
+      <a href="#cmd-uninstall"><span class="mono">oimo uninstall</span></a>
+      <a href="#cmd-completion"><span class="mono">oimo completion</span></a>
+
+      <div class="group">リファレンス</div>
+      <a href="#env">環境変数</a>
+      <a href="#workflows">ワークフロー例</a>
+    </nav>
+  </aside>
+
+  <!-- ======================= MAIN ======================= -->
+  <main class="main">
+
+    <header class="hero">
+      <p class="kicker">Open Mimo Code — CLI Reference</p>
+      <h1><span class="prompt">$</span> oimo</h1>
+      <p class="sub">
+        oimo は、AI コーディングエージェント Open Mimo Code のコマンドラインインターフェースです。
+        ターミナル内の対話 UI（TUI）、非対話のワンショット実行、リモートサーバー運用、モデル・セッション・
+        プロバイダの管理など、すべての操作をこの 1 つのコマンドで行えます。
+      </p>
+      <div class="term quick">
+<span class="p">$</span> oimo                      <span class="c"># 対話 UI を起動（既定コマンド）</span>
+<span class="p">$</span> oimo run "テストを実行して"  <span class="c"># 非対話で 1 回だけ実行</span>
+<span class="p">$</span> oimo <span class="o">--help</span>              <span class="c"># 全コマンド・オプションの一覧</span>
+      </div>
+    </header>
+
+    <!-- ======================= OVERVIEW ======================= -->
+    <section id="overview">
+      <h2 class="cmd-head" style="display:block"><span style="font-family:var(--mono)">概要</span></h2>
+      <p>
+        コマンドは基本 <code>oimo &lt;コマンド&gt; [引数..] [オプション..]</code> の形式です。
+        引数を省略して <code>oimo</code> だけを実行すると、カレントディレクトリをプロジェクトとして
+        対話 UI（TUI）が起動します。
+      </p>
+      <h3 class="sub">コマンド一覧</h3>
+      <table>
+        <thead><tr><th>コマンド</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">oimo</td><td>対話 UI（TUI）を起動</td></tr>
+          <tr><td class="flag">oimo run</td><td>メッセージを渡して非対話で実行</td></tr>
+          <tr><td class="flag">oimo attach</td><td>実行中の oimo サーバーに接続</td></tr>
+          <tr><td class="flag">oimo serve</td><td>ヘッドレスサーバーを起動</td></tr>
+          <tr><td class="flag">oimo acp</td><td>ACP（Agent Client Protocol）サーバーを起動</td></tr>
+          <tr><td class="flag">oimo session</td><td>セッションの管理（一覧・削除・Claude 取り込み）</td></tr>
+          <tr><td class="flag">oimo models</td><td>利用可能なモデルの一覧</td></tr>
+          <tr><td class="flag">oimo stats</td><td>トークン使用量・コスト統計</td></tr>
+          <tr><td class="flag">oimo providers</td><td>プロバイダと資格情報の管理 <span class="def">（エイリアス: auth）</span></td></tr>
+          <tr><td class="flag">oimo agent</td><td>エージェントの作成・一覧</td></tr>
+          <tr><td class="flag">oimo mcp</td><td>MCP サーバーの管理</td></tr>
+          <tr><td class="flag">oimo plugin</td><td>プラグインのインストール <span class="def">（エイリアス: plug）</span></td></tr>
+          <tr><td class="flag">oimo export / import</td><td>セッションの JSON 出力 / 取り込み</td></tr>
+          <tr><td class="flag">oimo github</td><td>GitHub Agent の管理</td></tr>
+          <tr><td class="flag">oimo pr</td><td>PR ブランチをチェックアウトして起動</td></tr>
+          <tr><td class="flag">oimo db</td><td>SQLite データベースの操作</td></tr>
+          <tr><td class="flag">oimo debug</td><td>デバッグ・トラブルシューティング</td></tr>
+          <tr><td class="flag">oimo upgrade</td><td>バージョンアップグレード</td></tr>
+          <tr><td class="flag">oimo uninstall</td><td>アンインストール</td></tr>
+          <tr><td class="flag">oimo completion</td><td>シェル補完スクリプトを生成</td></tr>
+        </tbody>
+      </table>
+      <div class="note info">
+        引数を解析する <code>.strict()</code> モードが有効です。存在しないオプションを渡すとエラーになります。
+      </div>
+    </section>
+
+    <!-- ======================= QUICKSTART ======================= -->
+    <section id="quickstart">
+      <h2 class="cmd-head" style="display:block"><span style="font-family:var(--mono)">クイックスタート</span></h2>
+      <div class="term lg">
+<span class="p">$</span> oimo                        <span class="c"># 対話 UI を起動（最も一般的な使い方）</span>
+<span class="p">$</span> oimo run "このリポジトリの README を要約して"
+<span class="p">$</span> oimo -c                      <span class="c"># 直前のセッションを継続</span>
+<span class="p">$</span> oimo -m openai/gpt-5.6       <span class="c"># モデルを指定して起動（provider/model 形式）</span>
+<span class="p">$</span> oimo --tor                   <span class="c"># Tor SOCKS5 経由で通信を匿名化</span>
+      </div>
+      <p>
+        詳しいヘルプはいつでも <code>oimo --help</code>（コマンド全体）または
+        <code>oimo &lt;コマンド&gt; --help</code>（個別コマンド）で表示できます。
+      </p>
+    </section>
+
+    <!-- ======================= GLOBAL OPTIONS ======================= -->
+    <section id="global-options">
+      <h2 class="cmd-head" style="display:block"><span style="font-family:var(--mono)">グローバルオプション</span></h2>
+      <p>
+        <code>oimo --help</code> に表示される共通オプションです。既定コマンド（TUI）と
+        <code>serve</code> / <code>acp</code> / <code>attach</code> は、このうちネットワーク関連の
+        オプションを共有しています。
+      </p>
+      <h3 class="sub">共通オプション</h3>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">-h, --help</td><td>ヘルプを表示</td></tr>
+          <tr><td class="flag">-v, --version</td><td>バージョンを表示</td></tr>
+          <tr><td class="flag">--print-logs</td><td>ログを stderr に出力</td></tr>
+          <tr><td class="flag">--log-level</td><td>ログレベル <span class="def">DEBUG / INFO / WARN / ERROR</span></td></tr>
+          <tr><td class="flag">--pure</td><td>外部プラグインなしで実行</td></tr>
+          <tr><td class="flag">--tor</td><td>全通信を Tor SOCKS5 プロキシ経由にルーティング</td></tr>
+          <tr><td class="flag">--log &lt;file&gt;</td><td>TUI セッションの質問と要約を Markdown ファイルに追記</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">ネットワークオプション（TUI / serve / acp 共通）</h3>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th><th>既定値</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--port</td><td>リッスンポート</td><td class="def">0（自動）</td></tr>
+          <tr><td class="flag">--hostname</td><td>リッスンするホスト名</td><td class="def">127.0.0.1</td></tr>
+          <tr><td class="flag">--mdns</td><td>mDNS サービスディスカバリを有効化（hostname が 0.0.0.0 になる）</td><td class="def">false</td></tr>
+          <tr><td class="flag">--mdns-domain</td><td>mDNS 用のカスタムドメイン</td><td class="def">oimo.local</td></tr>
+          <tr><td class="flag">--cors</td><td>CORS を許可する追加ドメイン（複数指定可）</td><td class="def">[]</td></tr>
+          <tr><td class="flag">--no-auth</td><td>非ループバックアドレスで認証なし起動を許可（危険）</td><td class="def">false</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">TUI 起動オプション</h3>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span></td></tr>
+          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続</td></tr>
+          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続</td></tr>
+          <tr><td class="flag">--fork</td><td>継続時にセッションをフォーク <span class="def">（--continue または --session と併用）</span></td></tr>
+          <tr><td class="flag">--prompt</td><td>使用するプロンプト</td></tr>
+          <tr><td class="flag">--agent</td><td>使用するエージェント</td></tr>
+          <tr><td class="flag">--never-ask</td><td>never-ask モードで開始（権限系は対象外。実行中は /never-ask で切替）</td></tr>
+          <tr><td class="flag">--autonomy, --se</td><td>SE 型自律実行モード（要件を聞いてロック → 証跡付きでノンストップ開発。compose エージェントを暗黙指定）</td></tr>
+          <tr><td class="flag">--trust</td><td>ワークスペース信頼確認をスキップしてそのディレクトリを信頼</td></tr>
+          <tr><td class="flag">--dangerously-skip-permissions</td><td>明示的に拒否されていない権限を自動承認（危険）</td></tr>
+          <tr><td class="flag">--auto</td><td>上記と同じ自動承認に加え、ワークスペース信頼確認もスキップ（危険）</td></tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- ======================= DEFAULT TUI ======================= -->
+    <section id="cmd-default">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo</span> [project]</h2>
+        <span class="tag">既定コマンド</span>
+      </div>
+      <p class="cmd-desc">対話 UI（TUI）を起動します。</p>
+      <div class="term"><span class="p">$</span> oimo [project] [options]</div>
+      <table>
+        <thead><tr><th>引数</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">project</td><td>作業を開始するディレクトリのパス（省略時はカレントディレクトリ）</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># カレントディレクトリで対話 UI を起動</span>
+oimo
+
+<span class="cm"># 指定ディレクトリをプロジェクトとして起動</span>
+oimo ~/my-project
+
+<span class="cm"># モデルを指定して起動</span>
+oimo -m openai/gpt-5.6
+
+<span class="cm"># 直前のセッションを続行</span>
+oimo -c
+
+<span class="cm"># 特定セッションをフォークして続行</span>
+oimo -s ses_abc123 --fork
+
+<span class="cm"># SE 型自律実行モード（要件ロック → 証跡付き自動実装）</span>
+oimo --se
+
+<span class="cm"># Tor 経由で匿名化（--auto と併用で信頼確認もスキップ）</span>
+oimo --tor --auto</pre>
+      <div class="note">
+        起動時にワークスペースの信頼確認が行われます。<code>--trust</code> / <code>--auto</code> /
+        <code>--dangerously-skip-permissions</code> でスキップできます。
+      </div>
+    </section>
+
+    <!-- ======================= RUN ======================= -->
+    <section id="cmd-run">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo run</span> [message..]</h2>
+      </div>
+      <p class="cmd-desc">メッセージを渡して非対話で 1 回だけ実行します。パイプ入力された標準入力もメッセージとして扱われます。また <code>--</code> 以降のトークンはメッセージに追加されます。</p>
+      <div class="term"><span class="p">$</span> oimo run [message..] [options]</div>
+      <table>
+        <thead><tr><th>引数</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">message..</td><td>送信するメッセージ（複数指定すると連結）</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--command</td><td>実行するコマンド（引数は message で渡す）</td></tr>
+          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続</td></tr>
+          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続</td></tr>
+          <tr><td class="flag">--fork</td><td>継続前にセッションをフォーク <span class="def">（--continue / --session 必須）</span></td></tr>
+          <tr><td class="flag">--share</td><td>セッションを共有（共有 URL を生成）</td></tr>
+          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span></td></tr>
+          <tr><td class="flag">--agent</td><td>使用するエージェント</td></tr>
+          <tr><td class="flag">--format</td><td>出力形式 <span class="def">default（整形済み）/ json（生の JSON イベント）</span></td></tr>
+          <tr><td class="flag">-f, --file</td><td>メッセージに添付するファイル（複数指定可）</td></tr>
+          <tr><td class="flag">--title</td><td>セッションのタイトル（省略時はプロンプト先頭から自動生成）</td></tr>
+          <tr><td class="flag">--attach &lt;url&gt;</td><td>実行中の oimo サーバーに接続して実行 <span class="def">例: http://localhost:4096</span></td></tr>
+          <tr><td class="flag">-p, --password</td><td>Basic 認証パスワード <span class="def">（既定: MIMOCODE_SERVER_PASSWORD）</span></td></tr>
+          <tr><td class="flag">--dir &lt;path&gt;</td><td>実行ディレクトリ（アタッチ時はリモート上のパス）</td></tr>
+          <tr><td class="flag">--port</td><td>ローカルサーバーのポート（省略時はランダム）</td></tr>
+          <tr><td class="flag">--variant</td><td>モデルバリアント（プロバイダ固有の reasoning effort 等）</td></tr>
+          <tr><td class="flag">--thinking</td><td>thinking ブロックを表示</td></tr>
+          <tr><td class="flag">--role</td><td>注入メッセージのロール <span class="def">user / assistant（assistant はテキストをモデル出力として注入して継続）</span></td></tr>
+          <tr><td class="flag">--auto</td><td>明示的に拒否されていない権限を自動承認（危険）</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># ワンショット実行</span>
+oimo run "このリポジトリのテストを実行して結果を教えて"
+
+<span class="cm"># --command でコマンドを指定</span>
+oimo run --command "bun test" --dir packages/opencode
+
+<span class="cm"># 標準入力からメッセージを渡す</span>
+cat spec.txt | oimo run "この仕様を実装して"
+
+<span class="cm"># ファイルを添付してレビューを依頼</span>
+oimo run -f src/main.ts -f src/util.ts "これら 2 ファイルのレビューをして"
+
+<span class="cm"># 直前のセッションをフォークして続行</span>
+oimo run -c --fork "ここまでの続きをやって"
+
+<span class="cm"># プロセスイベントを JSON で受信</span>
+oimo run --format json "3 ファイルに分割して"
+
+<span class="cm"># 実行中のサーバーへ接続して実行</span>
+oimo run --attach http://127.0.0.1:4096 "リモートで実行して"</pre>
+    </section>
+
+    <!-- ======================= ATTACH ======================= -->
+    <section id="cmd-attach">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo attach</span> &lt;url&gt;</h2>
+      </div>
+      <p class="cmd-desc">実行中の oimo サーバーに接続し、そのサーバーに対して対話 UI（TUI）を起動します。</p>
+      <div class="term"><span class="p">$</span> oimo attach &lt;url&gt; [options]</div>
+      <table>
+        <thead><tr><th>引数</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">url</td><td>接続先サーバーの URL <span class="def">例: http://localhost:4096</span></td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--dir</td><td>作業ディレクトリ（ローカルに無ければリモート上のパスとして送信）</td></tr>
+          <tr><td class="flag">-c, --continue</td><td>直前のセッションを継続</td></tr>
+          <tr><td class="flag">-s, --session</td><td>セッション ID を指定して継続</td></tr>
+          <tr><td class="flag">--fork</td><td>継続時にセッションをフォーク <span class="def">（--continue / --session と併用）</span></td></tr>
+          <tr><td class="flag">-p, --password</td><td>Basic 認証パスワード <span class="def">（既定: MIMOCODE_SERVER_PASSWORD）</span></td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># ローカルで起動したサーバーに接続</span>
+oimo serve --port 4096 &amp;
+oimo attach http://127.0.0.1:4096
+
+<span class="cm"># SSH ポートフォワードでリモートのサーバーに接続</span>
+ssh -N -L 4096:127.0.0.1:4096 user@remote-host
+oimo attach http://127.0.0.1:4096</pre>
+    </section>
+
+    <!-- ======================= SERVE ======================= -->
+    <section id="cmd-serve">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo serve</span></h2>
+      </div>
+      <p class="cmd-desc">ヘッドレス（UI なし）の oimo サーバーを起動します。リモートホストや CI 環境でサーバーだけを立ち上げ、別のマシンから <code>oimo attach</code> / <code>oimo run --attach</code> で接続する用途に使います。</p>
+      <div class="term"><span class="p">$</span> oimo serve [options]</div>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># ポート 4096 でサーバーを起動</span>
+oimo serve --port 4096
+
+<span class="cm"># パスワード付きで起動（非ループバックへ公開する場合）</span>
+MIMOCODE_SERVER_PASSWORD=secret oimo serve --hostname 0.0.0.0 --port 4096
+
+<span class="cm"># mDNS でネットワーク内から発見可能にする</span>
+oimo serve --mdns --port 4096</pre>
+      <div class="note">
+        非ループバックアドレス（0.0.0.0 等）にバインドするには
+        <code>MIMOCODE_SERVER_PASSWORD</code> の設定（または危険な <code>--no-auth</code>）が必要です。
+        認証ユーザー名は <code>MIMOCODE_SERVER_USERNAME</code>（既定 <code>oimo</code>）。
+      </div>
+    </section>
+
+    <!-- ======================= ACP ======================= -->
+    <section id="cmd-acp">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo acp</span></h2>
+      </div>
+      <p class="cmd-desc">ACP（Agent Client Protocol）サーバーを起動します。ヘッドレスサーバーを起動し、標準入出力を NDJSON ストリームで ACP エージェントとして橋渡しします。</p>
+      <div class="term"><span class="p">$</span> oimo acp [network-options] [--cwd &lt;dir&gt;]</div>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--cwd</td><td>作業ディレクトリ <span class="def">（既定: カレントディレクトリ）</span></td></tr>
+          <tr><td class="flag">--port / --hostname / --mdns / --mdns-domain / --cors / --no-auth</td><td>ネットワークオプション（前掲の共通オプション参照）</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># ACP サーバーをポート 4096 で起動</span>
+oimo acp --port 4096</pre>
+    </section>
+
+    <!-- ======================= SESSION ======================= -->
+    <section id="cmd-session">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo session</span> &lt;list|delete|import-claude&gt;</h2>
+      </div>
+      <p class="cmd-desc">セッションの管理を行います。</p>
+      <div class="term"><span class="p">$</span> oimo session list [options]</div>
+      <div class="term"><span class="p">$</span> oimo session delete &lt;sessionID&gt;</div>
+      <div class="term"><span class="p">$</span> oimo session import-claude [--force]</div>
+      <h3 class="sub">サブコマンド</h3>
+      <table>
+        <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">list</td><td>セッションの一覧を表示。<code>--format json</code> で JSON 出力、TTY では対話ピッカー（矢印キー + Enter でそのセッションを TUI で再開）</td></tr>
+          <tr><td class="flag">delete &lt;sessionID&gt;</td><td>セッションを削除</td></tr>
+          <tr><td class="flag">import-claude</td><td>Claude Code のセッション（~/.claude/projects）を oimo に取り込み</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">-n, --max-count</td><td>直近 N 件に制限 <span class="def">（list）</span></td></tr>
+          <tr><td class="flag">--format</td><td>出力形式 <span class="def">table / json（既定: table）</span></td></tr>
+          <tr><td class="flag">--force</td><td>mtime キャッシュを無視して全セッションを再同期 <span class="def">（import-claude）</span></td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 直近 20 件を一覧</span>
+oimo session list -n 20
+
+<span class="cm"># JSON で取得（スクリプト処理用）</span>
+oimo session list --format json
+
+<span class="cm"># セッションを削除</span>
+oimo session delete ses_abc123
+
+<span class="cm"># Claude Code のセッションを取り込む</span>
+oimo session import-claude
+oimo session import-claude --force</pre>
+    </section>
+
+    <!-- ======================= MODELS ======================= -->
+    <section id="cmd-models">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo models</span> [provider]</h2>
+      </div>
+      <p class="cmd-desc">利用可能なモデルの一覧を表示します。各モデルの解決済みウィンドウと、どのトークン数で圧縮されるかも表示されます。</p>
+      <div class="term"><span class="p">$</span> oimo models [provider] [options]</div>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">provider</td><td>モデルを絞り込むプロバイダ ID <span class="def">（位置引数）</span></td></tr>
+          <tr><td class="flag">--verbose</td><td>コスト等のメタデータを含む詳細出力</td></tr>
+          <tr><td class="flag">--refresh</td><td>models.dev のキャッシュを再取得して表示</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 全モデルを一覧</span>
+oimo models
+
+<span class="cm"># openai プロバイダのみ</span>
+oimo models openai
+
+<span class="cm"># キャッシュを更新して詳細表示</span>
+oimo models --refresh --verbose</pre>
+      <div class="note">
+        設定の検証にも使えます。プロバイダが未設定で不正な設定をしていると、ここでモデルが解決できずに分かります。
+      </div>
+    </section>
+
+    <!-- ======================= STATS ======================= -->
+    <section id="cmd-stats">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo stats</span></h2>
+      </div>
+      <p class="cmd-desc">トークン使用量とコストの統計を表示します（OVERVIEW / COST &amp; TOKENS / MODEL USAGE / TOOL USAGE のセクションで構成）。</p>
+      <div class="term"><span class="p">$</span> oimo stats [options]</div>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--days &lt;N&gt;</td><td>直近 N 日分を表示 <span class="def">（0 は今日。既定: 全期間）</span></td></tr>
+          <tr><td class="flag">--tools &lt;N&gt;</td><td>ツール使用量の上位 N 件を表示 <span class="def">（既定: 全部）</span></td></tr>
+          <tr><td class="flag">--models [N]</td><td>モデル統計を表示（既定は非表示。数値を渡すと上位 N 件）</td></tr>
+          <tr><td class="flag">--project &lt;name&gt;</td><td>プロジェクトで絞り込み <span class="def">（既定: 全プロジェクト。空文字で現在のプロジェクトのみ）</span></td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 全期間の統計</span>
+oimo stats
+
+<span class="cm"># 直近 7 日、モデル上位 10・ツール上位 5</span>
+oimo stats --days 7 --models 10 --tools 5
+
+<span class="cm"># 現在のプロジェクトのみ</span>
+oimo stats --project ""</pre>
+    </section>
+
+    <!-- ======================= PROVIDERS ======================= -->
+    <section id="cmd-providers">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo providers</span> &lt;list|login|logout|whoami&gt;</h2>
+        <span class="tag">エイリアス: oimo auth</span>
+      </div>
+      <p class="cmd-desc">AI プロバイダと資格情報（API キー・OAuth）を管理します。</p>
+      <div class="term"><span class="p">$</span> oimo providers &lt;list|login|logout|whoami&gt; [options]</div>
+      <h3 class="sub">サブコマンド</h3>
+      <table>
+        <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">list <span class="def">(ls)</span></td><td>プロバイダと資格情報の一覧（auth.json の内容と、環境に見つかったプロバイダ向け環境変数）</td></tr>
+          <tr><td class="flag">login [url]</td><td>プロバイダにログイン。URL を渡すとその OAuth サーバー（.well-known/opencode）から認証フローを取得</td></tr>
+          <tr><td class="flag">logout</td><td>設定済みプロバイダからログアウト（対話で選択）</td></tr>
+          <tr><td class="flag">whoami</td><td>現在のログインユーザー情報を表示</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">-p, --provider</td><td>ログインするプロバイダ ID <span class="def">（選択をスキップ）</span></td></tr>
+          <tr><td class="flag">-m, --method</td><td>ログインメソッドのラベル <span class="def">（選択をスキップ）</span></td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 対話でプロバイダにログイン</span>
+oimo auth login
+
+<span class="cm"># プロバイダを直接指定（例: xiaomi MiMo）</span>
+oimo auth login -p xiaomi
+
+<span class="cm"># 独自 OAuth サーバーから認証フローを取得してログイン</span>
+oimo auth login https://opencode.example.com
+
+<span class="cm"># 一覧と確認</span>
+oimo auth list
+oimo auth whoami
+oimo auth logout</pre>
+    </section>
+
+    <!-- ======================= AGENT ======================= -->
+    <section id="cmd-agent">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo agent</span> &lt;create|list&gt;</h2>
+      </div>
+      <p class="cmd-desc">エージェントの作成・一覧表示を行います。エージェントは役割（build / plan / compose 等）と権限（ツールセット）を持ちます。</p>
+      <div class="term"><span class="p">$</span> oimo agent create [options]</div>
+      <div class="term"><span class="p">$</span> oimo agent list</div>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--path &lt;dir&gt;</td><td>エージェントファイルを生成するディレクトリ</td></tr>
+          <tr><td class="flag">--description</td><td>エージェントが何をするか</td></tr>
+          <tr><td class="flag">--mode</td><td>エージェントモード <span class="def">all / primary / subagent</span></td></tr>
+          <tr><td class="flag">--tools</td><td>有効化するツールのカンマ区切り <span class="def">（既定: all。bash, read, write, edit, glob, grep, webfetch, actor, task）</span></td></tr>
+          <tr><td class="flag">-m, --model</td><td>使用するモデル <span class="def">provider/model 形式</span></td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># エージェント一覧</span>
+oimo agent list
+
+<span class="cm"># 全引数を渡して非対話で作成</span>
+oimo agent create \
+  --path ./agent \
+  --description "README とドキュメントを整えるレビューワ" \
+  --mode subagent \
+  --tools "read,write,edit,glob,grep"
+
+<span class="cm"># 対話で作成（引数を省略するとプロンプトで聞かれる）</span>
+oimo agent create</pre>
+    </section>
+
+    <!-- ======================= MCP ======================= -->
+    <section id="cmd-mcp">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo mcp</span> &lt;list|auth|logout|add|debug&gt;</h2>
+      </div>
+      <p class="cmd-desc">MCP（Model Context Protocol）サーバーの管理を行います。</p>
+      <div class="term"><span class="p">$</span> oimo mcp &lt;list|auth|logout|add|debug&gt; [options]</div>
+      <h3 class="sub">サブコマンド</h3>
+      <table>
+        <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">list <span class="def">(ls)</span></td><td>MCP サーバーとその状態を一覧表示</td></tr>
+          <tr><td class="flag">add</td><td>MCP サーバーを追加（対話形式。スコープ・名前・種別 local/remote・コマンド・URL・OAuth 設定を入力）</td></tr>
+          <tr><td class="flag">auth [name]</td><td>OAuth 対応 MCP サーバーで認証。<code>auth list</code> で認証状態を確認</td></tr>
+          <tr><td class="flag">logout [name]</td><td>MCP サーバーの OAuth 資格情報を削除</td></tr>
+          <tr><td class="flag">debug &lt;name&gt;</td><td>OAuth 接続をデバッグ（initialize ハンドシェイク、HTTP ステータス、OAuth ディスカバリ等）</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 対話で MCP サーバーを追加（--type 等のフラグは無し）</span>
+oimo mcp add
+
+<span class="cm"># 一覧と認証状態</span>
+oimo mcp list
+oimo mcp auth list
+
+<span class="cm"># サーバー名を指定して OAuth 認証</span>
+oimo mcp auth github-mcp
+
+<span class="cm"># 接続をデバッグ / 資格情報を削除</span>
+oimo mcp debug github-mcp
+oimo mcp logout github-mcp</pre>
+      <div class="note info">
+        <code>oimo mcp add</code> は完全に対話式です。<code>--type</code> / <code>--command</code> 等の
+        フラグは存在しないため、プロンプトに従って入力してください。
+      </div>
+    </section>
+
+    <!-- ======================= PLUGIN ======================= -->
+    <section id="cmd-plugin">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo plugin</span> &lt;module&gt;</h2>
+        <span class="tag">エイリアス: oimo plug</span>
+      </div>
+      <p class="cmd-desc">npm のプラグインモジュールをインストールし、設定（oimo.json）を自動で更新します。</p>
+      <div class="term"><span class="p">$</span> oimo plugin &lt;module&gt; [options]</div>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">-g, --global</td><td>グローバル設定にインストール <span class="def">（既定: プロジェクト）</span></td></tr>
+          <tr><td class="flag">-f, --force</td><td>既存のプラグインバージョンを置き換え</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># プロジェクトにインストール</span>
+oimo plugin @some/plugin
+
+<span class="cm"># グローバルにインストール / 強制アップデート</span>
+oimo plugin @some/plugin -g
+oimo plugin @some/plugin -f</pre>
+    </section>
+
+    <!-- ======================= EXPORT ======================= -->
+    <section id="cmd-export">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo export</span> [sessionID]</h2>
+      </div>
+      <p class="cmd-desc">セッションデータを JSON（<code>{info, messages}</code>）として標準出力に書き出します。sessionID を省略すると対話で選択します（パイプ時は最新）。</p>
+      <div class="term"><span class="p">$</span> oimo export [sessionID] [--sanitize]</div>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--sanitize</td><td>会話本文・ファイルパス・ツール入出力等の機微情報を <code>[redacted:...]</code> に置き換えてマスク</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># セッションをファイルに書き出し</span>
+oimo export ses_abc123 &gt; session.json
+
+<span class="cm"># 機微情報をマスクして書き出し</span>
+oimo export --sanitize &gt; session-sanitized.json
+
+<span class="cm"># 対話で選択して書き出し</span>
+oimo export</pre>
+    </section>
+
+    <!-- ======================= IMPORT ======================= -->
+    <section id="cmd-import">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo import</span> &lt;file&gt;</h2>
+      </div>
+      <p class="cmd-desc">エクスポートされたセッション JSON、または共有 URL からセッションを取り込みます。</p>
+      <div class="term"><span class="p">$</span> oimo import &lt;file|share-url&gt;</div>
+      <table>
+        <thead><tr><th>引数</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">file</td><td>JSON ファイルのパス、または <code>https://…/share/&lt;slug&gt;</code> 形式の共有 URL</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># ローカルファイルから取り込み</span>
+oimo import session.json
+
+<span class="cm"># 共有 URL から取り込み</span>
+oimo import https://opncd.ai/share/abc123</pre>
+    </section>
+
+    <!-- ======================= GITHUB ======================= -->
+    <section id="cmd-github">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo github</span> &lt;install|run&gt;</h2>
+      </div>
+      <p class="cmd-desc">GitHub Agent を管理・実行します。</p>
+      <div class="term"><span class="p">$</span> oimo github install</div>
+      <div class="term"><span class="p">$</span> oimo github run [--event &lt;type&gt;] [--token &lt;pat&gt;]</div>
+      <h3 class="sub">サブコマンド</h3>
+      <table>
+        <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">install</td><td>GitHub Agent をインストール。GitHub の origin リモートを持つリポジトリ内で実行し、opencode-agent App を導入して <code>.github/workflows/opencode.yml</code> を生成</td></tr>
+          <tr><td class="flag">run</td><td>GitHub Agent を実行（ワークフロー内で使用）</td></tr>
+        </tbody>
+      </table>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">--event</td><td>実行する GitHub モックイベント（issue_comment / pull_request 等）</td></tr>
+          <tr><td class="flag">--token</td><td>GitHub の personal access token</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># GitHub リポジトリ内で Agent をセットアップ</span>
+oimo github install
+
+<span class="cm"># 特定イベントで Agent を実行（テスト用途）</span>
+MODEL=openai/gpt-5.6 GITHUB_RUN_ID=1 oimo github run --event pull_request</pre>
+      <div class="note info">
+        <code>oimo github run</code> は主に GitHub Actions のワークフローから使うため、
+        環境変数 <code>MODEL</code> / <code>GITHUB_RUN_ID</code> / <code>PROMPT</code> 等が必須です。
+      </div>
+    </section>
+
+    <!-- ======================= PR ======================= -->
+    <section id="cmd-pr">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo pr</span> &lt;number&gt;</h2>
+      </div>
+      <p class="cmd-desc">指定した GitHub PR のブランチをチェックアウトして oimo（TUI）を起動します。PR 本文に共有 URL が含まれる場合は、そのセッションを取り込んで続行します。</p>
+      <div class="term"><span class="p">$</span> oimo pr &lt;number&gt;</div>
+      <div class="note">
+        <code>gh</code> CLI と git リポジトリが必要です。フォークからの PR は自動でリモートを追加します。
+      </div>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># PR #42 のブランチで作業を開始</span>
+oimo pr 42</pre>
+    </section>
+
+    <!-- ======================= DB ======================= -->
+    <section id="cmd-db">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo db</span> &lt;[query]|path|migrate&gt;</h2>
+      </div>
+      <p class="cmd-desc">SQLite データベースの操作ツールです。</p>
+      <div class="term"><span class="p">$</span> oimo db [query] [--format &lt;json|tsv&gt;]</div>
+      <div class="term"><span class="p">$</span> oimo db path</div>
+      <div class="term"><span class="p">$</span> oimo db migrate</div>
+      <h3 class="sub">サブコマンド</h3>
+      <table>
+        <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">[query]</td><td>SQL クエリを実行して結果を出力（既定: tsv）。クエリなしで実行すると対話式 sqlite3 シェルを起動</td></tr>
+          <tr><td class="flag">path</td><td>データベースファイルのパスを表示</td></tr>
+          <tr><td class="flag">migrate</td><td>旧 JSON データを SQLite に移行（既存データとマージ）</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># DB の場所を確認</span>
+oimo db path
+
+<span class="cm"># セッション数を数える</span>
+oimo db "select count(*) from session"
+
+<span class="cm"># 結果を JSON で取得</span>
+oimo db "select id, title from session limit 5" --format json
+
+<span class="cm"># 対話シェルを起動</span>
+oimo db</pre>
+    </section>
+
+    <!-- ======================= DEBUG ======================= -->
+    <section id="cmd-debug">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo debug</span> &lt;subcommand&gt;</h2>
+      </div>
+      <p class="cmd-desc">デバッグ・トラブルシューティング用の各種ユーティリティです。</p>
+      <div class="term"><span class="p">$</span> oimo debug &lt;subcommand&gt; [options]</div>
+      <table>
+        <thead><tr><th>サブコマンド</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">config</td><td>解決済み設定（JSON）を表示</td></tr>
+          <tr><td class="flag">lsp</td><td>LSP デバッグ: <code>diagnostics &lt;file&gt;</code> / <code>symbols &lt;query&gt;</code> / <code>document-symbols &lt;uri&gt;</code></td></tr>
+          <tr><td class="flag">rg</td><td>ripgrep デバッグ: <code>tree</code> / <code>files [--query --glob --limit]</code> / <code>search &lt;pattern&gt; [--glob --limit]</code></td></tr>
+          <tr><td class="flag">file</td><td>ファイルシステムデバッグ: <code>read &lt;path&gt;</code> / <code>status</code> / <code>list &lt;path&gt;</code> / <code>search &lt;query&gt;</code> / <code>tree [dir]</code></td></tr>
+          <tr><td class="flag">scrap</td><td>既知の全プロジェクトを表示</td></tr>
+          <tr><td class="flag">skill</td><td>利用可能な全スキルを表示</td></tr>
+          <tr><td class="flag">snapshot</td><td>スナップショットデバッグ: <code>track</code> / <code>patch &lt;hash&gt;</code> / <code>diff &lt;hash&gt;</code></td></tr>
+          <tr><td class="flag">agent &lt;name&gt;</td><td>エージェント設定の詳細を表示。<code>--tool</code> / <code>--params</code> でツールを直接実行</td></tr>
+          <tr><td class="flag">paths</td><td>グローバルパス（data / config / cache / state）を表示</td></tr>
+          <tr><td class="flag">wait</td><td>無期限に待機（デバッグ用）</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 設定の確認</span>
+oimo debug config
+
+<span class="cm"># パスの確認</span>
+oimo debug paths
+
+<span class="cm"># エージェント設定の詳細</span>
+oimo debug agent build
+
+<span class="cm"># エージェントのツールを直接実行</span>
+oimo debug agent plan --tool read --params '{"filePath":"README.md"}'
+
+<span class="cm"># スキル・スナップショットの確認</span>
+oimo debug skill
+oimo debug snapshot track</pre>
+    </section>
+
+    <!-- ======================= UPGRADE ======================= -->
+    <section id="cmd-upgrade">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo upgrade</span> [target]</h2>
+      </div>
+      <p class="cmd-desc">oimo を最新版、または指定バージョンへアップグレードします。インストール方法（curl / npm / brew 等）を自動検出します。</p>
+      <div class="term"><span class="p">$</span> oimo upgrade [target] [options]</div>
+      <table>
+        <thead><tr><th>引数 / オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">target</td><td>アップグレード先のバージョン <span class="def">例: 0.1.48 または v0.1.48（省略時は最新）</span></td></tr>
+          <tr><td class="flag">-m, --method</td><td>インストール方法を明示 <span class="def">curl / npm / pnpm / bun / brew / choco / scoop</span></td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 最新版へアップグレード</span>
+oimo upgrade
+
+<span class="cm"># 特定バージョンを指定</span>
+oimo upgrade 0.1.48
+
+<span class="cm"># インストール方法を指定</span>
+oimo upgrade -m brew</pre>
+    </section>
+
+    <!-- ======================= UNINSTALL ======================= -->
+    <section id="cmd-uninstall">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo uninstall</span></h2>
+      </div>
+      <p class="cmd-desc">oimo をアンインストールし、関連ファイルを削除します。何が削除されるか事前に確認できます。</p>
+      <div class="term"><span class="p">$</span> oimo uninstall [options]</div>
+      <table>
+        <thead><tr><th>オプション</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">-c, --keep-config</td><td>設定ファイルを残す</td></tr>
+          <tr><td class="flag">-d, --keep-data</td><td>セッションデータとスナップショットを残す</td></tr>
+          <tr><td class="flag">--dry-run</td><td>削除せずに削除対象だけを表示</td></tr>
+          <tr><td class="flag">-f, --force</td><td>確認プロンプトをスキップ</td></tr>
+        </tbody>
+      </table>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># 削除対象を確認</span>
+oimo uninstall --dry-run
+
+<span class="cm"># 設定とデータを残してアンインストール</span>
+oimo uninstall -c -d
+
+<span class="cm"># 確認なしで完全削除</span>
+oimo uninstall -f</pre>
+    </section>
+
+    <!-- ======================= COMPLETION ======================= -->
+    <section id="cmd-completion">
+      <div class="cmd-head">
+        <h2><span class="kw">oimo completion</span> [shell]</h2>
+      </div>
+      <p class="cmd-desc">シェル補完スクリプトを生成します。</p>
+      <div class="term"><span class="p">$</span> oimo completion [bash|zsh|fish]</div>
+      <h3 class="sub">例</h3>
+      <pre class="ex"><span class="cm"># bash: 出力を設定ファイルに追記</span>
+oimo completion bash &gt; ~/.oimo/completion.bash
+echo "source ~/.oimo/completion.bash" &gt;&gt; ~/.bashrc
+
+<span class="cm"># zsh / fish</span>
+oimo completion zsh &gt; ~/.zfunc/_oimo
+oimo completion fish &gt; ~/.config/fish/completions/oimo.fish</pre>
+      <div class="note info">
+        シェルの補完設定への反映方法は、お使いのシェルによって異なります。上記は一般的な例です。
+      </div>
+    </section>
+
+    <!-- ======================= ENV ======================= -->
+    <section id="env">
+      <h2 class="cmd-head" style="display:block"><span style="font-family:var(--mono)">環境変数</span></h2>
+      <p>よく使われる環境変数の一覧です。フラグで指定できるものは、環境変数でも同じ挙動にできます。</p>
+      <table>
+        <thead><tr><th>環境変数</th><th>説明</th></tr></thead>
+        <tbody>
+          <tr><td class="flag">MIMOCODE_SERVER_PASSWORD</td><td>サーバーの Basic 認証パスワード（serve / attach / run --attach で使用）</td></tr>
+          <tr><td class="flag">MIMOCODE_SERVER_USERNAME</td><td>認証ユーザー名 <span class="def">（既定: oimo）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_TOR</td><td><code>1</code> で全通信を Tor SOCKS5 経由に <span class="def">（--tor と同じ）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_TOR_PROXY</td><td>Tor プロキシの指定 <span class="def">（既定: socks5h://127.0.0.1:9050）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_PURE</td><td><code>1</code> で外部プラグインなし <span class="def">（--pure と同じ）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_LOG</td><td>セッションログ（Markdown）の出力パス <span class="def">（--log と同じ）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_AUTONOMY</td><td><code>1</code> で SE 型自律実行モード <span class="def">（--se と同じ）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS</td><td><code>1</code> で権限の自動承認 <span class="def">（--auto と同じ）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_ENABLE_ANALYSIS</td><td><code>true</code> でメトリクス送信を明示的に有効化 <span class="def">（既定: 無効）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_ENABLE_MIMO_FREE</td><td><code>true</code> で xiaomimimo 無料チャネルを明示的に有効化 <span class="def">（既定: 無効。中国サーバーへの送信を遮断）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_AUTO_SHARE</td><td><code>oimo run</code> でセッションを自動共有</td></tr>
+          <tr><td class="flag">MIMOCODE_DISABLE_CLAUDE_IMPORT</td><td>初回起動時の Claude Code セッション取り込みを無効化</td></tr>
+          <tr><td class="flag">GH_REPO</td><td>アップグレード取得元リポジトリ <span class="def">（既定: kuwa2005/OpenMimoCode）</span></td></tr>
+          <tr><td class="flag">MIMOCODE_INSTALL_SCRIPT_URL</td><td>インストーラースクリプトの URL を上書き</td></tr>
+          <tr><td class="flag">MIMOCODE_UNINSTALL_DIR</td><td>アンインストール対象ディレクトリ <span class="def">（既定: ~/.oimo/bin）</span></td></tr>
+        </tbody>
+      </table>
+      <div class="note info">
+        <code>oimo github run</code> はワークフロー実行用のため、<code>MODEL</code> /
+        <code>GITHUB_RUN_ID</code> / <code>PROMPT</code> / <code>MENTIONS</code> /
+        <code>GITHUB_TOKEN</code> などの環境変数を読みます。詳細は <code>oimo github run --help</code> を確認してください。
+      </div>
+    </section>
+
+    <!-- ======================= WORKFLOWS ======================= -->
+    <section id="workflows">
+      <h2 class="cmd-head" style="display:block"><span style="font-family:var(--mono)">ワークフロー例</span></h2>
+
+      <h3 class="sub">1. リモートホストでサーバー運用し、ローカルから接続</h3>
+      <p>TUI が遅くなる環境（SSH 直打ちなど）では、表示をローカルに、実行をリモートに分離できます。</p>
+      <pre class="ex"><span class="cm"># リモートホスト</span>
+oimo serve --port 4096
+
+<span class="cm"># ローカルホスト: SSH ポートフォワードを作成</span>
+ssh -N -L 4096:127.0.0.1:4096 user@remote-host
+
+<span class="cm"># ローカルホスト: 別のターミナルから接続</span>
+oimo attach http://127.0.0.1:4096
+
+<span class="cm"># 非対話で実行する場合</span>
+oimo run --attach http://127.0.0.1:4096 "ビルドを直して"</pre>
+
+      <h3 class="sub">2. Tor による匿名利用</h3>
+      <pre class="ex"><span class="cm"># ローカル Tor デーモン（ポート 9050）を起動してから</span>
+oimo --tor
+oimo run --tor "リポジトリを調査して"</pre>
+
+      <h3 class="sub">3. SE 型自律実行（要件ロック → 証跡付き自動開発）</h3>
+      <pre class="ex">oimo --se ~/my-project</pre>
+
+      <h3 class="sub">4. セッションの共有と引き継ぎ</h3>
+      <pre class="ex"><span class="cm"># 実行結果を共有 URL にする</span>
+oimo run --share "調査結果をまとめて"
+
+<span class="cm"># 共有 URL を取り込んで継続</span>
+oimo import https://opncd.ai/share/abc123
+oimo -s &lt;取り込まれたセッションID&gt;</pre>
+
+      <h3 class="sub">5. MCP サーバーの追加とツール利用</h3>
+      <pre class="ex"><span class="cm"># 対話で追加（名前・種別・コマンド/URL を入力）</span>
+oimo mcp add
+oimo mcp list
+oimo mcp auth github-mcp   <span class="cm"># OAuth 対応サーバーなら認証</span></pre>
+
+      <h3 class="sub">6. データベースの確認と移行</h3>
+      <pre class="ex">oimo db path
+oimo db "select count(*) from session" --format json
+oimo db migrate   <span class="cm"># 旧 JSON データを SQLite へ移行</span></pre>
+    </section>
+
+    <footer>
+      Open Mimo Code（oimo）CLI マニュアル — 本ページは <code>oimo --help</code> の出力とソースコード
+      （<code>packages/opencode/src/cli</code>）を基に作成した参考資料です。実際の挙動が変わった場合は
+      <code>oimo &lt;コマンド&gt; --help</code> を参照してください。
+    </footer>
+
+  </main>
+</div>
+
+<script>
+  var sidebar = document.getElementById("sidebar");
+  var toggle = document.getElementById("nav-toggle");
+  if (toggle) toggle.addEventListener("click", function () {
+    sidebar.classList.toggle("open");
+  });
+  var links = Array.prototype.slice.call(document.querySelectorAll("#toc a"));
+  var map = links.map(function (a) { return document.querySelector(a.getAttribute("href")); });
+  function onScroll() {
+    var y = window.scrollY + 80;
+    var current = null;
+    for (var i = 0; i < map.length; i++) {
+      if (map[i] && map[i].offsetTop <= y) current = links[i];
+    }
+    links.forEach(function (a) { a.classList.remove("active"); });
+    if (current) current.classList.add("active");
+  }
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+</script>
+
+</body>
+</html>
