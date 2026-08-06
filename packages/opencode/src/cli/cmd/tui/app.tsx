@@ -452,6 +452,11 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       } else {
         route.navigate({ type: "session", sessionID: match })
       }
+    } else {
+      // Nothing to continue: land on the new-session screen instead of a dead
+      // "dummy" session (which would otherwise leave -c unresponsive).
+      continued = true
+      route.navigate({ type: "home" })
     }
   })
 
