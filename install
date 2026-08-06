@@ -20,8 +20,8 @@ Options:
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
 
 Examples:
-    curl -fsSL https://mimo.xiaomi.com/install | bash
-    curl -fsSL https://mimo.xiaomi.com/install | bash -s -- --version 0.1.0
+    curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
+    curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash -s -- --version 0.1.0
     ./install --binary /path/to/omimo
 EOF
 }
@@ -180,27 +180,31 @@ else
         fi
     fi
 
-    # Download from Xiaomi FDS (fast in mainland China). Layout:
-    #   $MIMO_FDS_BASE/releases/latest          -> text file containing the latest version (e.g. 0.1.0)
-    #   $MIMO_FDS_BASE/releases/v<version>/<filename>
-    fds_base="${MIMO_FDS_BASE:-https://mimocode.cnbj1.mi-fds.com/mimocode/mimocode}"
-    fds_base="${fds_base%/}"
+    # Download from GitHub Releases. Layout:
+    #   https://github.com/$repo/releases/latest             -> redirects to the latest release tag
+    #   https://github.com/$repo/releases/download/v<version>/<filename>
+    repo="${GH_REPO:-kuwa2005/OpenMimoCode}"
 
     if [ -z "$requested_version" ]; then
-        specific_version=$(curl -fsSL "${fds_base}/releases/latest" 2>/dev/null | tr -d '[:space:]' | sed 's/^v//')
+        latest_url=$(curl -fsSI -o /dev/null -w '%{redirect_url}' "https://github.com/$repo/releases/latest" 2>/dev/null || true)
+        specific_version=$(basename "${latest_url%/}" | sed 's/^v//')
+
+        if [ -z "$specific_version" ]; then
+            specific_version=$(curl -fsSL "https://api.github.com/repos/$repo/releases/latest" 2>/dev/null | grep -oE '"tag_name": "[^"]+"' | head -1 | sed -E 's/.*"v?([^"]+)"/\1/')
+        fi
 
         if [ -z "$specific_version" ]; then
             echo -e "${RED}Failed to fetch version information${NC}"
-            echo -e "${MUTED}Could not resolve the latest release from FDS. Please check your network and retry,${NC}"
+            echo -e "${MUTED}Could not resolve the latest release from GitHub. Please check your network and retry,${NC}"
             echo -e "${MUTED}or install a specific version, e.g.: bash -s -- --version 0.1.0${NC}"
             exit 1
         fi
-        url="${fds_base}/releases/v${specific_version}/$filename"
+        url="https://github.com/$repo/releases/download/v${specific_version}/$filename"
     else
         # Strip leading 'v' if present
         requested_version="${requested_version#v}"
         specific_version=$requested_version
-        url="${fds_base}/releases/v${requested_version}/$filename"
+        url="https://github.com/$repo/releases/download/v${requested_version}/$filename"
 
         # Verify the artifact exists before downloading
         http_status=$(curl -sI -o /dev/null -w "%{http_code}" "$url")

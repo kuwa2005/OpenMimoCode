@@ -26,10 +26,10 @@ MiMo Auto は期間限定で無料のチャネルとして組み込まれてお�
 
 ```bash
 # ワンラインインストール（macOS / Linux）
-curl -fsSL https://mimo.xiaomi.com/install | bash
+curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
 
 # ワンラインインストール（Windows PowerShell）
-powershell -ep Bypass -c "irm https://mimo.xiaomi.com/install.ps1 | iex"
+powershell -ep Bypass -c "irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex"
 
 # または npm でインストール（全プラットフォーム）
 npm install -g @mimo-ai/cli

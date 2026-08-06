@@ -157,12 +157,12 @@ describe("installation", () => {
       expect(result).toBe("1.7.0")
     })
 
-    test("resolves version from FDS for curl method", async () => {
+    test("resolves version from GitHub latest release for curl method", async () => {
       const layer = testLayer(
         () => jsonResponse({}),
         (cmd, args) => {
-          if (cmd === "curl" && args.includes("https://mimocode.cnbj1.mi-fds.com/mimocode/mimocode/releases/latest"))
-            return "v0.1.1\n"
+          if (cmd === "curl" && args.includes("https://github.com/kuwa2005/OpenMimoCode/releases/latest"))
+            return "https://github.com/kuwa2005/OpenMimoCode/releases/tag/v0.1.1\n"
           return ""
         },
       )

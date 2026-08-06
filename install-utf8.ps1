@@ -11,11 +11,11 @@
 .PARAMETER NoModifyPath
     Don't modify the user PATH environment variable.
 .LINK
-    https://mimo.xiaomi.com/coder
+    https://github.com/kuwa2005/OpenMimoCode
 .EXAMPLE
-    irm https://mimo.xiaomi.com/install.ps1 | iex
+    irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex
 .EXAMPLE
-    $env:VERSION = "0.1.0"; irm https://mimo.xiaomi.com/install.ps1 | iex
+    $env:VERSION = "0.1.0"; irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex
 #>
 param(
     [String] $Version,
@@ -86,13 +86,12 @@ if ($NeedsBaseline) { $Target = "$Target-baseline" }
 
 # --- Resolve version ---
 
-$FdsBase = if ($env:MIMO_FDS_BASE) { $env:MIMO_FDS_BASE.TrimEnd('/') } else {
-    "https://mimocode.cnbj1.mi-fds.com/mimocode/mimocode"
-}
+$Repo = if ($env:GH_REPO) { $env:GH_REPO } else { "kuwa2005/OpenMimoCode" }
 
 if (-not $Version) {
     try {
-        $Version = (Invoke-WebRequest "$FdsBase/releases/latest" -UseBasicParsing).Content.Trim().TrimStart('v')
+        $Release = Invoke-RestMethod "https://api.github.com/repos/$Repo/releases/latest"
+        $Version = $Release.tag_name.Trim().TrimStart('v')
     } catch {
         Write-Err "Failed to fetch latest version. Check your network and retry, or specify -Version."
     }
@@ -138,7 +137,7 @@ if (-not $Staging) {
 # --- Download and install ---
 
 $Filename = "mimocode-$Target.zip"
-$Url = "$FdsBase/releases/v$Version/$Filename"
+$Url = "https://github.com/$Repo/releases/download/v$Version/$Filename"
 
 Write-Host ""
 Write-Host "Installing " -NoNewline -ForegroundColor DarkGray

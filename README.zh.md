@@ -26,10 +26,10 @@ MiMoCode 是一个终端原生的 AI 编程助手。它能读写代码、执行�
 
 ```bash
 # 一键安装（macOS / Linux）
-curl -fsSL https://mimo.xiaomi.com/install | bash
+curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
 
 # 一键安装（Windows PowerShell）
-powershell -ep Bypass -c "irm https://mimo.xiaomi.com/install.ps1 | iex"
+powershell -ep Bypass -c "irm https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install.ps1 | iex"
 
 # 或通过 npm 安装（全平台）
 npm install -g @mimo-ai/cli

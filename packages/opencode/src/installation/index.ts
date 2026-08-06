@@ -17,6 +17,8 @@ const log = Log.create({ service: "installation" })
 
 const PACKAGE_NAME = "@mimo-ai/cli"
 
+const RELEASE_REPO = process.env.GH_REPO ?? "kuwa2005/OpenMimoCode"
+
 export type Method = "curl" | "npm" | "pnpm" | "bun" | "brew" | "scoop" | "choco" | "unknown"
 
 export type ReleaseType = "patch" | "minor" | "major"
@@ -151,7 +153,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
           if (process.platform === "win32") {
             return yield* upgradeCurlWindows(target)
           }
-          const response = yield* httpOk.execute(HttpClientRequest.get(process.env.MIMOCODE_INSTALL_SCRIPT_URL ?? "https://mimo.xiaomi.com/install"))
+          const response = yield* httpOk.execute(HttpClientRequest.get(process.env.MIMOCODE_INSTALL_SCRIPT_URL ?? `https://raw.githubusercontent.com/${RELEASE_REPO}/main/install`))
           const body = yield* response.text
           const bodyBytes = new TextEncoder().encode(body)
           const proc = ChildProcess.make("bash", [], {
@@ -177,7 +179,7 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         const stageDir = path.join(os.tmpdir(), `mimocode_upgrade_${pid}`)
 
         // Download new version to staging dir (reuses install.ps1 logic)
-        const installScriptUrl = process.env.MIMOCODE_INSTALL_SCRIPT_URL ?? "https://mimo.xiaomi.com/install.ps1"
+        const installScriptUrl = process.env.MIMOCODE_INSTALL_SCRIPT_URL ?? `https://raw.githubusercontent.com/${RELEASE_REPO}/main/install.ps1`
         const downloadResult = yield* run(
           ["powershell.exe", "-NoProfile", "-NonInteractive", "-ep", "Bypass", "-c", "[Console]::OutputEncoding = [System.Text.Encoding]::UTF8; irm $env:INSTALL_SCRIPT_URL | iex"],
           { env: { MIMOCODE_INSTALL_DIR: stageDir, VERSION: target, INSTALL_SCRIPT_URL: installScriptUrl } },
@@ -257,16 +259,13 @@ export const layer: Layer.Layer<Service, never, HttpClient.HttpClient | ChildPro
         // }
 
         if (detectedMethod === "curl") {
-          // Resolve the latest version from FDS, matching the source the install
-          // script downloads from (fast in mainland China). Override base via
-          // MIMO_FDS_BASE to mirror the install script.
-          const base = (process.env.MIMO_FDS_BASE || "https://mimocode.cnbj1.mi-fds.com/mimocode/mimocode").replace(
-            /\/+$/,
-            "",
-          )
-          const version = (yield* text(["curl", "-fsSL", `${base}/releases/latest`])).trim().replace(/^v/, "")
+          // Resolve the latest version from GitHub, matching the source the
+          // install script downloads from. Override the repo via GH_REPO.
+          const url = `https://github.com/${RELEASE_REPO}/releases/latest`
+          const redirect = (yield* text(["curl", "-fsSI", "-o", "/dev/null", "-w", "%{redirect_url}", url])).trim()
+          const version = redirect.split("/").pop()?.replace(/^v/, "") ?? ""
           if (/^\d+\.\d+\.\d+/.test(version)) return version
-          return yield* Effect.die(new Error("failed to resolve latest version from FDS"))
+          return yield* Effect.die(new Error(`failed to resolve latest version from ${url}`))
         }
 
         if (detectedMethod === "npm" || detectedMethod === "bun" || detectedMethod === "pnpm") {
