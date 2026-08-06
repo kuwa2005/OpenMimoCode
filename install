@@ -9,7 +9,7 @@ NC='\033[0m' # No Color
 
 usage() {
     cat <<EOF
-MiMoCode Installer
+OpenMimoCode (omimo) Installer
 
 Usage: install.sh [options]
 
@@ -343,7 +343,7 @@ download_with_progress() {
 }
 
 download_and_install() {
-    print_message info "\n${MUTED}Installing ${NC}mimocode ${MUTED}version: ${NC}$specific_version"
+    print_message info "\n${MUTED}Installing ${NC}omimo ${MUTED}version: ${NC}$specific_version"
     local tmp_dir="${TMPDIR:-/tmp}/mimocode_install_$$"
     mkdir -p "$tmp_dir"
 
@@ -364,7 +364,7 @@ download_and_install() {
 }
 
 install_from_binary() {
-    print_message info "\n${MUTED}Installing ${NC}mimocode ${MUTED}from: ${NC}$binary_path"
+    print_message info "\n${MUTED}Installing ${NC}omimo ${MUTED}from: ${NC}$binary_path"
     cp "$binary_path" "${INSTALL_DIR}/omimo"
     chmod 755 "${INSTALL_DIR}/omimo"
 }
@@ -385,9 +385,9 @@ add_to_path() {
         print_message info "Command already exists in $config_file, skipping write."
         path_written=true
     elif [[ -w $config_file ]]; then
-        echo -e "\n# mimocode" >> "$config_file"
+        echo -e "\n# omimo" >> "$config_file"
         echo "$command" >> "$config_file"
-        print_message info "${MUTED}Successfully added ${NC}mimocode ${MUTED}to \$PATH in ${NC}$config_file"
+        print_message info "${MUTED}Successfully added ${NC}omimo ${MUTED}to \$PATH in ${NC}$config_file"
         path_written=true
     else
         print_message warning "Manually add the directory to $config_file (or similar):"
@@ -498,6 +498,6 @@ else
     echo -e "omimo          ${MUTED}# Run command${NC}"
 fi
 echo -e ""
-echo -e "${MUTED}For more information visit ${NC}https://mimo.xiaomi.com/coder/docs"
+echo -e "${MUTED}For more information visit ${NC}https://github.com/kuwa2005/OpenMimoCode"
 echo -e ""
 echo -e ""

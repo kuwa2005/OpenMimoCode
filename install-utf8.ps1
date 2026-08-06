@@ -141,7 +141,7 @@ $Url = "https://github.com/$Repo/releases/download/v$Version/$Filename"
 
 Write-Host ""
 Write-Host "Installing " -NoNewline -ForegroundColor DarkGray
-Write-Host "mimocode" -NoNewline
+Write-Host "omimo" -NoNewline
 Write-Host " version: " -NoNewline -ForegroundColor DarkGray
 Write-Host "$Version"
 
@@ -228,5 +228,5 @@ Write-Host "  cd <project>"
 Write-Host "  omimo"
 Write-Host ""
 Write-Host "For more information visit " -NoNewline -ForegroundColor DarkGray
-Write-Host "https://mimo.xiaomi.com/coder/docs"
+Write-Host "https://github.com/kuwa2005/OpenMimoCode"
 Write-Host ""
