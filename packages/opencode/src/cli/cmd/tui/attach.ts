@@ -6,12 +6,12 @@ import { TuiConfig } from "@/cli/cmd/tui/config/tui"
 
 export const AttachCommand = cmd({
   command: "attach <url>",
-  describe: "attach to a running oimo server",
+  describe: "実行中の oimo サーバーに接続する",
   builder: (yargs) =>
     yargs
       .positional("url", {
         type: "string",
-        describe: "http://localhost:4096",
+        describe: "接続先 URL (例: http://localhost:4096)",
         demandOption: true,
       })
       .option("dir", {
@@ -20,22 +20,22 @@ export const AttachCommand = cmd({
       })
       .option("continue", {
         alias: ["c"],
-        describe: "continue the last session",
+        describe: "最後のセッションを続行する",
         type: "boolean",
       })
       .option("session", {
         alias: ["s"],
         type: "string",
-        describe: "session id to continue",
+        describe: "続行するセッション ID",
       })
       .option("fork", {
         type: "boolean",
-        describe: "fork the session when continuing (use with --continue or --session)",
+        describe: "続行時にセッションをフォークする (--continue または --session と併用)",
       })
       .option("password", {
         alias: ["p"],
         type: "string",
-        describe: "basic auth password (defaults to MIMOCODE_SERVER_PASSWORD)",
+        describe: "Basic 認証パスワード (既定は MIMOCODE_SERVER_PASSWORD)",
       }),
   handler: async (args) => {
     const unguard = win32InstallCtrlCGuard()

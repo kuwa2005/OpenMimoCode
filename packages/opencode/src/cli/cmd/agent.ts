@@ -19,30 +19,30 @@ const AVAILABLE_TOOLS = ["bash", "read", "write", "edit", "glob", "grep", "webfe
 
 const AgentCreateCommand = cmd({
   command: "create",
-  describe: "create a new agent",
+  describe: "新しいエージェントを作成する",
   builder: (yargs: Argv) =>
     yargs
       .option("path", {
         type: "string",
-        describe: "directory path to generate the agent file",
+        describe: "エージェント ファイルを生成するディレクトリ パス",
       })
       .option("description", {
         type: "string",
-        describe: "what the agent should do",
+        describe: "エージェントの役割 (何をすべきか)",
       })
       .option("mode", {
         type: "string",
-        describe: "agent mode",
+        describe: "エージェントのモード",
         choices: ["all", "primary", "subagent"] as const,
       })
       .option("tools", {
         type: "string",
-        describe: `comma-separated list of tools to enable (default: all). Available: "${AVAILABLE_TOOLS.join(", ")}"`,
+        describe: `有効にするツールのカンマ区切りリスト (既定: すべて)。利用可能: "${AVAILABLE_TOOLS.join(", ")}"`,
       })
       .option("model", {
         type: "string",
         alias: ["m"],
-        describe: "model to use in the format of provider/model",
+        describe: "使用するモデル (provider/model 形式)",
       }),
   async handler(args) {
     await Instance.provide({
@@ -218,7 +218,7 @@ const AgentCreateCommand = cmd({
 
 const AgentListCommand = cmd({
   command: "list",
-  describe: "list all available agents",
+  describe: "利用可能なエージェントを一覧表示する",
   async handler() {
     await Instance.provide({
       directory: process.cwd(),
@@ -242,7 +242,7 @@ const AgentListCommand = cmd({
 
 export const AgentCommand = cmd({
   command: "agent",
-  describe: "manage agents",
+  describe: "エージェントを管理する",
   builder: (yargs) => yargs.command(AgentCreateCommand).command(AgentListCommand).demandCommand(),
   async handler() {},
 })

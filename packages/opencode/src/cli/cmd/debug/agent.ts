@@ -17,21 +17,21 @@ import { AppRuntime } from "@/effect/app-runtime"
 
 export const AgentCommand = cmd({
   command: "agent <name>",
-  describe: "show agent configuration details",
+  describe: "エージェント設定の詳細を表示",
   builder: (yargs) =>
     yargs
       .positional("name", {
         type: "string",
         demandOption: true,
-        description: "Agent name",
+        description: "エージェント名",
       })
       .option("tool", {
         type: "string",
-        description: "Tool id to execute",
+        description: "実行するツール ID",
       })
       .option("params", {
         type: "string",
-        description: "Tool params as JSON or a JS object literal",
+        description: "JSON または JS オブジェクトリテラル形式のツールパラメータ",
       }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {

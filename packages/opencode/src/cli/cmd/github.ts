@@ -194,14 +194,14 @@ export function formatPromptTooLargeError(files: { filename: string; content: st
 
 export const GithubCommand = cmd({
   command: "github",
-  describe: "manage GitHub agent",
+  describe: "GitHub エージェントを管理",
   builder: (yargs) => yargs.command(GithubInstallCommand).command(GithubRunCommand).demandCommand(),
   async handler() {},
 })
 
 export const GithubInstallCommand = cmd({
   command: "install",
-  describe: "install the GitHub agent",
+  describe: "GitHub エージェントをインストール",
   async handler() {
     await Instance.provide({
       directory: process.cwd(),
@@ -426,16 +426,16 @@ jobs:
 
 export const GithubRunCommand = cmd({
   command: "run",
-  describe: "run the GitHub agent",
+  describe: "GitHub エージェントを実行",
   builder: (yargs) =>
     yargs
       .option("event", {
         type: "string",
-        describe: "GitHub mock event to run the agent for",
+        describe: "エージェントを実行する GitHub モックイベント",
       })
       .option("token", {
         type: "string",
-        describe: "GitHub personal access token (github_pat_********)",
+        describe: "GitHub パーソナルアクセストークン (github_pat_********)",
       }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {

@@ -8,14 +8,14 @@ import { cmd } from "../cmd"
 
 export const RipgrepCommand = cmd({
   command: "rg",
-  describe: "ripgrep debugging utilities",
+  describe: "ripgrep デバッグ用ユーティリティ",
   builder: (yargs) => yargs.command(TreeCommand).command(FilesCommand).command(SearchCommand).demandCommand(),
   async handler() {},
 })
 
 const TreeCommand = cmd({
   command: "tree",
-  describe: "show file tree using ripgrep",
+  describe: "ripgrep でファイルツリーを表示",
   builder: (yargs) =>
     yargs.option("limit", {
       type: "number",
@@ -32,20 +32,20 @@ const TreeCommand = cmd({
 
 const FilesCommand = cmd({
   command: "files",
-  describe: "list files using ripgrep",
+  describe: "ripgrep でファイルを一覧表示",
   builder: (yargs) =>
     yargs
       .option("query", {
         type: "string",
-        description: "Filter files by query",
+        description: "クエリでファイルを絞り込み",
       })
       .option("glob", {
         type: "string",
-        description: "Glob pattern to match files",
+        description: "ファイルに一致させる glob パターン",
       })
       .option("limit", {
         type: "number",
-        description: "Limit number of results",
+        description: "結果数の上限",
       }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {
@@ -71,21 +71,21 @@ const FilesCommand = cmd({
 
 const SearchCommand = cmd({
   command: "search <pattern>",
-  describe: "search file contents using ripgrep",
+  describe: "ripgrep でファイル内容を検索",
   builder: (yargs) =>
     yargs
       .positional("pattern", {
         type: "string",
         demandOption: true,
-        description: "Search pattern",
+        description: "検索パターン",
       })
       .option("glob", {
         type: "array",
-        description: "File glob patterns",
+        description: "ファイルの glob パターン",
       })
       .option("limit", {
         type: "number",
-        description: "Limit number of results",
+        description: "結果数の上限",
       }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {

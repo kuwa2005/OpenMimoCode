@@ -178,24 +178,24 @@ export function createPlugTask(input: PlugInput, dep: PlugDeps = defaultPlugDeps
 export const PluginCommand = cmd({
   command: "plugin <module>",
   aliases: ["plug"],
-  describe: "install plugin and update config",
+  describe: "プラグインをインストールして設定を更新",
   builder: (yargs: Argv) => {
     return yargs
       .positional("module", {
         type: "string",
-        describe: "npm module name",
+        describe: "npm モジュール名",
       })
       .option("global", {
         alias: ["g"],
         type: "boolean",
         default: false,
-        describe: "install in global config",
+        describe: "グローバル設定にインストール",
       })
       .option("force", {
         alias: ["f"],
         type: "boolean",
         default: false,
-        describe: "replace existing plugin version",
+        describe: "既存のプラグインバージョンを置き換え",
       })
   },
   handler: async (args) => {

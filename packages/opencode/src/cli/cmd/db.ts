@@ -12,18 +12,18 @@ import { Log } from "../../util"
 
 const QueryCommand = cmd({
   command: "$0 [query]",
-  describe: "open an interactive sqlite3 shell or run a query",
+  describe: "対話型 sqlite3 シェルを開くか、クエリを実行する",
   builder: (yargs: Argv) => {
     return yargs
       .positional("query", {
         type: "string",
-        describe: "SQL query to execute",
+        describe: "実行する SQL クエリ",
       })
       .option("format", {
         type: "string",
         choices: ["json", "tsv"],
         default: "tsv",
-        describe: "Output format",
+        describe: "出力形式",
       })
   },
   handler: async (args: { query?: string; format: string }) => {
@@ -57,7 +57,7 @@ const QueryCommand = cmd({
 
 const PathCommand = cmd({
   command: "path",
-  describe: "print the database path",
+  describe: "データベースのパスを表示する",
   handler: () => {
     console.log(Database.Path)
   },
@@ -65,7 +65,7 @@ const PathCommand = cmd({
 
 const MigrateCommand = cmd({
   command: "migrate",
-  describe: "migrate JSON data to SQLite (merges with existing data)",
+  describe: "JSON データを SQLite に移行する (既存データとマージ)",
   handler: async () => {
     const sqlite = new BunDatabase(Database.Path)
     const tty = process.stderr.isTTY
@@ -113,7 +113,7 @@ const MigrateCommand = cmd({
 
 export const DbCommand = cmd({
   command: "db",
-  describe: "database tools",
+  describe: "データベース ツール",
   builder: (yargs: Argv) => {
     return yargs.command(QueryCommand).command(PathCommand).command(MigrateCommand).demandCommand()
   },

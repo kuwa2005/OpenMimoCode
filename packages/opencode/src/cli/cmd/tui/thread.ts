@@ -126,67 +126,67 @@ async function promptWorkspaceTrust(directory: string, level: "untrusted" | "dan
 
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
-  describe: "start oimo tui",
+  describe: "oimo TUI を起動する",
   builder: (yargs) =>
     withNetworkOptions(yargs)
       .positional("project", {
         type: "string",
-        describe: "path to start oimo in",
+        describe: "oimo を起動するディレクトリ",
       })
       .option("model", {
         type: "string",
         alias: ["m"],
-        describe: "model to use in the format of provider/model",
+        describe: "使用するモデル (provider/model 形式)",
       })
       .option("continue", {
         alias: ["c"],
-        describe: "continue the last session",
+        describe: "最後のセッションを続行する",
         type: "boolean",
       })
       .option("session", {
         alias: ["s"],
         type: "string",
-        describe: "session id to continue",
+        describe: "続行するセッション ID",
       })
       .option("fork", {
         type: "boolean",
-        describe: "fork the session when continuing (use with --continue or --session)",
+        describe: "続行時にセッションをフォークする (--continue または --session と併用)",
       })
       .option("prompt", {
         type: "string",
-        describe: "prompt to use",
+        describe: "使用するプロンプト",
       })
       .option("agent", {
         type: "string",
-        describe: "agent to use",
+        describe: "使用するエージェント",
       })
       .option("never-ask", {
         type: "boolean",
         describe:
-          "start in never-ask mode — auto-decide without asking (permissions excluded), toggle at runtime with /never-ask",
+          "never-ask モードで起動する (パーミッションを除き、確認せず自動判断。実行中は /never-ask で切替)",
         default: false,
       })
       .option("autonomy", {
         alias: ["se"],
         type: "boolean",
         describe:
-          "SE-style AI-driven mode: hear & lock requirements first, then non-stop delivery with documentary evidence (implies compose agent)",
+          "SE 自律モード: 要件をヒアリングしてロックしてから、証跡ドキュメント付きでノンストップ実装する (compose エージェントになる)",
         default: false,
       })
       .option("trust", {
         type: "boolean",
-        describe: "skip workspace trust prompt and trust the directory",
+        describe: "ワークスペース信頼プロンプトをスキップし、ディレクトリを信頼する",
         default: false,
       })
       .option("dangerously-skip-permissions", {
         type: "boolean",
-        describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
+        describe: "明示的に拒否されていないパーミッションを自動承認する (危険!)",
         default: false,
       })
       .option("auto", {
         type: "boolean",
         describe:
-          "auto-approve permissions that are not explicitly denied (dangerous!); also skips the workspace trust prompt",
+          "明示的に拒否されていないパーミッションを自動承認する (危険!)。ワークスペース信頼プロンプトもスキップする",
         default: false,
       }),
   handler: async (args) => {

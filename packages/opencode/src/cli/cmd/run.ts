@@ -202,96 +202,97 @@ function normalizePath(input?: string) {
 
 export const RunCommand = cmd({
   command: "run [message..]",
-  describe: "run oimo with a message",
+  describe: "メッセージを渡して oimo を実行する",
   builder: (yargs: Argv) => {
     return yargs
       .positional("message", {
-        describe: "message to send",
+        describe: "送信するメッセージ",
         type: "string",
         array: true,
         default: [],
       })
       .option("command", {
-        describe: "the command to run, use message for args",
+        describe: "実行するコマンド (引数は message を使用)",
         type: "string",
       })
       .option("continue", {
         alias: ["c"],
-        describe: "continue the last session",
+        describe: "最後のセッションを続行する",
         type: "boolean",
       })
       .option("session", {
         alias: ["s"],
-        describe: "session id to continue",
+        describe: "続行するセッション ID",
         type: "string",
       })
       .option("fork", {
-        describe: "fork the session before continuing (requires --continue or --session)",
+        describe: "続行前にセッションをフォークする (--continue または --session が必要)",
         type: "boolean",
       })
       .option("share", {
         type: "boolean",
-        describe: "share the session",
+        describe: "セッションを共有する",
       })
       .option("model", {
         type: "string",
         alias: ["m"],
-        describe: "model to use in the format of provider/model",
+        describe: "使用するモデル (provider/model 形式)",
       })
       .option("agent", {
         type: "string",
-        describe: "agent to use",
+        describe: "使用するエージェント",
       })
       .option("format", {
         type: "string",
         choices: ["default", "json"],
         default: "default",
-        describe: "format: default (formatted) or json (raw JSON events)",
+        describe: "出力形式: default (整形) または json (生の JSON イベント)",
       })
       .option("file", {
         alias: ["f"],
         type: "string",
         array: true,
-        describe: "file(s) to attach to message",
+        describe: "メッセージに添付するファイル",
       })
       .option("title", {
         type: "string",
-        describe: "title for the session (uses truncated prompt if no value provided)",
+        describe: "セッションのタイトル (省略時はプロンプトの先頭を使用)",
       })
       .option("attach", {
         type: "string",
-        describe: "attach to a running oimo server (e.g., http://localhost:4096)",
+        describe: "実行中の oimo サーバーに接続する (例: http://localhost:4096)",
       })
       .option("password", {
         alias: ["p"],
         type: "string",
-        describe: "basic auth password (defaults to MIMOCODE_SERVER_PASSWORD)",
+        describe: "Basic 認証パスワード (既定は MIMOCODE_SERVER_PASSWORD)",
       })
       .option("dir", {
         type: "string",
-        describe: "directory to run in, path on remote server if attaching",
+        describe: "実行するディレクトリ (attach 時はリモート側のパス)",
       })
       .option("port", {
         type: "number",
-        describe: "port for the local server (defaults to random port if no value provided)",
+        describe: "ローカル サーバーのポート (省略時はランダム)",
       })
       .option("variant", {
         type: "string",
-        describe: "model variant (provider-specific reasoning effort, e.g., high, max, minimal)",
+        describe: "モデルのバリアント (プロバイダ固有の思考量設定。例: high, max, minimal)",
       })
       .option("thinking", {
         type: "boolean",
-        describe: "show thinking blocks",
+        describe: "思考ブロックを表示する",
         default: false,
       })
       .option("role", {
         type: "string",
         choices: ["user", "assistant"],
-        describe: "role for the injected message (assistant injects text as model output then triggers continuation)",
+        describe:
+          "注入メッセージのロール (assistant はテキストをモデル出力として注入し、続行をトリガーする)",
       })
       .option("auto", {
         type: "boolean",
-        describe: "auto-approve permissions that are not explicitly denied (dangerous!)",
+        describe: "明示的に拒否されていないパーミッションを自動承認する (危険!)",
         default: false,
       })
       .option("yolo", {

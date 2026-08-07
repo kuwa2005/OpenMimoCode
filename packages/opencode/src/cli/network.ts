@@ -5,33 +5,33 @@ import { AppRuntime } from "@/effect/app-runtime"
 const options = {
   port: {
     type: "number" as const,
-    describe: "port to listen on",
+    describe: "待ち受けポート",
     default: 0,
   },
   hostname: {
     type: "string" as const,
-    describe: "hostname to listen on",
+    describe: "待ち受けホスト名",
     default: "127.0.0.1",
   },
   mdns: {
     type: "boolean" as const,
-    describe: "enable mDNS service discovery (defaults hostname to 0.0.0.0)",
+    describe: "mDNS サービス ディスカバリを有効にする (ホスト名の既定が 0.0.0.0 になる)",
     default: false,
   },
   "mdns-domain": {
     type: "string" as const,
-    describe: "custom domain name for mDNS service (default: oimo.local)",
+    describe: "mDNS サービスのカスタム ドメイン名 (既定: oimo.local)",
     default: "oimo.local",
   },
   cors: {
     type: "string" as const,
     array: true,
-    describe: "additional domains to allow for CORS",
+    describe: "CORS を許可する追加ドメイン",
     default: [] as string[],
   },
   "no-auth": {
     type: "boolean" as const,
-    describe: "allow starting without authentication on non-loopback addresses (DANGEROUS)",
+    describe: "非ループバック アドレスで認証なしの起動を許可する (危険)",
     default: false,
   },
 }

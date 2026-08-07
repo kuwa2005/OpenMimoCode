@@ -11,10 +11,10 @@ const log = Log.create({ service: "acp-command" })
 
 export const AcpCommand = cmd({
   command: "acp",
-  describe: "start ACP (Agent Client Protocol) server",
+  describe: "ACP (Agent Client Protocol) サーバーを起動",
   builder: (yargs) => {
     return withNetworkOptions(yargs).option("cwd", {
-      describe: "working directory",
+      describe: "作業ディレクトリ",
       type: "string",
       default: process.cwd(),
     })

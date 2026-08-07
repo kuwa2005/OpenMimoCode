@@ -14,20 +14,20 @@ import { Effect } from "effect"
 
 export const ModelsCommand = cmd({
   command: "models [provider]",
-  describe: "list all available models",
+  describe: "利用可能なすべてのモデルを一覧表示します",
   builder: (yargs: Argv) => {
     return yargs
       .positional("provider", {
-        describe: "provider ID to filter models by",
+        describe: "モデルを絞り込むプロバイダ ID",
         type: "string",
         array: false,
       })
       .option("verbose", {
-        describe: "use more verbose model output (includes metadata like costs)",
+        describe: "より詳細なモデル出力を使用します (コストなどのメタデータを含む)",
         type: "boolean",
       })
       .option("refresh", {
-        describe: "refresh the models cache from models.dev",
+        describe: "models.dev からモデルキャッシュを更新します",
         type: "boolean",
       })
   },

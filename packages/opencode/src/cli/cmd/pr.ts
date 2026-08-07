@@ -7,11 +7,11 @@ import { Log, Process } from "@/util"
 
 export const PrCommand = cmd({
   command: "pr <number>",
-  describe: "fetch and checkout a GitHub PR branch, then run oimo",
+  describe: "GitHub PR のブランチを取得してチェックアウトし、oimo を実行します",
   builder: (yargs) =>
     yargs.positional("number", {
       type: "number",
-      describe: "PR number to checkout",
+      describe: "チェックアウトする PR 番号",
       demandOption: true,
     }),
   async handler(args) {

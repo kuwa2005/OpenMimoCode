@@ -25,30 +25,30 @@ interface RemovalTargets {
 
 export const UninstallCommand = {
   command: "uninstall",
-  describe: "uninstall oimo and remove all related files",
+  describe: "oimo をアンインストールし、関連ファイルをすべて削除します",
   builder: (yargs: Argv) =>
     yargs
       .option("keep-config", {
         alias: "c",
         type: "boolean",
-        describe: "keep configuration files",
+        describe: "設定ファイルを保持します",
         default: false,
       })
       .option("keep-data", {
         alias: "d",
         type: "boolean",
-        describe: "keep session data and snapshots",
+        describe: "セッションデータとスナップショットを保持します",
         default: false,
       })
       .option("dry-run", {
         type: "boolean",
-        describe: "show what would be removed without removing",
+        describe: "削除せずに、削除される内容を表示します",
         default: false,
       })
       .option("force", {
         alias: "f",
         type: "boolean",
-        describe: "skip confirmation prompts",
+        describe: "確認プロンプトをスキップします",
         default: false,
       }),
 

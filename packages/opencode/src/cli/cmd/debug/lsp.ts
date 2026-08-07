@@ -8,7 +8,7 @@ import { EOL } from "os"
 
 export const LSPCommand = cmd({
   command: "lsp",
-  describe: "LSP debugging utilities",
+  describe: "LSP デバッグ用ユーティリティ",
   builder: (yargs) =>
     yargs.command(DiagnosticsCommand).command(SymbolsCommand).command(DocumentSymbolsCommand).demandCommand(),
   async handler() {},
@@ -16,7 +16,7 @@ export const LSPCommand = cmd({
 
 const DiagnosticsCommand = cmd({
   command: "diagnostics <file>",
-  describe: "get diagnostics for a file",
+  describe: "ファイルの診断情報を取得",
   builder: (yargs) => yargs.positional("file", { type: "string", demandOption: true }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {
@@ -36,7 +36,7 @@ const DiagnosticsCommand = cmd({
 
 export const SymbolsCommand = cmd({
   command: "symbols <query>",
-  describe: "search workspace symbols",
+  describe: "ワークスペースのシンボルを検索",
   builder: (yargs) => yargs.positional("query", { type: "string", demandOption: true }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {
@@ -49,7 +49,7 @@ export const SymbolsCommand = cmd({
 
 export const DocumentSymbolsCommand = cmd({
   command: "document-symbols <uri>",
-  describe: "get symbols from a document",
+  describe: "ドキュメントからシンボルを取得",
   builder: (yargs) => yargs.positional("uri", { type: "string", demandOption: true }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {

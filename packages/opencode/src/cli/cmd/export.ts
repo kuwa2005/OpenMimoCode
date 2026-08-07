@@ -223,15 +223,15 @@ function sanitize(data: { info: Session.Info; messages: MessageV2.WithParts[] })
 
 export const ExportCommand = cmd({
   command: "export [sessionID]",
-  describe: "export session data as JSON",
+  describe: "セッションデータを JSON としてエクスポートします",
   builder: (yargs: Argv) => {
     return yargs
       .positional("sessionID", {
-        describe: "session id to export",
+        describe: "エクスポートするセッション ID",
         type: "string",
       })
       .option("sanitize", {
-        describe: "redact sensitive transcript and file data",
+        describe: "機密性の高いトランスクリプトとファイルデータを難読化します",
         type: "boolean",
       })
   },

@@ -105,7 +105,7 @@ async function authState() {
 
 export const McpCommand = cmd({
   command: "mcp",
-  describe: "manage MCP (Model Context Protocol) servers",
+  describe: "MCP (Model Context Protocol) サーバーを管理する",
   builder: (yargs) =>
     yargs
       .command(McpAddCommand)
@@ -120,7 +120,7 @@ export const McpCommand = cmd({
 export const McpListCommand = cmd({
   command: "list",
   aliases: ["ls"],
-  describe: "list MCP servers and their status",
+  describe: "MCP サーバーとそのステータスを一覧表示する",
   async handler() {
     await Instance.provide({
       directory: process.cwd(),
@@ -191,11 +191,11 @@ export const McpListCommand = cmd({
 
 export const McpAuthCommand = cmd({
   command: "auth [name]",
-  describe: "authenticate with an OAuth-enabled MCP server",
+  describe: "OAuth 対応 MCP サーバーで認証する",
   builder: (yargs) =>
     yargs
       .positional("name", {
-        describe: "name of the MCP server",
+        describe: "MCP サーバーの名前",
         type: "string",
       })
       .command(McpAuthListCommand),
@@ -330,7 +330,7 @@ export const McpAuthCommand = cmd({
 export const McpAuthListCommand = cmd({
   command: "list",
   aliases: ["ls"],
-  describe: "list OAuth-capable MCP servers and their auth status",
+  describe: "OAuth 対応の MCP サーバーと認証ステータスを一覧表示する",
   async handler() {
     await Instance.provide({
       directory: process.cwd(),
@@ -364,10 +364,10 @@ export const McpAuthListCommand = cmd({
 
 export const McpLogoutCommand = cmd({
   command: "logout [name]",
-  describe: "remove OAuth credentials for an MCP server",
+  describe: "MCP サーバーの OAuth 資格情報を削除する",
   builder: (yargs) =>
     yargs.positional("name", {
-      describe: "name of the MCP server",
+      describe: "MCP サーバーの名前",
       type: "string",
     }),
   async handler(args) {
@@ -460,7 +460,7 @@ async function addMcpToConfig(name: string, mcpConfig: ConfigMCP.Info, configPat
 
 export const McpAddCommand = cmd({
   command: "add",
-  describe: "add an MCP server",
+  describe: "MCP サーバーを追加する",
   async handler() {
     await Instance.provide({
       directory: process.cwd(),
@@ -624,10 +624,10 @@ export const McpAddCommand = cmd({
 
 export const McpDebugCommand = cmd({
   command: "debug <name>",
-  describe: "debug OAuth connection for an MCP server",
+  describe: "MCP サーバーの OAuth 接続をデバッグする",
   builder: (yargs) =>
     yargs.positional("name", {
-      describe: "name of the MCP server",
+      describe: "MCP サーバーの名前",
       type: "string",
       demandOption: true,
     }),

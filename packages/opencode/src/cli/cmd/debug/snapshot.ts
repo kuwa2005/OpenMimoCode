@@ -5,14 +5,14 @@ import { cmd } from "../cmd"
 
 export const SnapshotCommand = cmd({
   command: "snapshot",
-  describe: "snapshot debugging utilities",
+  describe: "スナップショットのデバッグ用ユーティリティ",
   builder: (yargs) => yargs.command(TrackCommand).command(PatchCommand).command(DiffCommand).demandCommand(),
   async handler() {},
 })
 
 const TrackCommand = cmd({
   command: "track",
-  describe: "track current snapshot state",
+  describe: "現在のスナップショット状態を追跡",
   async handler() {
     await bootstrap(process.cwd(), async () => {
       console.log(await AppRuntime.runPromise(Snapshot.Service.use((svc) => svc.track())))
@@ -22,11 +22,11 @@ const TrackCommand = cmd({
 
 const PatchCommand = cmd({
   command: "patch <hash>",
-  describe: "show patch for a snapshot hash",
+  describe: "スナップショットハッシュのパッチを表示",
   builder: (yargs) =>
     yargs.positional("hash", {
       type: "string",
-      description: "hash",
+      description: "ハッシュ",
       demandOption: true,
     }),
   async handler(args) {
@@ -38,11 +38,11 @@ const PatchCommand = cmd({
 
 const DiffCommand = cmd({
   command: "diff <hash>",
-  describe: "show diff for a snapshot hash",
+  describe: "スナップショットハッシュの差分を表示",
   builder: (yargs) =>
     yargs.positional("hash", {
       type: "string",
-      description: "hash",
+      description: "ハッシュ",
       demandOption: true,
     }),
   async handler(args) {

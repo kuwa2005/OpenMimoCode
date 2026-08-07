@@ -72,33 +72,40 @@ function show(out: string) {
 }
 
 const cli = yargs(args)
+  .locale("ja")
   .parserConfiguration({ "populate--": true })
   .scriptName("oimo")
   .wrap(100)
-  .help("help", "show help")
+  .help("help")
   .alias("help", "h")
-  .version("version", "show version number", InstallationVersion)
+  .version("version", InstallationVersion)
   .alias("version", "v")
   .option("print-logs", {
-    describe: "print logs to stderr",
+    describe: "ログを stderr に出力する",
     type: "boolean",
   })
   .option("log-level", {
-    describe: "log level",
+    describe: "ログレベル",
     type: "string",
     choices: ["DEBUG", "INFO", "WARN", "ERROR"],
   })
   .option("pure", {
-    describe: "run without external plugins",
+    describe: "外部プラグインなしで実行する",
     type: "boolean",
   })
   .option("tor", {
-    describe: "route all network traffic through a Tor SOCKS5 proxy",
+    describe: "すべてのネットワーク通信を Tor SOCKS5 プロキシ経由にする",
     type: "boolean",
   })
   .option("log", {
-    describe: "append each question and its summary from a TUI session to a markdown file",
+    describe:
+      "TUI セッションの質問と要約をマークダウン ファイルに追記する (ファイル名省略時は oimo-session-<タイムスタンプ>.md を自動生成)",
     type: "string",
+  })
+  .option("log-mode", {
+    describe: "--log ファイルの内容 (既定: summary)",
+    type: "string",
+    choices: ["full", "summary"],
   })
   .middleware(async (opts) => {
     if (opts.pure) {
@@ -111,6 +118,14 @@ const cli = yargs(args)
 
     if (opts.log) {
       process.env.MIMOCODE_LOG = path.resolve(opts.log)
+    } else if (opts.log === "") {
+      // Bare `--log` with no filename: the TUI auto-generates
+      // oimo-session-<timestamp>.md instead of silently doing nothing.
+      process.env.MIMOCODE_LOG_AUTO = "1"
+    }
+
+    if (opts.logMode) {
+      process.env.MIMOCODE_LOG_MODE = opts.logMode
     }
 
     await Log.init({
@@ -199,8 +214,12 @@ const cli = yargs(args)
       } catch {}
     }
   })
-  .usage("")
-  .completion("completion", "generate shell completion script")
+  .usage("oimo <コマンド> [オプション]")
+  .example("oimo", "TUI を起動する")
+  .example("oimo -c --auto --se", "最後のセッションを自動許可 + SE 自律モードで続行する")
+  .example('oimo run "バグを修正して"', "ヘッドレスで 1 回のプロンプトを実行する")
+  .example("oimo session list", "セッションの一覧を表示する")
+  .completion("completion", "シェルの補完スクリプトを生成する")
   .command(AcpCommand)
   .command(McpCommand)
   .command(TuiThreadCommand)
@@ -227,11 +246,15 @@ const cli = yargs(args)
   .command(DbCommand)
   .fail((msg, err) => {
     if (
-      msg?.startsWith("Unknown argument") ||
-      msg?.startsWith("Not enough non-option arguments") ||
-      msg?.startsWith("Invalid values:")
+      msg?.startsWith("未知の引数です") ||
+      msg?.startsWith("オプションではない引数が") ||
+      msg?.startsWith("不正な値です")
     ) {
       if (err) throw err
+      if (msg) {
+        process.stderr.write(UI.Style.TEXT_DANGER_BOLD + msg + UI.Style.TEXT_NORMAL + EOL)
+        process.stderr.write("ヒント: `oimo --help` でコマンドとオプションを確認できます。" + EOL)
+      }
       cli.showHelp(show)
     }
     if (err) throw err

@@ -357,7 +357,7 @@ function raceCallbackAndStdin<T>(
 export const ProvidersCommand = cmd({
   command: "providers",
   aliases: ["auth"],
-  describe: "manage AI providers and credentials",
+  describe: "AI プロバイダと資格情報を管理する",
   builder: (yargs) =>
     yargs
       .command(ProvidersListCommand)
@@ -371,7 +371,7 @@ export const ProvidersCommand = cmd({
 export const ProvidersListCommand = cmd({
   command: "list",
   aliases: ["ls"],
-  describe: "list providers and credentials",
+  describe: "プロバイダと資格情報を一覧表示する",
   async handler(_args) {
     UI.empty()
     const authPath = path.join(Global.Path.data, "auth.json")
@@ -421,21 +421,21 @@ export const ProvidersListCommand = cmd({
 
 export const ProvidersLoginCommand = cmd({
   command: "login [url]",
-  describe: "log in to a provider",
+  describe: "プロバイダにログインする",
   builder: (yargs) =>
     yargs
       .positional("url", {
-        describe: "oimo auth provider",
+        describe: "oimo 認証プロバイダ",
         type: "string",
       })
       .option("provider", {
         alias: ["p"],
-        describe: "provider id or name to log in to (skips provider selection)",
+        describe: "ログインするプロバイダ ID または名前 (プロバイダ選択をスキップ)",
         type: "string",
       })
       .option("method", {
         alias: ["m"],
-        describe: "login method label (skips method selection)",
+        describe: "ログイン方法のラベル (方法選択をスキップ)",
         type: "string",
       }),
   async handler(args) {
@@ -652,7 +652,7 @@ export const ProvidersLoginCommand = cmd({
 
 export const ProvidersLogoutCommand = cmd({
   command: "logout",
-  describe: "log out from a configured provider",
+  describe: "設定済みプロバイダからログアウトする",
   async handler(_args) {
     UI.empty()
     const credentials: Array<[string, Auth.Info]> = await AppRuntime.runPromise(
@@ -688,7 +688,7 @@ export const ProvidersLogoutCommand = cmd({
 
 export const ProvidersWhoamiCommand = cmd({
   command: "whoami",
-  describe: "show current logged-in user info",
+  describe: "現在ログイン中のユーザー情報を表示する",
   async handler(_args) {
     UI.empty()
     prompts.intro("Current user")

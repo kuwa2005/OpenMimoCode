@@ -7,12 +7,12 @@ import { cmd } from "../cmd"
 
 const FileSearchCommand = cmd({
   command: "search <query>",
-  describe: "search files by query",
+  describe: "クエリでファイルを検索",
   builder: (yargs) =>
     yargs.positional("query", {
       type: "string",
       demandOption: true,
-      description: "Search query",
+      description: "検索クエリ",
     }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {
@@ -24,12 +24,12 @@ const FileSearchCommand = cmd({
 
 const FileReadCommand = cmd({
   command: "read <path>",
-  describe: "read file contents as JSON",
+  describe: "ファイル内容を JSON として読み込む",
   builder: (yargs) =>
     yargs.positional("path", {
       type: "string",
       demandOption: true,
-      description: "File path to read",
+      description: "読み込むファイルパス",
     }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {
@@ -41,7 +41,7 @@ const FileReadCommand = cmd({
 
 const FileStatusCommand = cmd({
   command: "status",
-  describe: "show file status information",
+  describe: "ファイルのステータス情報を表示",
   builder: (yargs) => yargs,
   async handler() {
     await bootstrap(process.cwd(), async () => {
@@ -53,12 +53,12 @@ const FileStatusCommand = cmd({
 
 const FileListCommand = cmd({
   command: "list <path>",
-  describe: "list files in a directory",
+  describe: "ディレクトリ内のファイルを一覧表示",
   builder: (yargs) =>
     yargs.positional("path", {
       type: "string",
       demandOption: true,
-      description: "File path to list",
+      description: "一覧表示するファイルパス",
     }),
   async handler(args) {
     await bootstrap(process.cwd(), async () => {
@@ -70,11 +70,11 @@ const FileListCommand = cmd({
 
 const FileTreeCommand = cmd({
   command: "tree [dir]",
-  describe: "show directory tree",
+  describe: "ディレクトリツリーを表示",
   builder: (yargs) =>
     yargs.positional("dir", {
       type: "string",
-      description: "Directory to tree",
+      description: "ツリー表示するディレクトリ",
       default: process.cwd(),
     }),
   async handler(args) {
@@ -87,7 +87,7 @@ const FileTreeCommand = cmd({
 
 export const FileCommand = cmd({
   command: "file",
-  describe: "file system debugging utilities",
+  describe: "ファイルシステムのデバッグ用ユーティリティ",
   builder: (yargs) =>
     yargs
       .command(FileReadCommand)

@@ -76,10 +76,10 @@ export function transformShareData(shareData: ShareData[]): {
 
 export const ImportCommand = cmd({
   command: "import <file>",
-  describe: "import session data from JSON file or URL",
+  describe: "JSON ファイルまたは URL からセッションデータをインポートします",
   builder: (yargs: Argv) => {
     return yargs.positional("file", {
-      describe: "path to JSON file or share URL",
+      describe: "JSON ファイルのパスまたは共有 URL",
       type: "string",
       demandOption: true,
     })

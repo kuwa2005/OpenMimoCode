@@ -177,7 +177,7 @@ export const LoginCommand = cmd({
   describe: false,
   builder: (yargs) =>
     yargs.positional("url", {
-      describe: "server URL",
+      describe: "サーバー URL",
       type: "string",
       demandOption: true,
     }),
@@ -192,7 +192,7 @@ export const LogoutCommand = cmd({
   describe: false,
   builder: (yargs) =>
     yargs.positional("email", {
-      describe: "account email to log out from",
+      describe: "ログアウトするアカウントのメールアドレス",
       type: "string",
     }),
   async handler(args) {
@@ -235,23 +235,23 @@ export const ConsoleCommand = cmd({
     yargs
       .command({
         ...LoginCommand,
-        describe: "log in to console",
+        describe: "コンソールにログインする",
       })
       .command({
         ...LogoutCommand,
-        describe: "log out from console",
+        describe: "コンソールからログアウトする",
       })
       .command({
         ...SwitchCommand,
-        describe: "switch active org",
+        describe: "アクティブな組織を切り替える",
       })
       .command({
         ...OrgsCommand,
-        describe: "list orgs",
+        describe: "組織の一覧を表示する",
       })
       .command({
         ...OpenCommand,
-        describe: "open active console account",
+        describe: "アクティブなコンソール アカウントを開く",
       })
       .demandCommand(),
   async handler() {},

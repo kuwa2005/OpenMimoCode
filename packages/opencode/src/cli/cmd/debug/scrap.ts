@@ -5,7 +5,7 @@ import { cmd } from "../cmd"
 
 export const ScrapCommand = cmd({
   command: "scrap",
-  describe: "list all known projects",
+  describe: "既知のプロジェクトをすべて一覧表示",
   builder: (yargs) => yargs,
   async handler() {
     const timer = Log.Default.time("scrap")

@@ -49,22 +49,22 @@ interface SessionStats {
 
 export const StatsCommand = cmd({
   command: "stats",
-  describe: "show token usage and cost statistics",
+  describe: "トークン使用量とコストの統計を表示",
   builder: (yargs: Argv) => {
     return yargs
       .option("days", {
-        describe: "show stats for the last N days (default: all time)",
+        describe: "直近 N 日間の統計を表示 (既定: 全期間)",
         type: "number",
       })
       .option("tools", {
-        describe: "number of tools to show (default: all)",
+        describe: "表示するツール数 (既定: すべて)",
         type: "number",
       })
       .option("models", {
-        describe: "show model statistics (default: hidden). Pass a number to show top N, otherwise shows all",
+        describe: "モデル統計を表示 (既定: 非表示)。数値を指定すると上位 N 件を表示し、それ以外はすべて表示",
       })
       .option("project", {
-        describe: "filter by project (default: all projects, empty string: current project)",
+        describe: "プロジェクトで絞り込み (既定: すべてのプロジェクト、空文字: 現在のプロジェクト)",
         type: "string",
       })
   },

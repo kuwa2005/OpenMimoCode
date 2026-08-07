@@ -14,7 +14,7 @@ import { AppRuntime } from "@/effect/app-runtime"
 
 export const SessionCommand = cmd({
   command: "session",
-  describe: "manage sessions",
+  describe: "セッションを管理する",
   builder: (yargs: Argv) =>
     yargs.command(SessionListCommand).command(SessionDeleteCommand).command(SessionImportClaudeCommand).demandCommand(),
   async handler() {},
@@ -22,10 +22,10 @@ export const SessionCommand = cmd({
 
 export const SessionImportClaudeCommand = cmd({
   command: "import-claude",
-  describe: "import Claude Code sessions (~/.claude/projects) into oimo",
+  describe: "Claude Code のセッション (~/.claude/projects) を oimo に取り込む",
   builder: (yargs: Argv) =>
     yargs.option("force", {
-      describe: "re-sync every session, ignoring the mtime cache",
+      describe: "mtime キャッシュを無視してすべてのセッションを再同期する",
       type: "boolean",
       default: false,
     }),
@@ -41,10 +41,10 @@ export const SessionImportClaudeCommand = cmd({
 
 export const SessionDeleteCommand = cmd({
   command: "delete <sessionID>",
-  describe: "delete a session",
+  describe: "セッションを削除する",
   builder: (yargs: Argv) => {
     return yargs.positional("sessionID", {
-      describe: "session ID to delete",
+      describe: "削除するセッション ID",
       type: "string",
       demandOption: true,
     })
@@ -66,19 +66,33 @@ export const SessionDeleteCommand = cmd({
 
 export const SessionListCommand = cmd({
   command: "list",
-  describe: "list sessions",
+  describe: "セッションを一覧表示し、選択して TUI で起動する",
   builder: (yargs: Argv) => {
     return yargs
       .option("max-count", {
         alias: "n",
-        describe: "limit to N most recent sessions",
+        describe: "直近 N 件のセッションに限定する",
         type: "number",
       })
       .option("format", {
-        describe: "output format",
+        describe: "出力形式",
         type: "string",
         choices: ["table", "json"],
         default: "table",
+      })
+      .option("continue", {
+        alias: "c",
+        describe: "ピッカーを使わず、直近のセッションを TUI で続行する (--auto/--se などの起動フラグと併用可)",
+        type: "boolean",
+      })
+      .option("auto", {
+        describe: "選択したセッションを自動許可 (dangerous) で起動する。ワークスペース信頼プロンプトもスキップ",
+        type: "boolean",
+      })
+      .option("autonomy", {
+        alias: "se",
+        describe: "選択したセッションを SE 自律モード (ヒアリング→要件ロック→自律実装) で起動する",
+        type: "boolean",
       })
   },
   handler: async (args) => {
@@ -86,7 +100,10 @@ export const SessionListCommand = cmd({
       const sessions = [...Session.list({ roots: true, limit: args.maxCount })]
 
       if (sessions.length === 0) {
-        if (process.stdout.isTTY) UI.println("No sessions found.")
+        if (process.stdout.isTTY) {
+          UI.println("セッションが見つかりません。")
+          if (args.continue) await Log.exit(1)
+        }
         return
       }
 
@@ -95,17 +112,29 @@ export const SessionListCommand = cmd({
         return
       }
 
-      if (process.stdout.isTTY) {
-        await pickAndLaunch(sessions)
+      if (!process.stdout.isTTY) {
+        console.log(formatSessionTable(sessions))
         return
       }
 
-      console.log(formatSessionTable(sessions))
+      const flags = launchFlags(args)
+      if (args.continue) {
+        await launchTui(["--continue", ...flags])
+        return
+      }
+      await pickAndLaunch(sessions, flags)
     })
   },
 })
 
-async function pickAndLaunch(sessions: Session.Info[]) {
+export function launchFlags(args: { auto?: boolean; autonomy?: boolean }): string[] {
+  const flags: string[] = []
+  if (args.auto) flags.push("--auto")
+  if (args.autonomy) flags.push("--se")
+  return flags
+}
+
+async function pickAndLaunch(sessions: Session.Info[], flags: string[]) {
   const options = [
     { label: "＋ New session", value: "new" },
     ...sessions.map((s) => ({
@@ -114,11 +143,11 @@ async function pickAndLaunch(sessions: Session.Info[]) {
     })),
   ]
   const result = await prompts.select({
-    message: "Select a session to continue",
+    message: "続行するセッションを選択",
     options,
   })
   if (prompts.isCancel(result)) return
-  await launchTui(result === "new" ? [] : ["--session", String(result)])
+  await launchTui(result === "new" ? flags : ["--session", String(result), ...flags])
 }
 
 async function launchTui(args: string[]) {
