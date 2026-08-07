@@ -99,6 +99,15 @@ jobs:
   publish:
     needs: [version, build-cli]
     runs-on: ubuntu-latest
+    env:
+      MIMOCODE_VERSION: ${{ needs.version.outputs.version }}
+      MIMOCODE_RELEASE: ${{ needs.version.outputs.release }}
+      GH_REPO: ${{ github.repository }}
+      GH_TOKEN: ${{ github.token }}
+      NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+      TAG: v${{ needs.version.outputs.version }}
+      RELEASE_ID: ${{ needs.version.outputs.release }}
     steps:
       - uses: actions/checkout@v6
         with:
@@ -128,12 +137,3 @@ jobs:
           if [ -n "$RELEASE_ID" ]; then
             gh release edit "$TAG" --draft=false --repo "$GH_REPO"
           fi
-        env:
-          MIMOCODE_VERSION: ${{ needs.version.outputs.version }}
-          MIMOCODE_RELEASE: ${{ needs.version.outputs.release }}
-          GH_REPO: ${{ github.repository }}
-          GH_TOKEN: ${{ github.token }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
-          TAG: v${{ needs.version.outputs.version }}
-          RELEASE_ID: ${{ needs.version.outputs.release }}
