@@ -1,24 +1,27 @@
 # リリース手順 (RELEASING)
 
 このドキュメントは OpenMimoCode のリリースを「迷わず」進めるためのランブックです。
-リリースカットは原則 **`./script/release` の 1 コマンド** で完結します。詳細な仕組みを知りたい場合や
-トラブル時は、このドキュメントの該当セクションを参照してください。
+リリースカットは原則 **`./script/release` の 1 コマンド** で完結します (bump → タグ push → 自動リリース)。
+詳細な仕組みを知りたい場合やトラブル時は、このドキュメントの該当セクションを参照してください。
 
 ## 概要
 
-リリースは GitHub Actions ワークフロー (`.github/workflows/publish.yml`) が以下の 3 ジョブで実行します。
+リリース制御は GitHub Actions へ移譲されています。**`v*` 形式のタグを push すると**
+ワークフロー (`.github/workflows/release.yml`) が自動でビルド・公開します。
 
 ```
-version (バージョン決定・bump・コミット・push・ドラフトリリース作成)
-   ↓
-build-cli (12 ターゲットを build matrix で並列ビルドし、ドラフトにアセットをアップロード)
-   ↓
-publish (SHA256SUMS 集約生成 → npm 公開 → リリースを public 化)
+[タグ push: v0.1.15]
+   ↓ (on: push.tags.v*)
+build-cli (12 ターゲットを build matrix で並列ビルド → アーカイブのみ生成)
+   ↓ (needs)
+assemble (アーカイブ集約 → SHA256SUMS 生成 → リリースノート → softprops でリリース作成・公開 → npm)
 ```
 
-- **トリガー**: `workflow_dispatch` のみ。push で自動リリースはしません (公開は不可逆操作のため)。
-- **公開まで自動**: 発火後はビルド・アセット・チェックサム・npm 公開・リリース公開まで CI が自動実行します。
-  人間が操作するのはトリガー (次の手順) だけです。
+- **トリガー**: `v*` タグの push のみ。`workflow_dispatch` (手動発火) は廃止されました。
+- **公開まで自動**: タグ push 後はビルド・アセット・チェックサム・リリース公開まで CI が自動実行します。
+  人間が操作するのはタグを作って push する (次の手順) だけです。
+- バージョンの真実は**タグ名**です (`v0.1.15` → `MIMOCODE_VERSION=0.1.15`)。ワークフロー内での
+  bump コミットは行いません。
 
 ## 前提条件
 
@@ -36,7 +39,7 @@ publish (SHA256SUMS 集約生成 → npm 公開 → リリースを public 化)
    `gh secret list` で確認できます。`script/release` がプリフライトで設定状況を表示します。
 
 3. **作業ツリー**: 未コミットの変更があると警告が出ます。リリースの bump コミットには
-   **コミット済みの変更** だけが含まれるので、必要なら先にコミットしておいてください。
+   **package.json のみ**が含まれるので、他の変更は先にコミットしておいてください。
 
 ## リリース手順
 
@@ -48,64 +51,68 @@ publish (SHA256SUMS 集約生成 → npm 公開 → リリースを public 化)
 ./script/release minor
 
 # バージョンを直接指定 (bump 計算をスキップ)
-./script/release --version 0.1.14
+./script/release --version 0.1.15
 
-# 発火のみで監視しない (バックグラウンドで回す場合)
+# タグ push のみで監視しない (バックグラウンドで回す場合)
 ./script/release --no-watch
 ```
 
 `script/release` が行うこと:
 
 1. **プリフライト** — gh の存在・認証、未コミット変更の警告、シークレット設定状況の表示。
-2. **発火** — `gh workflow run publish.yml -f bump=<type> [-f version=<ver>]`。
-3. **監視** — `gh run watch` で完了まで待機 (途中で Ctrl-C してもワークフローは継続)。
-4. **結果表示** — ジョブ別の結果とリリースページの URL。
+2. **bump & コミット** — `script/bump.ts` がバージョンを決定し、全 package.json を書き換えて
+   `chore: bump version to <version>` でコミット。
+3. **ブランチ push** — bump コミットを `origin/<現在ブランチ>` へ push。
+4. **タグ push** — `v<version>` タグを作成して push。これがリリースのトリガーです。
+5. **監視** — `gh run watch` で release.yml の完了まで待機 (途中で Ctrl-C してもワークフローは継続)。
+6. **結果表示** — ジョブ別の結果とリリースページの URL。
 
-完了後、リリースページ (例: `https://github.com/kuwa2005/OpenMimoCode/releases`) で
-リリースノートと 12 アセット + `SHA256SUMS` を確認してください。
+タグを push した時点でリリースは「作られる運命」です。ワークフローが失敗した場合は
+`gh run view <id> --log-failed` でログを確認し、修正後に**バージョンを上げて**再実行してください。
+
+### 手動でタグを push する場合
+
+`script/release` を使わずに `git tag v0.1.15 && git push origin v0.1.15` でも release.yml は発火します
+(バージョンはタグ名から取られます)。ただし package.json の bump コミットは入らないため、
+**`script/release` を使うのが推奨**です (バージョン整合性が保たれます)。
 
 ### バージョン決定規則
 
-- `--version X.Y.Z` を指定 → そのバージョンをそのまま使用 (`MIMOCODE_VERSION`)。
+- `--version X.Y.Z` を指定 → そのバージョンをそのまま使用。
 - bump 種別 (`major`/`minor`/`patch`) → `packages/opencode/package.json` の現在バージョンから
-  `script/bump-version.ts` (`bumpVersions`) が 1 段上げ、**全 package.json を一括書き換え**
-  (`node_modules` / `dist` は除外)。
+  `script/bump.ts` (`nextVersion`) が 1 段上げ、`script/bump-version.ts` (`bumpVersions`) が
+  **全 package.json を一括書き換え** (`node_modules` / `dist` は除外)。
 - 指定がない場合は `patch` が既定。
 
-バージョン決定 → `bumpVersions` → 各 package.json の `git add/commit/push`
-(`chore: bump version to <version>`) → push 後に `git rev-parse HEAD` でコミット SHA を取得 → リリースノート生成 → ドラフトリリース作成、の順です。
-
 ## ワークフロー各ジョブの動作
-
-### version
-
-- `script/version.ts` を実行。
-- バージョン決定と bump コミット (**push は `git push origin HEAD:<branch>`** — Actions は detached HEAD のため)。
-- リリースノートを `script/changelog.ts` で生成 (git log、conventional commit グループ化)。
-- `gh release create v<version> --draft --target <push 後 SHA>` でドラフトリリースを作成。
-- 出力: `version` / `release` (databaseId) / `tag` / `repo` を後続ジョブへ渡す。
 
 ### build-cli (build matrix)
 
 - 12 ターゲット (`linux-arm64`, `linux-x64`, `linux-x64-baseline`, `linux-arm64-musl`,
-  `linux-x64-musl`, `linux-x64-musl-baseline`, `darwin-arm64`, `darwin-x64`,
+  `linux-x64-musl`, `linux-x64-baseline-musl`, `darwin-arm64`, `darwin-x64`,
   `darwin-x64-baseline`, `windows-arm64`, `windows-x64`, `windows-x64-baseline`) を
   **並列ジョブ**でビルド。逐次ビルド時代に比べウォールクロックが大幅に短縮されます。
-- 各ジョブは `MIMOCODE_TARGETS=<target>` で自分のターゲットだけをビルドし、
-  `packages/opencode/script/build.ts` が `gh release upload` でアセット
-  (`oimo-<os>-<arch>[-baseline][-musl].{tar.gz|zip}`) をドラフトへアップロード。
-- FDS シークレットがあれば各ジョブが自分のアセットを FDS ミラーへもアップロード。
+- 各ジョブは `MIMOCODE_TARGETS=<target>` で自分のターゲットだけをビルドします。
+  `MIMOCODE_RELEASE=1` でアーカイブ (`oimo-<os>-<arch>[-baseline][-musl].{tar.gz|zip}`) を生成し、
+  `MIMOCODE_SKIP_UPLOAD=1` で **gh release へのアップロードを抑止**します
+  (この時点ではリリースが未作成のため)。アーカイブは `actions/upload-artifact` で assemble へ渡します。
+- FDS シークレットがあれば各ジョブが自分のアセットを FDS ミラーへもアップロードします
+  (SKIP_UPLOAD の影響を受けません)。
 - `packages/opencode/script/targets.ts` がターゲット定義・名前計算を一元管理します
   (`MIMOCODE_TARGETS` 未指定なら従来どおり全ターゲットを 1 プロセスでビルド — ローカルリリースビルド互換)。
 
-### publish
+### assemble
 
-1. `gh release download` でドラフトの全アセットを取得し、`script/checksums.ts` で
-   **SHA256SUMS を集約生成**してアップロード (`--clobber`)。matrix で分散ビルドしても
+1. `actions/download-artifact` で全アーカイブを `release-assets/` に集約。
+2. `script/checksums.ts` で **SHA256SUMS を集約生成** (`sha256sum -c` 互換)。matrix で分散ビルドしても
    チェックサムは単一の正にまとまります。
-2. `NPM_TOKEN` があれば `script/publish.ts` で npm 公開 (per-platform パッケージ群)。
+3. `script/changelog.ts` でリリースノートを生成 (git log、conventional commit グループ化。
+   範囲は直前の `v*` タグから HEAD)。
+4. **softprops/action-gh-release** でリリースを作成・公開 (`draft: false`)。
+   12 アーカイブ + `SHA256SUMS` を添付します。アセットが欠けている場合は失敗します
+   (`fail_on_unmatched_files: true`)。
+5. `NPM_TOKEN` があれば `script/publish.ts` で npm 公開 (per-platform パッケージ群)。
    なければ warning のみ (リリースは完了)。
-3. `gh release edit --draft=false` でリリースを public 化。
 
 ## アセットとチェックサム・インストーラー検証
 
@@ -135,10 +142,10 @@ npm とは独立です。
 |---|---|
 | `Error: not authenticated with gh` | `gh auth login` を実行 (スコープ: repo, workflow)。 |
 | `[warn] NPM_TOKEN is NOT set` | npm 公開がスキップされます。必要ならリポジトリシークレットに追加して再実行。 |
-| `checksum mismatch` でインストール失敗 | ダウンロードが壊れているか、リリースの SHA256SUMS と実アセットが不一致。リリースページで SHA256SUMS を再確認し、壊れたリリースは `gh release delete` + 再実行。 |
-| リリースノートが「No notable changes」になる | 現在の HEAD が最新タグ内 (変更なし) か、直近タグがローカルに無い。`git fetch --tags` してから再実行。 |
-| `git push` で detached HEAD エラー | ワークフロー内では `git push origin HEAD:<branch>` を使用済み。ローカル実行時のエラーならブランチを確認。 |
-| build-cli の一部ジョブだけ失敗 | matrix は `fail-fast: false` なので他ターゲットは継続。失敗ジョブのログ (`gh run view <id> --log-failed`) を確認し、修正後に同じバージョンのアセットを再アップロード (`gh release upload v<v> <file> --clobber`) するか、バージョンを上げて再実行。 |
+| `checksum mismatch` でインストール失敗 | ダウンロードが壊れているか、リリースの SHA256SUMS と実アセットが不一致。リリースページで SHA256SUMS を再確認し、壊れたリリースは `gh release delete` + バージョンを上げて再実行。 |
+| リリースノートが「No notable changes」になる | 直前タグからの差分が無いか、タグがローカルに無い。`git fetch --tags` してから再実行。 |
+| タグ push してもワークフローが走らない | release.yml がデフォルトブランチに存在し、**登録済み**であること (`gh api repos/<owner>/<repo>/actions/workflows` で確認)。このリポジトリでは登録拒否がサイレントに起きた実績があるため、ワークフロー変更時は必ず確認する。 |
+| build-cli の一部ジョブだけ失敗 | matrix は `fail-fast: false` なので他ターゲットは継続。失敗ジョブのログ (`gh run view <id> --log-failed`) を確認し、修正後に**バージョンを上げて**再実行 (同じタグを再 push するには先にタグとリリースを削除する必要があります)。 |
 | npm 公開済みなのにインストーラーが古い | インストーラーは GitHub リリースのアセットを参照します。アセットが揃っているかリリースページで確認。 |
 | `Unknown argument` が出る | `script/release --help` で使い方を確認。 |
 
@@ -148,11 +155,17 @@ npm とは独立です。
 # 特定ターゲットだけローカルビルド (アップロードなし)
 MIMOCODE_TARGETS=linux-x64 bun packages/opencode/script/build.ts
 
+# リリースビルドのアーカイブのみ生成 (gh release へアップロードしない)
+MIMOCODE_RELEASE=1 MIMOCODE_SKIP_UPLOAD=1 MIMOCODE_TARGETS=linux-x64 bun packages/opencode/script/build.ts
+
+# バージョン bump のみ (コミット付き、新バージョンを表示)
+bun script/bump.ts patch
+
 # チェックサム生成のみ
 bun script/checksums.ts <file...>
 
 # リリースノート生成 (タグ範囲)
-bun script/changelog.ts --from v0.1.13 --to v0.1.14 --print
+bun script/changelog.ts --from v0.1.14 --to v0.1.15 --print
 
 # install.ps1 再生成 (決定性)
 bun script/build-install-ps1.ts

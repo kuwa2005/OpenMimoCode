@@ -2,9 +2,10 @@ import { afterAll, describe, expect, test } from "bun:test"
 import { readFileSync, readdirSync } from "node:fs"
 import { resolve } from "node:path"
 import { ALL_TARGETS, filterTargets, targetName } from "../../script/targets.ts"
+import { nextVersion } from "../../../../script/bump.ts"
 
 const ROOT = resolve(import.meta.dir, "../../../..")
-const PUBLISH_YML = resolve(ROOT, ".github/workflows/publish.yml")
+const RELEASE_YML = resolve(ROOT, ".github/workflows/release.yml")
 const BUILD_TS = resolve(ROOT, "packages/opencode/script/build.ts")
 const RELEASE_SCRIPT = resolve(ROOT, "script/release")
 const RELEASING_MD = resolve(ROOT, "docs/RELEASING.md")
@@ -68,11 +69,14 @@ describe("release build matrix: targets.ts", () => {
   })
 })
 
-describe("release build matrix: publish.yml", () => {
-  const yml = readFileSync(PUBLISH_YML, "utf8")
+describe("release build matrix: release.yml", () => {
+  const yml = readFileSync(RELEASE_YML, "utf8")
 
-  test("T3: workflow_dispatch trigger preserved", () => {
-    expect(yml).toContain("workflow_dispatch")
+  test("T3: tag push (v*) trigger, no manual dispatch", () => {
+    expect(yml).toContain("push:")
+    expect(yml).toContain("tags:")
+    expect(yml).toContain('"v*"')
+    expect(yml).not.toContain("workflow_dispatch")
   })
 
   test("T3b: build-cli runs a 12-target matrix", () => {
@@ -87,23 +91,39 @@ describe("release build matrix: publish.yml", () => {
     expect(yml).toContain("MIMOCODE_TARGETS: ${{ matrix.target }}")
   })
 
-  test("T3d: job dependency chain version -> build-cli -> publish", () => {
-    expect(yml).toContain("needs: version")
-    expect(yml).toContain("needs: [version, build-cli]")
+  test("T3d: assemble depends on the build-cli matrix (no version job)", () => {
+    expect(yml).toContain("needs: build-cli")
+    expect(yml).not.toContain("needs: version")
+    expect(yml).not.toContain("needs: [version, build-cli]")
   })
 
-  test("T3e: publish job regenerates aggregate SHA256SUMS from uploaded assets", () => {
-    expect(yml).toContain("gh release download")
-    expect(yml).toContain("checksums.ts")
-    expect(yml).toContain("upload \"$TAG\" release-assets/SHA256SUMS --clobber")
+  test("T3e: assemble regenerates aggregate SHA256SUMS from downloaded artifacts", () => {
+    expect(yml).toContain("checksums.ts release-assets/*")
+    expect(yml).toContain("download-artifact@v4")
+    expect(yml).toContain("pattern: oimo-*")
   })
 
-  test("T3f: publish job finalizes the draft release", () => {
-    expect(yml).toContain("--draft=false")
+  test("T3f: softprops/action-gh-release creates the release with assets", () => {
+    expect(yml).toContain("softprops/action-gh-release@v2")
+    expect(yml).toContain("files: release-assets/*")
+    expect(yml).toContain("draft: false")
+    expect(yml).toContain("contents: write")
   })
 
   test("T3g: npm publish is guarded by NPM_TOKEN presence", () => {
     expect(yml).toContain('if [ -z "$NPM_TOKEN" ]')
+  })
+
+  test("T3h: archives flow through upload/download artifacts", () => {
+    expect(yml).toContain("upload-artifact@v4")
+    expect(yml).toContain("merge-multiple: true")
+    expect(yml).toContain("if-no-files-found: error")
+  })
+
+  test("T3i: matrix jobs build archives only and derive the version from the tag", () => {
+    expect(yml).toContain('MIMOCODE_SKIP_UPLOAD: "1"')
+    expect(yml).toContain('MIMOCODE_RELEASE: "1"')
+    expect(yml).toContain("GITHUB_REF_NAME#v")
   })
 })
 
@@ -123,17 +143,25 @@ describe("release build matrix: build.ts", () => {
     expect(ts).toContain('from "./targets.ts"')
     expect(ts).toContain("filterTargets(allTargets, targetFilter)")
   })
+
+  test("T4d: build.ts skips gh release upload when MIMOCODE_SKIP_UPLOAD is set", () => {
+    expect(ts).toContain("MIMOCODE_SKIP_UPLOAD")
+    expect(ts).toContain("if (!process.env.MIMOCODE_SKIP_UPLOAD)")
+  })
 })
 
 describe("release build matrix: script/release", () => {
   const script = readFileSync(RELEASE_SCRIPT, "utf8")
 
-  test("T5: script/release has one-stop options and watch/summary flow", () => {
-    expect(script).toContain("--no-watch")
-    expect(script).toContain("gh workflow run publish.yml")
+  test("T5: script/release bumps, tags, pushes and watches", () => {
+    expect(script).toContain("bun script/bump.ts")
+    expect(script).toContain("git tag")
+    expect(script).toContain("git push origin")
     expect(script).toContain("gh run watch")
     expect(script).toContain("docs/RELEASING.md")
     expect(script).toContain("gh secret list")
+    expect(script).toContain("--no-watch")
+    expect(script).not.toContain("gh workflow run publish.yml")
   })
 
   test("T5b: --help exits 0 with usage", async () => {
@@ -171,6 +199,7 @@ describe("release build matrix: runbook + future reference", () => {
     expect(md).toContain("./script/release")
     expect(md).toContain("SHA256SUMS")
     expect(md).toContain("OIMO_BASE_URL")
+    expect(md).toContain("release.yml")
   })
 
   test("T7: AGENTS.md references docs/RELEASING.md for future sessions", () => {
@@ -183,6 +212,12 @@ describe("release build matrix: runbook + future reference", () => {
     // packages/opencode/script must not contain a run artifact from import
     const files = readdirSync(resolve(ROOT, "packages/opencode/script"))
     expect(files).toContain("targets.ts")
+  })
+
+  test("T8: nextVersion computes the next semantic version", () => {
+    expect(nextVersion("0.1.14", "patch")).toBe("0.1.15")
+    expect(nextVersion("0.1.14", "minor")).toBe("0.2.0")
+    expect(nextVersion("0.1.14", "major")).toBe("1.0.0")
   })
 })
 

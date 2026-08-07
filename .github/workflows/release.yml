@@ -1,0 +1,126 @@
+# release workflow: tag push (v*) -> build-cli matrix -> assemble (checksums + softprops release + npm)
+name: release
+run-name: "release ${{ github.ref_name }}"
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-cli:
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        target:
+          - linux-arm64
+          - linux-x64
+          - linux-x64-baseline
+          - linux-arm64-musl
+          - linux-x64-musl
+          - linux-x64-baseline-musl
+          - darwin-arm64
+          - darwin-x64
+          - darwin-x64-baseline
+          - windows-arm64
+          - windows-x64
+          - windows-x64-baseline
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Compute version from tag
+        run: echo "MIMOCODE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Build CLI binary (archives only; the release is created in assemble)
+        run: bun packages/opencode/script/build.ts
+        env:
+          MIMOCODE_VERSION: ${{ env.MIMOCODE_VERSION }}
+          MIMOCODE_RELEASE: "1"
+          MIMOCODE_SKIP_UPLOAD: "1"
+          MIMOCODE_TARGETS: ${{ matrix.target }}
+          GH_REPO: ${{ github.repository }}
+          GH_TOKEN: ${{ github.token }}
+          MIMO_FDS_AK: ${{ secrets.MIMO_FDS_AK }}
+          MIMO_FDS_SK: ${{ secrets.MIMO_FDS_SK }}
+          MIMO_FDS_ENDPOINT: ${{ secrets.MIMO_FDS_ENDPOINT }}
+          MIMO_FDS_BUCKET: ${{ secrets.MIMO_FDS_BUCKET }}
+          MIMO_FDS_PREFIX: ${{ secrets.MIMO_FDS_PREFIX }}
+
+      - name: Upload release asset
+        uses: actions/upload-artifact@v4
+        with:
+          name: oimo-${{ matrix.target }}
+          path: |
+            packages/opencode/dist/*.tar.gz
+            packages/opencode/dist/*.zip
+          if-no-files-found: error
+
+  assemble:
+    needs: build-cli
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - uses: ./.github/actions/setup-bun
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Compute version from tag
+        run: echo "MIMOCODE_VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Download built archives
+        uses: actions/download-artifact@v4
+        with:
+          pattern: oimo-*
+          path: release-assets
+          merge-multiple: true
+
+      - name: Generate aggregate SHA256SUMS
+        run: |
+          bun script/checksums.ts release-assets/* > release-assets/SHA256SUMS
+          ls -la release-assets
+
+      - name: Generate release notes from git history
+        run: |
+          PREV=$(git tag --list 'v*' --sort=-version:refname | sed -n '2p')
+          if [ -n "$PREV" ]; then
+            bun script/changelog.ts --from "$PREV" --to HEAD --print > /tmp/release-notes.md
+          else
+            bun script/changelog.ts --to HEAD --print > /tmp/release-notes.md
+          fi
+
+      - name: Create GitHub release with assets
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ github.ref_name }}
+          files: release-assets/*
+          body_path: /tmp/release-notes.md
+          draft: false
+          fail_on_unmatched_files: true
+
+      - name: Publish npm packages
+        run: |
+          if [ -z "$NPM_TOKEN" ]; then
+            echo "::warning::NPM_TOKEN is not set; skipping npm publish (GitHub release assets are already uploaded). Add the NPM_TOKEN secret to the repository to enable npm publishing."
+          else
+            bun script/publish.ts
+          fi
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+          MIMOCODE_VERSION: ${{ env.MIMOCODE_VERSION }}

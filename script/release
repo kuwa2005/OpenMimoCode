@@ -10,13 +10,14 @@ usage() {
   cat <<'EOF'
 Usage: script/release [major|minor|patch] [--version X.Y.Z] [--no-watch] [--help]
 
-Cut a release: preflight checks -> dispatch publish.yml -> watch -> summary.
+Cut a release: preflight -> bump & commit -> push branch + tag vX.Y.Z ->
+GitHub Actions (release.yml) builds and publishes the release automatically.
 Full runbook: docs/RELEASING.md
 
 Options:
   major|minor|patch   Bump type (default: patch)
   --version X.Y.Z     Override the release version (takes precedence over bump)
-  --no-watch          Dispatch and exit without watching the workflow
+  --no-watch          Push the tag and exit without watching the workflow
   --help              Show this help
 EOF
 }
@@ -42,7 +43,7 @@ if ! gh auth status >/dev/null 2>&1; then
   exit 1
 fi
 if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
-  echo "Warning: working tree has uncommitted changes; the release commit includes staged files only."
+  echo "Warning: working tree has uncommitted changes; the release bump commit includes package.json files only."
   git status --short 2>/dev/null | head -20
 fi
 
@@ -60,21 +61,39 @@ for s in NPM_TOKEN MIMO_FDS_AK MIMO_FDS_SK; do
   fi
 done
 
-# --- Dispatch ---
-ARGS=(-f "bump=$BUMP_TYPE")
-if [ -n "$VERSION" ]; then
-  ARGS+=(-f "version=$VERSION")
+# --- Bump & commit ---
+echo "--- Bump ---"
+VERSION=$(bun script/bump.ts "${VERSION:-$BUMP_TYPE}")
+echo "Release version: v$VERSION"
+
+# --- Push branch + tag ---
+BRANCH=$(git branch --show-current 2>/dev/null || true)
+if [ -n "$BRANCH" ]; then
+  echo "--- Push branch ---"
+  git push origin "HEAD:$BRANCH"
 fi
-echo "--- Dispatch ---"
-gh workflow run publish.yml "${ARGS[@]}" --repo "$REPO"
-sleep 3
-RUN_ID=$(gh run list --workflow publish.yml --repo "$REPO" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || true)
-if [ -n "$RUN_ID" ]; then
-  echo "Run: https://github.com/$REPO/actions/runs/$RUN_ID"
+echo "--- Push tag ---"
+git tag "v$VERSION"
+git push origin "v$VERSION"
+
+# --- Locate the workflow run triggered by the tag push ---
+echo "--- Workflow ---"
+RUN_ID=""
+for _ in $(seq 1 30); do
+  RUN_ID=$(gh run list --workflow release.yml --repo "$REPO" --limit 10 --json databaseId,headBranch -q ".[] | select(.headBranch == \"v$VERSION\") | .databaseId" 2>/dev/null | head -1 || true)
+  if [ -n "$RUN_ID" ]; then
+    break
+  fi
+  sleep 2
+done
+if [ -z "$RUN_ID" ]; then
+  echo "Run not found yet; check: https://github.com/$REPO/actions/workflows/release.yml" >&2
+  exit 1
 fi
+echo "Run: https://github.com/$REPO/actions/runs/$RUN_ID"
 
 # --- Watch ---
-if [ "$WATCH" -eq 1 ] && [ -n "$RUN_ID" ]; then
+if [ "$WATCH" -eq 1 ]; then
   echo "Watching run (Ctrl-C stops watching; the workflow keeps running)..."
   if ! gh run watch "$RUN_ID" --repo "$REPO" --exit-status; then
     echo "Workflow failed:" >&2
@@ -83,11 +102,7 @@ if [ "$WATCH" -eq 1 ] && [ -n "$RUN_ID" ]; then
   fi
   echo "--- Jobs ---"
   gh run view "$RUN_ID" --repo "$REPO"
-  if [ -n "$VERSION" ]; then
-    gh release view "v$VERSION" --repo "$REPO" --json url -q .url 2>/dev/null && echo "Release URL: https://github.com/$REPO/releases/tag/v$VERSION" || true
-  else
-    echo "Release page: https://github.com/$REPO/releases"
-  fi
+  echo "Release URL: https://github.com/$REPO/releases/tag/v$VERSION"
 fi
 
 echo

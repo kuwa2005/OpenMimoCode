@@ -256,7 +256,12 @@ if (Script.release) {
     await Bun.file(sumsFile).write(await sha256Sums(archives))
     uploads.push(sumsFile)
   }
-  await $`gh release upload v${Script.version} ${uploads} --clobber --repo ${process.env.GH_REPO}`
+  // MIMOCODE_SKIP_UPLOAD=1 (tag-triggered release.yml matrix): build archives
+  // only; the release does not exist yet, so assemble uploads them via
+  // actions/upload-artifact and softprops/action-gh-release.
+  if (!process.env.MIMOCODE_SKIP_UPLOAD) {
+    await $`gh release upload v${Script.version} ${uploads} --clobber --repo ${process.env.GH_REPO}`
+  }
 
   // Also publish to Xiaomi FDS (fast download in mainland China). Skipped when
   // credentials are absent so local release builds still work. The install
