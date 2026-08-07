@@ -1,76 +1,67 @@
 #!/usr/bin/env bun
 
-import { rm } from "fs/promises"
-import path from "path"
-import { parseArgs } from "util"
+import { rm } from "node:fs/promises"
+import path from "node:path"
+import { parseArgs } from "node:util"
+import { $ } from "bun"
 
 const root = path.resolve(import.meta.dir, "..")
 const file = path.join(root, "UPCOMING_CHANGELOG.md")
-const { values, positionals } = parseArgs({
-  args: Bun.argv.slice(2),
-  options: {
-    from: { type: "string", short: "f" },
-    to: { type: "string", short: "t" },
-    variant: { type: "string", default: "low" },
-    quiet: { type: "boolean", default: false },
-    print: { type: "boolean", default: false },
-    help: { type: "boolean", short: "h", default: false },
-  },
-  allowPositionals: true,
-})
-const args = [...positionals]
 
-if (values.from) args.push("--from", values.from)
-if (values.to) args.push("--to", values.to)
+const GROUPS: [string, RegExp][] = [
+  ["Features", /^feat(\([^)]*\))?:/],
+  ["Fixes", /^fix(\([^)]*\))?:/],
+  ["Performance", /^perf(\([^)]*\))?:/],
+  ["Refactor", /^refactor(\([^)]*\))?:/],
+  ["Docs", /^docs(\([^)]*\))?:/],
+  ["Chores", /^chore(\([^)]*\))?:/],
+]
 
-if (values.help) {
-  console.log(`
-Usage: bun script/changelog.ts [options]
+const cleanSubject = (line: string) => line.replace(/^[a-z]+(\([^)]*\))?:\s*/i, "")
 
-Generates UPCOMING_CHANGELOG.md by running the opencode changelog command.
-
-Options:
-  -f, --from <version>   Starting version (default: latest non-draft GitHub release)
-  -t, --to <ref>         Ending ref (default: HEAD)
-      --variant <name>   Thinking variant for opencode run (default: low)
-      --quiet            Suppress opencode command output unless it fails
-      --print            Print the generated UPCOMING_CHANGELOG.md after success
-  -h, --help             Show this help message
-
-Examples:
-  bun script/changelog.ts
-  bun script/changelog.ts --from 1.0.200
-  bun script/changelog.ts -f 1.0.200 -t 1.0.205
-`)
-  process.exit(0)
+export function renderChangelog(lines: string[]): string {
+  const buckets = new Map<string, string[]>()
+  for (const line of lines) {
+    const group = GROUPS.find(([, re]) => re.test(line))?.[0] ?? "Other"
+    const items = buckets.get(group)
+    if (items) items.push(cleanSubject(line))
+    else buckets.set(group, [cleanSubject(line)])
+  }
+  const sections = [...buckets.entries()].map(
+    ([name, items]) => `### ${name}\n\n${items.map((item) => `- ${item}`).join("\n")}`,
+  )
+  const body = sections.join("\n\n")
+  return `# Changelog\n\n${body.length > 0 ? body : "No notable changes"}\n`
 }
 
-await rm(file, { force: true })
+if (import.meta.main) {
+  const { values } = parseArgs({
+    args: process.argv.slice(2),
+    options: {
+      from: { type: "string", short: "f" },
+      to: { type: "string", short: "t" },
+      print: { type: "boolean", short: "p" },
+      help: { type: "boolean", short: "h" },
+    },
+  })
 
-const quiet = values.quiet
-const cmd = ["opencode", "run"]
-cmd.push("--variant", values.variant)
-cmd.push("--command", "changelog", "--", ...args)
+  if (values.help) {
+    console.log("Usage: bun script/changelog.ts [--from <ref>] [--to <ref>] [--print]")
+    process.exit(0)
+  }
 
-const proc = Bun.spawn(cmd, {
-  cwd: root,
-  stdin: "inherit",
-  stdout: quiet ? "pipe" : "inherit",
-  stderr: quiet ? "pipe" : "inherit",
-})
+  await rm(file, { force: true })
 
-const [out, err] = quiet
-  ? await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()])
-  : ["", ""]
-const code = await proc.exited
-if (code === 0) {
+  let from = values.from
+  if (!from) {
+    from = (await $`git describe --tags --abbrev=0`.text().catch(() => "").then((x) => x.trim())) || undefined
+  }
+  const to = values.to ?? "HEAD"
+  const log = from
+    ? await $`git log --format=%s --no-decorate ${from}..${to}`.text()
+    : await $`git log --format=%s --no-decorate ${to}`.text()
+  const lines = log.split("\n").filter(Boolean)
+
+  await Bun.file(file).write(renderChangelog(lines))
   if (values.print) process.stdout.write(await Bun.file(file).text())
-  process.exit(0)
 }
-
-if (quiet) {
-  if (out) process.stdout.write(out)
-  if (err) process.stderr.write(err)
-}
-
-process.exit(code)

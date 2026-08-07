@@ -5,6 +5,7 @@ import fs from "fs"
 import path from "path"
 import { fileURLToPath } from "url"
 import { createSolidTransformPlugin } from "@opentui/solid/bun-plugin"
+import { ALL_TARGETS as allTargets, filterTargets, targetName } from "./targets.ts"
 
 const __filename = fileURLToPath(import.meta.url)
 const __dirname = path.dirname(__filename)
@@ -82,68 +83,10 @@ const createEmbeddedWebUIBundle = async () => {
 
 const embeddedFileMap = skipEmbedWebUi ? null : await createEmbeddedWebUIBundle()
 
-const allTargets: {
-  os: string
-  arch: "arm64" | "x64"
-  abi?: "musl"
-  avx2?: false
-}[] = [
-  {
-    os: "linux",
-    arch: "arm64",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-    avx2: false,
-  },
-  {
-    os: "linux",
-    arch: "arm64",
-    abi: "musl",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-    abi: "musl",
-  },
-  {
-    os: "linux",
-    arch: "x64",
-    abi: "musl",
-    avx2: false,
-  },
-  {
-    os: "darwin",
-    arch: "arm64",
-  },
-  {
-    os: "darwin",
-    arch: "x64",
-  },
-  {
-    os: "darwin",
-    arch: "x64",
-    avx2: false,
-  },
-  {
-    os: "win32",
-    arch: "arm64",
-  },
-  {
-    os: "win32",
-    arch: "x64",
-  },
-  {
-    os: "win32",
-    arch: "x64",
-    avx2: false,
-  },
-]
+const targetFilter = (process.env.MIMOCODE_TARGETS ?? "")
+  .split(",")
+  .map((t) => t.trim())
+  .filter(Boolean)
 
 const targets = singleFlag
   ? allTargets.filter((item) => {
@@ -164,7 +107,7 @@ const targets = singleFlag
 
       return true
     })
-  : allTargets
+  : filterTargets(allTargets, targetFilter)
 
 await $`rm -rf dist`
 
@@ -208,16 +151,7 @@ if (!skipInstall) {
   await $`bun install --os="*" --cpu="*" @parcel/watcher@${pkg.dependencies["@parcel/watcher"]}`
 }
 for (const item of targets) {
-  const name = [
-    BINARY_PREFIX,
-    // changing to win32 flags npm for some reason
-    item.os === "win32" ? "windows" : item.os,
-    item.arch,
-    item.avx2 === false ? "baseline" : undefined,
-    item.abi === undefined ? undefined : item.abi,
-  ]
-    .filter(Boolean)
-    .join("-")
+  const name = targetName(item)
   console.log(`building ${name}`)
   await $`mkdir -p dist/${name}/bin`
 
@@ -313,14 +247,26 @@ if (Script.release) {
     .readdirSync("dist")
     .filter((f) => f.endsWith(".zip") || f.endsWith(".tar.gz"))
     .map((f) => `dist/${f}`)
-  await $`gh release upload v${Script.version} ${archives} --clobber --repo ${process.env.GH_REPO}`
+  const uploads = [...archives]
+  if (targetFilter.length === 0) {
+    // Full build: emit a single aggregate SHA256SUMS. Matrix runs skip this;
+    // the publish job regenerates it from the uploaded assets (spec R3).
+    const { sha256Sums } = await import("../../../script/checksums.ts")
+    const sumsFile = "dist/SHA256SUMS"
+    await Bun.file(sumsFile).write(await sha256Sums(archives))
+    uploads.push(sumsFile)
+  }
+  await $`gh release upload v${Script.version} ${uploads} --clobber --repo ${process.env.GH_REPO}`
 
-  // Also publish to Xiaomi FDS (fast download in mainland China; the install
-  // script reads from there). Skipped when credentials are absent so local
-  // release builds still work.
+  // Also publish to Xiaomi FDS (fast download in mainland China). Skipped when
+  // credentials are absent so local release builds still work. The install
+  // scripts download from GitHub by default and can be pointed at a mirror
+  // (e.g. the FDS CDN) via OIMO_BASE_URL.
   if (process.env.MIMO_FDS_AK && process.env.MIMO_FDS_SK) {
     const { uploadFile } = await import("./fds-upload.ts")
-    const archives = fs.readdirSync("dist").filter((f) => f.endsWith(".zip") || f.endsWith(".tar.gz"))
+    const archives = fs
+      .readdirSync("dist")
+      .filter((f) => f.endsWith(".zip") || f.endsWith(".tar.gz") || f === "SHA256SUMS")
     for (const file of archives) {
       await uploadFile(`dist/${file}`, `releases/v${Script.version}/${file}`)
       console.log(`Uploaded to FDS: releases/v${Script.version}/${file}`)

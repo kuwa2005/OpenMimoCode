@@ -4,9 +4,17 @@ import { Script } from "@mimo-ai/script"
 import { $ } from "bun"
 
 const output = [`version=${Script.version}`]
-const sha = process.env.GITHUB_SHA ?? (await $`git rev-parse HEAD`.text()).trim()
 
 if (!Script.preview) {
+  const { bumpVersions } = await import("./bump-version.ts")
+  const changed = await bumpVersions(Script.version)
+  if (changed.length > 0) {
+    await $`git add ${changed}`.cwd(process.cwd()).nothrow()
+    await $`git commit -m "chore: bump version to ${Script.version}"`.cwd(process.cwd()).nothrow()
+    const branch = process.env.GITHUB_REF_NAME ?? (await $`git branch --show-current`.text()).trim()
+    if (branch) await $`git push origin HEAD:${branch}`.cwd(process.cwd()).nothrow()
+  }
+  const sha = (await $`git rev-parse HEAD`.text()).trim()
   await $`bun script/changelog.ts --to ${sha}`.cwd(process.cwd()).nothrow()
   const file = `${process.cwd()}/UPCOMING_CHANGELOG.md`
   const body = await Bun.file(file)

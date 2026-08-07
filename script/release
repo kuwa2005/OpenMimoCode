@@ -1,5 +1,94 @@
 #!/usr/bin/env bash
+set -euo pipefail
 
-BUMP_TYPE=${1:-patch}
+REPO="${GH_REPO:-kuwa2005/OpenMimoCode}"
+BUMP_TYPE="patch"
+VERSION=""
+WATCH=1
 
-gh workflow run publish.yml -f bump="$BUMP_TYPE"
+usage() {
+  cat <<'EOF'
+Usage: script/release [major|minor|patch] [--version X.Y.Z] [--no-watch] [--help]
+
+Cut a release: preflight checks -> dispatch publish.yml -> watch -> summary.
+Full runbook: docs/RELEASING.md
+
+Options:
+  major|minor|patch   Bump type (default: patch)
+  --version X.Y.Z     Override the release version (takes precedence over bump)
+  --no-watch          Dispatch and exit without watching the workflow
+  --help              Show this help
+EOF
+}
+
+while [ $# -gt 0 ]; do
+  case "$1" in
+    major|minor|patch) BUMP_TYPE="$1" ;;
+    --version) VERSION="${2:-}"; shift ;;
+    --no-watch) WATCH=0 ;;
+    --help|-h) usage; exit 0 ;;
+    *) echo "Unknown argument: $1" >&2; usage >&2; exit 1 ;;
+  esac
+  shift
+done
+
+# --- Preflight ---
+if ! command -v gh >/dev/null 2>&1; then
+  echo "Error: gh CLI is not installed (https://cli.github.com/)" >&2
+  exit 1
+fi
+if ! gh auth status >/dev/null 2>&1; then
+  echo "Error: not authenticated with gh. Run: gh auth login" >&2
+  exit 1
+fi
+if [ -n "$(git status --porcelain 2>/dev/null)" ]; then
+  echo "Warning: working tree has uncommitted changes; the release commit includes staged files only."
+  git status --short 2>/dev/null | head -20
+fi
+
+echo "--- Secrets ($REPO) ---"
+SECRETS=$(gh secret list --repo "$REPO" --json name -q '.[].name' 2>/dev/null || true)
+for s in NPM_TOKEN MIMO_FDS_AK MIMO_FDS_SK; do
+  if printf '%s\n' "$SECRETS" | grep -qx "$s"; then
+    echo "  [ok]   $s"
+  else
+    case "$s" in
+      NPM_TOKEN) note="npm publish will be skipped" ;;
+      *) note="FDS mirror upload will be skipped" ;;
+    esac
+    echo "  [warn] $s is NOT set -> $note"
+  fi
+done
+
+# --- Dispatch ---
+ARGS=(-f "bump=$BUMP_TYPE")
+if [ -n "$VERSION" ]; then
+  ARGS+=(-f "version=$VERSION")
+fi
+echo "--- Dispatch ---"
+gh workflow run publish.yml "${ARGS[@]}" --repo "$REPO"
+sleep 3
+RUN_ID=$(gh run list --workflow publish.yml --repo "$REPO" --limit 1 --json databaseId -q '.[0].databaseId' 2>/dev/null || true)
+if [ -n "$RUN_ID" ]; then
+  echo "Run: https://github.com/$REPO/actions/runs/$RUN_ID"
+fi
+
+# --- Watch ---
+if [ "$WATCH" -eq 1 ] && [ -n "$RUN_ID" ]; then
+  echo "Watching run (Ctrl-C stops watching; the workflow keeps running)..."
+  if ! gh run watch "$RUN_ID" --repo "$REPO" --exit-status; then
+    echo "Workflow failed:" >&2
+    gh run view "$RUN_ID" --repo "$REPO" --log-failed >&2 || true
+    exit 1
+  fi
+  echo "--- Jobs ---"
+  gh run view "$RUN_ID" --repo "$REPO"
+  if [ -n "$VERSION" ]; then
+    gh release view "v$VERSION" --repo "$REPO" --json url -q .url 2>/dev/null && echo "Release URL: https://github.com/$REPO/releases/tag/v$VERSION" || true
+  else
+    echo "Release page: https://github.com/$REPO/releases"
+  fi
+fi
+
+echo
+echo "Done. 手順の詳細は docs/RELEASING.md を参照。"

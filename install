@@ -19,6 +19,9 @@ Options:
     -b, --binary <path>     Install from a local binary instead of downloading
         --no-modify-path    Don't modify shell config files (.zshrc, .bashrc, etc.)
 
+Environment:
+    OIMO_BASE_URL            Override the download base URL (default: https://github.com/<repo>)
+
 Examples:
     curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash
     curl -fsSL https://raw.githubusercontent.com/kuwa2005/OpenMimoCode/main/install | bash -s -- --version 0.1.0
@@ -184,6 +187,7 @@ else
     #   https://github.com/$repo/releases/latest             -> redirects to the latest release tag
     #   https://github.com/$repo/releases/download/v<version>/<filename>
     repo="${GH_REPO:-kuwa2005/OpenMimoCode}"
+    base_url="${OIMO_BASE_URL:-https://github.com/$repo}"
     specific_version=""
 
     if [ -z "$requested_version" ]; then
@@ -205,12 +209,12 @@ else
             echo -e "${MUTED}or install a specific version, e.g.: bash -s -- --version 0.1.0${NC}"
             exit 1
         fi
-        url="https://github.com/$repo/releases/download/v${specific_version}/$filename"
+        url="$base_url/releases/download/v${specific_version}/$filename"
     else
         # Strip leading 'v' if present
         requested_version="${requested_version#v}"
         specific_version=$requested_version
-        url="https://github.com/$repo/releases/download/v${requested_version}/$filename"
+        url="$base_url/releases/download/v${requested_version}/$filename"
 
         # Verify the artifact exists before downloading
         http_status=$(curl -sI -o /dev/null -w "%{http_code}" "$url")
@@ -342,6 +346,38 @@ download_with_progress() {
     return $ret
 }
 
+verify_checksum() {
+    local file="$1"
+    local dir="$2"
+    local sums_file="$dir/SHA256SUMS"
+    local sums_url="$base_url/releases/download/v${specific_version}/SHA256SUMS"
+    if ! curl -fsSL -o "$sums_file" "$sums_url" 2>/dev/null; then
+        print_message warning "${ORANGE}Warning: SHA256SUMS not found for v${specific_version}; skipping checksum verification${NC}"
+        return 0
+    fi
+
+    local expected
+    expected=$(awk -v f="$filename" '$2 == f { print $1 }' "$sums_file")
+    if [ -z "$expected" ]; then
+        print_message warning "${ORANGE}Warning: no checksum entry for $filename; skipping verification${NC}"
+        return 0
+    fi
+
+    local actual
+    if command -v sha256sum >/dev/null 2>&1; then
+        actual=$(sha256sum "$file" | awk '{ print $1 }')
+    else
+        actual=$(shasum -a 256 "$file" | awk '{ print $1 }')
+    fi
+    if [ "$actual" != "$expected" ]; then
+        echo -e "${RED}Error: checksum mismatch for $filename${NC}" >&2
+        echo -e "${MUTED}expected: $expected${NC}" >&2
+        echo -e "${MUTED}actual:   $actual${NC}" >&2
+        exit 1
+    fi
+    print_message info "${MUTED}Checksum verified (SHA256)${NC}"
+}
+
 download_and_install() {
     print_message info "\n${MUTED}Installing ${NC}oimo ${MUTED}version: ${NC}$specific_version"
     local tmp_dir="${TMPDIR:-/tmp}/oimo_install_$$"
@@ -351,6 +387,8 @@ download_and_install() {
         # Fallback to standard curl on Windows, non-TTY environments, or if custom progress fails
         curl -# -L -o "$tmp_dir/$filename" "$url"
     fi
+
+    verify_checksum "$tmp_dir/$filename" "$tmp_dir"
 
     if [ "$os" = "linux" ]; then
         tar -xzf "$tmp_dir/$filename" -C "$tmp_dir"

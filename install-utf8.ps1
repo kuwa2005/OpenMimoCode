@@ -87,6 +87,7 @@ if ($NeedsBaseline) { $Target = "$Target-baseline" }
 # --- Resolve version ---
 
 $Repo = if ($env:GH_REPO) { $env:GH_REPO } else { "kuwa2005/OpenMimoCode" }
+$BaseUrl = if ($env:OIMO_BASE_URL) { $env:OIMO_BASE_URL } else { "https://github.com/$Repo" }
 
 if (-not $Version) {
     try {
@@ -137,7 +138,7 @@ if (-not $Staging) {
 # --- Download and install ---
 
 $Filename = "oimo-$Target.zip"
-$Url = "https://github.com/$Repo/releases/download/v$Version/$Filename"
+$Url = "$BaseUrl/releases/download/v$Version/$Filename"
 
 Write-Host ""
 Write-Host "Installing " -NoNewline -ForegroundColor DarkGray
@@ -160,6 +161,29 @@ try {
 } catch {
     Remove-Item -Recurse -Force $TmpDir -ErrorAction SilentlyContinue
     Write-Err "Failed to download from $Url`n$($_.Exception.Message)"
+}
+
+# Verify checksum when available (existing releases may not ship SHA256SUMS)
+$SumsPath = Join-Path $TmpDir "SHA256SUMS"
+$SumsUrl = "$BaseUrl/releases/download/v$Version/SHA256SUMS"
+try {
+    Invoke-WebRequest -Uri $SumsUrl -OutFile $SumsPath -UseBasicParsing -ErrorAction Stop
+    $Expected = Get-Content $SumsPath |
+        Where-Object { $_ -match "\s$([regex]::Escape($Filename))$" } |
+        ForEach-Object { ($_ -split '\s+')[0] } |
+        Select-Object -First 1
+    if ($Expected) {
+        $Actual = (Get-FileHash -Path $ZipPath -Algorithm SHA256).Hash.ToLower()
+        if ($Actual -ne $Expected.ToLower()) {
+            Remove-Item -Recurse -Force $TmpDir -ErrorAction SilentlyContinue
+            Write-Err "Checksum mismatch for $Filename. Expected $Expected, got $Actual."
+        }
+        Write-Host "Checksum verified (SHA256)." -ForegroundColor DarkGray
+    } else {
+        Write-Host "WARNING: No checksum entry for $Filename; skipping verification." -ForegroundColor Yellow
+    }
+} catch {
+    Write-Host "WARNING: SHA256SUMS not found for v$Version; skipping checksum verification." -ForegroundColor Yellow
 }
 
 # Extract and install
