@@ -4,6 +4,7 @@ import { Global } from "@/global"
 import { Bus } from "@/bus"
 import { Config } from "@/config"
 import { Memory } from "@/memory"
+import { isMemoryWriteEnabled } from "@/memory/write-gate"
 import { MemoryFtsTable } from "@/memory/fts.sql"
 import { TaskRegistry } from "@/task/registry"
 import { ActorRegistry } from "@/actor/registry"
@@ -417,9 +418,9 @@ export type TryStartCheckpointWriterInput = {
  *              newest wins because its range is a strict superset of the
  *              older pending range, so the older one would just duplicate
  *              work. (F40)
- * - "skipped": the request was rejected outright — empty session, system-
- *              spawned subagent, or Actor service unavailable. No writer
- *              will fire for this request now or later.
+ * - "skipped": the request was rejected outright — memory writing disabled,
+ *              empty session, system-spawned subagent, or Actor service
+ *              unavailable. No writer will fire for this request now or later.
  */
 export type TryStartCheckpointWriterResult = "started" | "queued" | "skipped"
 
@@ -588,6 +589,27 @@ export const layer: Layer.Layer<
     ) => Effect.Effect<TryStartCheckpointWriterResult> = Effect.fn("SessionCheckpoint.tryStartCheckpointWriter")(function* (
       input: TryStartCheckpointWriterInput,
     ) {
+      // Memory writing disabled — stop producing NEW memory. This is the single
+      // gate for the whole write side of checkpointing: template bootstrap
+      // (ensureCheckpointTemplate / ensureMemoryTemplate / ensureNotesTemplate),
+      // the writer subagent spawn, and the validator retry rename all live past
+      // this point, so returning here holds every one of them down at once. We
+      // deliberately never spawn rather than spawn-and-drop-the-write: the writer
+      // would burn a full model turn producing bytes nobody stores.
+      //
+      // READS are untouched — renderRebuildContext still injects an existing
+      // checkpoint.md / MEMORY.md / notes.md, and the `memory` search tool keeps
+      // working. The reads inside this function (prior checkpoint, progressDiff)
+      // exist only to feed the writer prompt, so short-circuiting loses no
+      // read capability.
+      //
+      // Default is ENABLED: absent config → write. The field name and polarity
+      // live in exactly one place (memory/write-gate.ts).
+      if (!isMemoryWriteEnabled(yield* config.get())) {
+        log.info("memory writing disabled, skipping checkpoint", { sessionID: input.sessionID })
+        return "skipped" as const
+      }
+
       // F40: writer1 still running. Evict any prior pending and queue this
       // request — newest wins because its range is a strict superset of the
       // older pending range, so older pending checkpoints would only
