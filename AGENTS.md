@@ -6,6 +6,7 @@
 - Prefer automation: execute requested actions without confirmation unless blocked by missing info or safety/irreversibility.
 - Install deps with `bun ci` (= `bun install --frozen-lockfile`) — install per `bun.lock`, don't mutate the lockfile. ⛔ Do NOT use `bun install`/`npm install`.
 - Release procedure and troubleshooting live in `docs/RELEASING.md` (Japanese). Cut a release with `./script/release <major|minor|patch>` — consult the runbook first.
+- `docs/index.html` (docs ビューア) は生成物 — 文書を追加・変更したら `bun script/build-docs-index.ts` で再生成する (pages.yml の CI でもデプロイ前に自動再生成される)。
 
 ## Core Focus (as of 2025-06-18)
 
