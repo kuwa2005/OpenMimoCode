@@ -1,3 +1,4 @@
+# publish workflow: version -> build-cli matrix -> publish
 name: publish
 run-name: "release ${{ inputs.bump || inputs.version || 'manual' }}"
 
