@@ -34,7 +34,14 @@ import { Log } from "@/util"
 import { isDirectoryDeniedError } from "@/server/routes/instance/access"
 import { useToastOptional } from "../ui/toast"
 import { emptyConsoleState, type ConsoleState } from "@/config/console-state"
-import { appendSessionLog } from "../session-log"
+import {
+  appendSessionLog,
+  flushSessionLogResult,
+  recordSessionLogAssistant,
+  recordSessionLogQA,
+  recordSessionLogUser,
+  sessionLogMode,
+} from "../session-log"
 
 /**
  * The SDK regenerated the task list as an inline anonymous array on
@@ -222,6 +229,10 @@ export function selectMessages<M extends { id: string }>(
 // repeated message.updated events for the same message never double-write.
 const loggedTurns = new Set<string>()
 
+// Requests still awaiting a reply, keyed by requestID, so the chosen answers
+// on question.replied can be matched to the question text seen on question.asked.
+const pendingQuestions = new Map<string, QuestionRequest>()
+
 function textOfParts(parts: Part[] | undefined): string {
   if (!parts) return ""
   return parts
@@ -362,16 +373,29 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
     let syncedDirectory = sdk.directory
 
     const maybeAppendSessionLog = (sid: string, aid: string, info: Message) => {
-      if (info.role !== "assistant") return
-      if (!info.time.completed) return
       if (loggedTurns.has(info.id)) return
-      loggedTurns.add(info.id)
-      const user = store.message[sid]?.[aid]?.findLast((m) => m.role === "user" && m.id < info.id)
-      if (!user) return
-      const question = textOfParts(store.part[user.id])
-      const answer = textOfParts(store.part[info.id])
-      if (!question || !answer) return
-      void appendSessionLog({ question, answer, time: info.time.completed })
+      if (info.role === "assistant") {
+        if (!info.time.completed) return
+        const answer = textOfParts(store.part[info.id])
+        if (!answer) return
+        loggedTurns.add(info.id)
+        if (sessionLogMode() === "summary") {
+          void recordSessionLogAssistant(answer, info.time.completed)
+          return
+        }
+        const user = store.message[sid]?.[aid]?.findLast((m) => m.role === "user" && m.id < info.id)
+        if (!user) return
+        const question = textOfParts(store.part[user.id])
+        if (!question) return
+        void appendSessionLog({ question, answer, time: info.time.completed })
+        return
+      }
+      if (info.role === "user") {
+        const text = textOfParts(store.part[info.id])
+        if (!text) return
+        loggedTurns.add(info.id)
+        void recordSessionLogUser(text, info.time.created)
+      }
     }
 
     event.subscribe((event) => {
@@ -416,7 +440,30 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
           break
         }
 
-        case "question.replied":
+        case "question.replied": {
+          const requests = store.question[event.properties.sessionID]
+          if (!requests) break
+          const match = Binary.search(requests, event.properties.requestID, (r) => r.id)
+          if (!match.found) break
+          setStore(
+            "question",
+            event.properties.sessionID,
+            produce((draft) => {
+              draft.splice(match.index, 1)
+            }),
+          )
+          const request = pendingQuestions.get(event.properties.requestID)
+          if (request) {
+            pendingQuestions.delete(event.properties.requestID)
+            void recordSessionLogQA({
+              questions: request.questions,
+              answers: event.properties.answers,
+              time: Date.now(),
+            })
+          }
+          break
+        }
+
         case "question.rejected": {
           const requests = store.question[event.properties.sessionID]
           if (!requests) break
@@ -429,11 +476,13 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
               draft.splice(match.index, 1)
             }),
           )
+          pendingQuestions.delete(event.properties.requestID)
           break
         }
 
         case "question.asked": {
           const request = event.properties
+          pendingQuestions.set(request.id, request)
           const requests = store.question[request.sessionID]
           if (!requests) {
             setStore("question", request.sessionID, [request])

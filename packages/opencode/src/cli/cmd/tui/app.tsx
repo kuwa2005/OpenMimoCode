@@ -15,6 +15,7 @@ import {
   Show,
 } from "solid-js"
 import { win32DisableProcessedInput, win32InstallCtrlCGuard } from "./win32"
+import { flushSessionLogResult } from "./session-log"
 import { Flag } from "@/flag/flag"
 import * as ConfigAutonomy from "@/config/autonomy"
 import { isSystemSession } from "@/session/auto-dream"
@@ -158,6 +159,7 @@ export function tui(input: {
     }
 
     const onBeforeExit = async () => {
+      await flushSessionLogResult()
       await TuiPluginRuntime.dispose()
     }
 

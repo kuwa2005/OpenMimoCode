@@ -72,6 +72,19 @@ export const Flag = {
     return process.env["MIMOCODE_LOG"]
   },
 
+  // Set by `oimo --log` without a filename: the TUI generates an
+  // oimo-session-<timestamp>.md file in the project directory.
+  get MIMOCODE_LOG_AUTO() {
+    return truthy("MIMOCODE_LOG_AUTO")
+  },
+
+  // Set by `oimo --log-mode`: "full" (default) logs every completed turn;
+  // "summary" logs only user inputs, question/answer pairs and the final
+  // result of each request.
+  get MIMOCODE_LOG_MODE() {
+    return process.env["MIMOCODE_LOG_MODE"]
+  },
+
   // Defaults to false (rotation enabled). When enabled, the active log file is
   // never archived to <name>.log.<stamp> on hitting MAX_FILE_SIZE — it grows in
   // place. Useful when an external tool tails/manages the single log file.
