@@ -1,4 +1,5 @@
 import type * as Arr from "effect/Array"
+import { withoutCredentials } from "@/util/credential-env"
 import { NodeFileSystem, NodeSink, NodeStream } from "@effect/platform-node"
 import * as NodePath from "@effect/platform-node/NodePath"
 import * as Deferred from "effect/Deferred"
@@ -104,8 +105,11 @@ export const make = Effect.gen(function* () {
     return path.resolve(opts.cwd)
   })
 
+  // withoutCredentials on the *inherited* half only: every `extendEnv: true` caller funnels
+  // through here, including the agent-controlled shell part in session/prompt.ts. A caller that
+  // passes credentials in `opts.env` on purpose (control-plane workspaces) is left alone.
   const env = (opts: ChildProcess.CommandOptions) =>
-    opts.extendEnv ? { ...globalThis.process.env, ...opts.env } : opts.env
+    opts.extendEnv ? { ...withoutCredentials(globalThis.process.env), ...opts.env } : opts.env
 
   const input = (x: ChildProcess.CommandInput | undefined): NodeChildProcess.IOType | undefined =>
     Stream.isStream(x) ? "pipe" : x

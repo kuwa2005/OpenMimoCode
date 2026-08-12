@@ -1,4 +1,5 @@
 import z from "zod"
+import { withoutCredentials } from "@/util/credential-env"
 import os from "os"
 import { createWriteStream, existsSync, readFileSync } from "node:fs"
 import * as Tool from "./tool"
@@ -603,8 +604,9 @@ export const BashTool = Tool.define(
       if (identity.email && !process.env["GIT_AUTHOR_EMAIL"]) gitFloor["GIT_AUTHOR_EMAIL"] = identity.email
       if (identity.name && !process.env["GIT_COMMITTER_NAME"]) gitFloor["GIT_COMMITTER_NAME"] = identity.name
       if (identity.email && !process.env["GIT_COMMITTER_EMAIL"]) gitFloor["GIT_COMMITTER_EMAIL"] = identity.email
+      // withoutCredentials: this env goes to agent-authored commands.
       return {
-        ...process.env,
+        ...withoutCredentials(process.env),
         // Python ignores the console code page when stdout is a pipe and falls
         // back to the ANSI code page (GBK on zh-CN), producing mojibake. Force
         // UTF-8 for child Python processes on Windows.

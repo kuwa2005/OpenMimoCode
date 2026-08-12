@@ -1,3 +1,4 @@
+export { Auth } from "./auth"
 export { Config } from "./config"
 export { Server } from "./server/server"
 export { bootstrap } from "./cli/bootstrap"

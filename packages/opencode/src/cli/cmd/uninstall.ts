@@ -1,4 +1,5 @@
 import type { Argv } from "yargs"
+import { withoutCredentials } from "@/util/credential-env"
 import { UI } from "../ui"
 import * as prompts from "@clack/prompts"
 import { AppRuntime } from "@/effect/app-runtime"
@@ -377,7 +378,7 @@ async function cleanWindowsPath() {
   `
   const result = await Process.run(["powershell", "-ep", "Bypass", "-c", script], {
     nothrow: true,
-    env: { ...process.env, MIMOCODE_UNINSTALL_DIR: installDir },
+    env: { ...withoutCredentials(process.env), MIMOCODE_UNINSTALL_DIR: installDir },
   })
   if (result.code !== 0) throw new Error(result.stderr.toString() || "Failed to clean User PATH")
 }

@@ -1,4 +1,5 @@
 import path from "path"
+import { withoutCredentials } from "@/util/credential-env"
 import z from "zod"
 import { AppFileSystem } from "@mimo-ai/shared/filesystem"
 import { Cause, Context, Effect, Fiber, Layer, Queue, Stream } from "effect"
@@ -143,7 +144,9 @@ export interface Interface {
 export class Service extends Context.Service<Service, Interface>()("@opencode/Ripgrep") {}
 
 function env() {
-  const env = sanitizedProcessEnv()
+  // sanitizedProcessEnv only drops undefined values — it does not drop credentials, and ripgrep
+  // has no use for them.
+  const env = withoutCredentials(sanitizedProcessEnv())
   delete env.RIPGREP_CONFIG_PATH
   return env
 }

@@ -1,4 +1,5 @@
 import { BusEvent } from "@/bus/bus-event"
+import { withoutCredentials } from "@/util/credential-env"
 import { Bus } from "@/bus"
 import { Log } from "../util"
 import * as LSPClient from "./client"
@@ -192,7 +193,7 @@ export const layer = Layer.effect(
                 spawn: async (root) => ({
                   process: lspspawn(item.command[0], item.command.slice(1), {
                     cwd: root,
-                    env: { ...process.env, ...item.env },
+                    env: { ...withoutCredentials(process.env), ...item.env },
                   }),
                   initialization: item.initialization,
                 }),
