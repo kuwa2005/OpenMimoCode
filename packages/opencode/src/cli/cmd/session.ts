@@ -86,6 +86,7 @@ export const SessionListCommand = cmd({
         type: "boolean",
       })
       .option("auto", {
+        alias: ["yolo"],
         describe: "選択したセッションを自動許可 (dangerous) で起動する。ワークスペース信頼プロンプトもスキップ",
         type: "boolean",
       })

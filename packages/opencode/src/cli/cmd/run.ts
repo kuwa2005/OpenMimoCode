@@ -291,13 +291,9 @@ export const RunCommand = cmd({
           "注入メッセージのロール (assistant はテキストをモデル出力として注入し、続行をトリガーする)",
       })
       .option("auto", {
+        alias: ["yolo"],
         type: "boolean",
         describe: "明示的に拒否されていないパーミッションを自動承認する (危険!)",
-        default: false,
-      })
-      .option("yolo", {
-        type: "boolean",
-        hidden: true,
         default: false,
       })
       .option("dangerously-skip-permissions", {
@@ -307,7 +303,7 @@ export const RunCommand = cmd({
       })
   },
   handler: async (args) => {
-    const auto = args.auto || args.yolo || args["dangerously-skip-permissions"]
+    const auto = args.auto || args["dangerously-skip-permissions"]
     let message = [...args.message, ...(args["--"] || [])]
       .map((arg) => (arg.includes(" ") ? `"${arg.replace(/"/g, '\\"')}"` : arg))
       .join(" ")

@@ -659,7 +659,7 @@ describe("Manual /rebuild: on-the-spot rebuild driven through SessionPrompt.comm
           git: true,
           init: (dir) =>
             Bun.write(
-              path.join(dir, "mimocode.json"),
+              path.join(dir, "oimo.json"),
               oimoConfig(llm.origin, { memory: { disable_write: true } }),
             ),
         })

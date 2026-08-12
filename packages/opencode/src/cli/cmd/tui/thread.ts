@@ -184,6 +184,7 @@ export const TuiThreadCommand = cmd({
         default: false,
       })
       .option("auto", {
+        alias: ["yolo"],
         type: "boolean",
         describe:
           "明示的に拒否されていないパーミッションを自動承認する (危険!)。ワークスペース信頼プロンプトもスキップする",
