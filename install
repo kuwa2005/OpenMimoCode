@@ -9,7 +9,7 @@ NC='\033[0m' # No Color
 
 usage() {
     cat <<EOF
-OpenMimoCode (oimo) Installer
+Oimo (OpenCode Mimo Code) Installer
 
 Usage: install.sh [options]
 
@@ -506,16 +506,16 @@ echo -e ""
 # Show classic (bold) logo when terminal is wide enough, thin otherwise
 term_width=$(tput cols 2>/dev/null || echo 80)
 if [ "$term_width" -ge 80 ] 2>/dev/null; then
-    echo -e "${MUTED}  ███╗   ███╗ ██╗ ███╗   ███╗  ██████╗ ${NC}   ██████╗  ██████╗  ██████╗  ███████╗"
-    echo -e "${MUTED}  ████╗ ████║ ██║ ████╗ ████║ ██╔═══██╗${NC}  ██╔════╝ ██╔═══██╗ ██╔══██╗ ██╔════╝"
-    echo -e "${MUTED}  ██╔████╔██║ ██║ ██╔████╔██║ ██║   ██║${NC}  ██║      ██║   ██║ ██║  ██║ █████╗  "
-    echo -e "${MUTED}  ██║╚██╔╝██║ ██║ ██║╚██╔╝██║ ██║   ██║${NC}  ██║      ██║   ██║ ██║  ██║ ██╔══╝  "
-    echo -e "${MUTED}  ██║ ╚═╝ ██║ ██║ ██║ ╚═╝ ██║ ╚██████╔╝${NC}  ╚██████╗ ╚██████╔╝ ██████╔╝ ███████╗"
-    echo -e "${MUTED}  ╚═╝     ╚═╝ ╚═╝ ╚═╝     ╚═╝  ╚═════╝ ${NC}   ╚═════╝  ╚═════╝  ╚═════╝  ╚══════╝"
+    echo -e "${MUTED} ██████╗ ██╗███╗   ███╗ ██████╗ ${NC}"
+    echo -e "${MUTED}██╔═══██╗██║████╗ ████║██╔═══██╗${NC}"
+    echo -e "${MUTED}██║   ██║██║██╔████╔██║██║   ██║${NC}"
+    echo -e "${MUTED}██║   ██║██║██║╚██╔╝██║██║   ██║${NC}"
+    echo -e "${MUTED}╚██████╔╝██║██║ ╚═╝ ██║╚██████╔╝${NC}"
+    echo -e "${MUTED} ╚═════╝ ╚═╝╚═╝     ╚═╝ ╚═════╝ ${NC}"
 else
-    echo -e "${MUTED}█▀▄▀█ █ █▀▄▀█ █▀▀█${NC}  █▀▀ █▀▀█ █▀▀▄ █▀▀▀"
-    echo -e "${MUTED}█ ▀ █ █ █ ▀ █ █  █${NC}  █   █  █ █  █ █▀▀ "
-    echo -e "${MUTED}▀   ▀ ▀ ▀   ▀ ▀▀▀▀${NC}  ▀▀▀ ▀▀▀▀ ▀▀▀  ▀▀▀▀"
+    echo -e "${MUTED}█▀▀█ █ █▀▄▀█ █▀▀█${NC}"
+    echo -e "${MUTED}█  █ █ █ ▀ █ █  █${NC}"
+    echo -e "${MUTED}▀▀▀▀ ▀ ▀   ▀ ▀▀▀▀${NC}"
 fi
 echo -e ""
 echo -e ""

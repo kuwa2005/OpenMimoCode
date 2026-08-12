@@ -65,6 +65,12 @@ export const Flag = {
     return process.env["MIMOCODE_TOR_PROXY"]
   },
 
+  // Set by `oimo --uuid`. Each process launch gets a fresh random installation
+  // UUID without reading or writing the persisted installation_id file.
+  get MIMOCODE_RANDOM_UUID() {
+    return truthy("MIMOCODE_RANDOM_UUID")
+  },
+
   // Path to a markdown file the TUI appends each completed user→assistant turn
   // (question + summary) to, set by the `--log` CLI flag. Getter so the CLI
   // middleware can set MIMOCODE_LOG at parse time before the TUI reads it.

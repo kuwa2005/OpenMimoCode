@@ -21,6 +21,7 @@ const fakeInput = {
 afterAll(() => {
   delete process.env.MIMOCODE_HOME
   delete process.env.MIMOCODE_TOR
+  delete process.env.MIMOCODE_RANDOM_UUID
   delete process.env.MIMOCODE_ENABLE_MIMO_FREE
   rmSync(home, { recursive: true, force: true })
 })
@@ -32,6 +33,7 @@ async function free() {
 describe("MimoFree.fingerprint", () => {
   test("rotates hourly while --tor is set", async () => {
     process.env.MIMOCODE_TOR = "1"
+    delete process.env.MIMOCODE_RANDOM_UUID
     const { MimoFree } = await free()
     const realNow = Date.now
     try {
@@ -51,8 +53,19 @@ describe("MimoFree.fingerprint", () => {
     }
   })
 
+  test("uses a fresh random id per process when --uuid is set", async () => {
+    process.env.MIMOCODE_RANDOM_UUID = "1"
+    delete process.env.MIMOCODE_TOR
+    const { MimoFree } = await free()
+    const a = MimoFree.fingerprint()
+    const b = MimoFree.fingerprint()
+    expect(a).toBe(b)
+    expect(a).toMatch(/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i)
+  })
+
   test("stays stable without --tor across hour boundaries", async () => {
     delete process.env.MIMOCODE_TOR
+    delete process.env.MIMOCODE_RANDOM_UUID
     const { MimoFree } = await free()
     const realNow = Date.now
     try {

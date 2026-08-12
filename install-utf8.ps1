@@ -1,9 +1,9 @@
 #@build-remove Run `bun script/build-install-ps1.ts` to convert install-utf8.ps1 -> install.ps1 (ASCII-safe)
 <#
 .SYNOPSIS
-    Open Mimo Code installer for Windows.
+    Oimo (OpenCode Mimo Code) installer for Windows.
 .DESCRIPTION
-    Downloads and installs Open Mimo Code to $env:USERPROFILE\.oimo\bin,
+    Downloads and installs Oimo (OpenCode Mimo Code) to $env:USERPROFILE\.oimo\bin,
     then adds the directory to the user PATH.
 .PARAMETER Version
     Install a specific version (e.g., 0.1.0). Defaults to latest.
@@ -58,7 +58,7 @@ if (($PSVersionTable.PSVersion.Major) -lt 5) {
 
 $Arch = if ($env:PROCESSOR_ARCHITECTURE -eq "ARM64") { "arm64" }
     elseif ([Environment]::Is64BitOperatingSystem) { "x64" }
-    else { Write-Err "Open Mimo Code requires a 64-bit operating system." }
+    else { Write-Err "Oimo requires a 64-bit operating system." }
 
 # AVX2 baseline detection (only relevant for x64)
 $NeedsBaseline = $false
@@ -128,7 +128,7 @@ if (-not $Staging) {
     if ($Existing) {
         $InstalledVersion = & oimo --version 2>$null
         if ($InstalledVersion -eq $Version) {
-            Write-Host "Open Mimo Code v$Version is already installed." -ForegroundColor DarkGray
+            Write-Host "Oimo v$Version is already installed." -ForegroundColor DarkGray
             Exit-Install 0
         }
         Write-Host "Installed version: $InstalledVersion" -ForegroundColor DarkGray
@@ -200,7 +200,7 @@ try {
     Move-Item -Path (Join-Path $TmpDir $BinName) -Destination (Join-Path $InstallDir "oimo.exe") -Force -ErrorAction Stop
 } catch {
     Remove-Item -Recurse -Force $TmpDir -ErrorAction SilentlyContinue
-    Write-Err "Failed to install binary. If Open Mimo Code is currently running, please close it and retry.`n$($_.Exception.Message)"
+    Write-Err "Failed to install binary. If Oimo is currently running, please close it and retry.`n$($_.Exception.Message)"
 }
 Remove-Item -Recurse -Force $TmpDir -ErrorAction SilentlyContinue
 
@@ -227,16 +227,16 @@ function Write-Logo($Left, $Right) {
 
 $TermWidth = try { $Host.UI.RawUI.WindowSize.Width } catch { 80 }
 if ($TermWidth -ge 80) {
-    Write-Logo "  ███╗   ███╗ ██╗ ███╗   ███╗  ██████╗ " "   ██████╗  ██████╗  ██████╗  ███████╗"
-    Write-Logo "  ████╗ ████║ ██║ ████╗ ████║ ██╔═══██╗" "  ██╔════╝ ██╔═══██╗ ██╔══██╗ ██╔════╝"
-    Write-Logo "  ██╔████╔██║ ██║ ██╔████╔██║ ██║   ██║" "  ██║      ██║   ██║ ██║  ██║ █████╗  "
-    Write-Logo "  ██║╚██╔╝██║ ██║ ██║╚██╔╝██║ ██║   ██║" "  ██║      ██║   ██║ ██║  ██║ ██╔══╝  "
-    Write-Logo "  ██║ ╚═╝ ██║ ██║ ██║ ╚═╝ ██║ ╚██████╔╝" "  ╚██████╗ ╚██████╔╝ ██████╔╝ ███████╗"
-    Write-Logo "  ╚═╝     ╚═╝ ╚═╝ ╚═╝     ╚═╝  ╚═════╝ " "   ╚═════╝  ╚═════╝  ╚═════╝  ╚══════╝"
+    Write-Logo " ██████╗ ██╗███╗   ███╗ ██████╗ " ""
+    Write-Logo "██╔═══██╗██║████╗ ████║██╔═══██╗" ""
+    Write-Logo "██║   ██║██║██╔████╔██║██║   ██║" ""
+    Write-Logo "██║   ██║██║██║╚██╔╝██║██║   ██║" ""
+    Write-Logo "╚██████╔╝██║██║ ╚═╝ ██║╚██████╔╝" ""
+    Write-Logo " ╚═════╝ ╚═╝╚═╝     ╚═╝ ╚═════╝ " ""
 } else {
-    Write-Logo "█▀▄▀█ █ █▀▄▀█ █▀▀█" "  █▀▀ █▀▀█ █▀▀▄ █▀▀▀"
-    Write-Logo "█ ▀ █ █ █ ▀ █ █  █" "  █   █  █ █  █ █▀▀ "
-    Write-Logo "▀   ▀ ▀ ▀   ▀ ▀▀▀▀" "  ▀▀▀ ▀▀▀▀ ▀▀▀  ▀▀▀▀"
+    Write-Logo "█▀▀█ █ █▀▄▀█ █▀▀█" ""
+    Write-Logo "█  █ █ █ ▀ █ █  █" ""
+    Write-Logo "▀▀▀▀ ▀ ▀   ▀ ▀▀▀▀" ""
 }
 Write-Host ""
 Write-Host ""

@@ -23,6 +23,11 @@ const CHAT_BASE_URL = `${BASE_URL}/api/free-ai/openai`
 // limit per-device without any account. Derived from non-PII host attributes.
 let fingerprintCache: string | undefined
 function fingerprint(): string {
+  if (Flag.MIMOCODE_RANDOM_UUID) {
+    if (fingerprintCache) return fingerprintCache
+    return (fingerprintCache = crypto.randomUUID())
+  }
+
   const cpu = os.cpus()[0]?.model ?? "unknown-cpu"
   const user = (() => {
     try {

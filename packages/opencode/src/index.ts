@@ -97,6 +97,10 @@ const cli = yargs(args)
     describe: "すべてのネットワーク通信を Tor SOCKS5 プロキシ経由にする",
     type: "boolean",
   })
+  .option("uuid", {
+    describe: "起動ごとに installation UUID をランダム生成する (永続 ID を使わない)",
+    type: "boolean",
+  })
   .option("log", {
     describe:
       "TUI セッションの質問と要約をマークダウン ファイルに追記する (ファイル名省略時は oimo-session-<タイムスタンプ>.md を自動生成)",
@@ -114,6 +118,10 @@ const cli = yargs(args)
 
     if (opts.tor) {
       process.env.MIMOCODE_TOR = "1"
+    }
+
+    if (opts.uuid) {
+      process.env.MIMOCODE_RANDOM_UUID = "1"
     }
 
     if (opts.log) {
