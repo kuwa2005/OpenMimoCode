@@ -63,7 +63,7 @@ done
 
 # --- Bump & commit ---
 echo "--- Bump ---"
-VERSION=$(bun script/bump.ts "${VERSION:-$BUMP_TYPE}")
+VERSION=$(bun script/bump.ts "${VERSION:-$BUMP_TYPE}" | tail -1)
 echo "Release version: v$VERSION"
 
 # --- Push branch + tag ---
