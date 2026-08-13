@@ -23,7 +23,7 @@ import {
   generateText,
   wrapLanguageModel,
 } from "ai"
-import { InstallationVersion } from "@/installation/version"
+import { providerRequestHeaders } from "./provider-headers"
 import type { JSONObject, JSONSchema7 } from "@ai-sdk/provider"
 import { SessionPrune } from "./prune"
 import { SessionCheckpoint } from "./checkpoint"
@@ -829,10 +829,11 @@ export const layer = Layer.effect(
           maxOutputTokens: ProviderTransform.maxOutputTokens(mdl),
           temperature: mdl.capabilities.temperature ? 0.7 : undefined,
           providerOptions: ProviderTransform.providerOptions(mdl, ProviderTransform.smallOptions(mdl)),
-          headers: {
-            ...mdl.headers,
-            "User-Agent": `oimo/${InstallationVersion}`,
-          },
+          headers: providerRequestHeaders({
+            providerID: mdl.providerID,
+            sessionID: input.sessionID,
+            extra: mdl.headers,
+          }),
           maxRetries: 1,
         }),
       ).pipe(

@@ -4,7 +4,7 @@ import { CreateMessageRequestSchema, ErrorCode, McpError } from "@modelcontextpr
 import { Config } from "@/config"
 import { Permission } from "@/permission"
 import { Provider, ProviderTransform, ModelCapability } from "@/provider"
-import { InstallationVersion } from "@/installation/version"
+import { providerRequestHeaders } from "@/session/provider-headers"
 import { Log } from "@/util"
 import type { SessionID } from "@/session/schema"
 
@@ -748,7 +748,11 @@ export const handle = Effect.fn("MCP.sampling.handle")(function* (input: HandleI
         temperature: model.capabilities.temperature ? input.params.temperature : undefined,
         stopSequences: input.params.stopSequences ? [...input.params.stopSequences] : undefined,
         providerOptions: ProviderTransform.providerOptions(model, {}),
-        headers: { ...model.headers, "User-Agent": `oimo/${InstallationVersion}` },
+        headers: providerRequestHeaders({
+          providerID: model.providerID,
+          sessionID: input.sessionID,
+          extra: model.headers,
+        }),
         abortSignal: providerSignal,
         maxRetries: 1,
         // `streamText` reports provider failures as an `error` PART rather than by

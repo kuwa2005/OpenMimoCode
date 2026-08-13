@@ -23,8 +23,7 @@ import * as Session from "@/session/session"
 import { migrateProjectMemory } from "./checkpoint-paths"
 import { ProjectID } from "@/project/schema"
 import { Auth } from "@/auth"
-import { Installation } from "@/installation"
-import { InstallationVersion } from "@/installation/version"
+import { providerRequestHeaders } from "./provider-headers"
 import { EffectBridge } from "@/effect"
 import { Global } from "@/global"
 import * as Option from "effect/Option"
@@ -734,13 +733,20 @@ const live: Layer.Layer<
         toolChoice: input.toolChoice,
         maxOutputTokens: params.maxOutputTokens,
         abortSignal: input.abort,
-        headers: {
-          "x-session-affinity": input.sessionID,
-          ...(input.parentSessionID ? { "x-parent-session-id": input.parentSessionID } : {}),
-          ...input.model.headers,
-          ...headers,
-          "User-Agent": `oimo/${InstallationVersion}`,
-        },
+        headers: providerRequestHeaders({
+          providerID: input.model.providerID,
+          sessionID: input.sessionID,
+          requestID: input.user.id,
+          parentSessionID: input.parentSessionID,
+          projectID: (() => {
+            try {
+              return Instance.current?.project?.id
+            } catch {
+              return undefined
+            }
+          })(),
+          extra: { ...input.model.headers, ...headers },
+        }),
         // AI SDK's internal retry loop is SILENT — it emits no events and does
         // not update session status, so the TUI shows only a dead spinner while
         // it runs. Its backoff is also UNCAPPED (delay *= 2 each attempt, capped
