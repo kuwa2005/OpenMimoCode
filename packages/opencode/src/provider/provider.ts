@@ -901,9 +901,10 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         )
       }
 
-      // Use official ai-gateway-provider package (v2.x for AI SDK v5 compatibility)
       const { createAiGateway } = yield* Effect.promise(() => import("ai-gateway-provider"))
       const { createUnified } = yield* Effect.promise(() => import("ai-gateway-provider/providers/unified"))
+      const { createOpenAI } = yield* Effect.promise(() => import("ai-gateway-provider/providers/openai"))
+      const { createAnthropic } = yield* Effect.promise(() => import("ai-gateway-provider/providers/anthropic"))
 
       const metadata = iife(() => {
         if (input.options?.metadata) return input.options.metadata
@@ -930,12 +931,29 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         apiKey: apiToken,
         ...(Object.values(opts).some((v) => v !== undefined) ? { options: opts } : {}),
       })
+<<<<<<< HEAD
       const unified = createUnified()
 
+=======
+>>>>>>> cba6b5f2f7 (feat(opencode): native OpenAI and Anthropic passthroughs for Cloudflare AI Gateway (#42634))
       return {
         autoload: true,
         async getModel(_sdk: any, modelID: string, _options?: Record<string, any>) {
-          // Model IDs use Unified API format: provider/model (e.g., "anthropic/claude-sonnet-4-5")
+          // Model IDs use Unified API format: provider/model (e.g., "anthropic/claude-sonnet-4-5").
+          // OpenAI and Anthropic ride their native passthrough routes so agents get the Responses
+          // and Messages APIs; new OpenAI models reject tools+reasoning_effort on chat completions.
+          // The passthrough wrappers inject a CF_TEMP_TOKEN sentinel that the gateway strips before
+          // dispatch, so upstream billing stays on the gateway (Unified Billing / stored BYOK).
+          if (modelID.startsWith("openai/")) return aigateway(createOpenAI()(modelID.slice("openai/".length)))
+          if (modelID.startsWith("anthropic/"))
+            return aigateway(createAnthropic()(modelID.slice("anthropic/".length)))
+          // Workers AI is the only first-party provider whose upstream is Cloudflare itself, so it is
+          // the only one that should receive the Cloudflare token as its upstream Authorization header.
+          // The Unified API addresses Workers AI both with the explicit "workers-ai/" prefix and as
+          // bare "@cf/..." ids. Third-party providers must not receive the token; they rely on the
+          // gateway's stored/BYOK keys instead.
+          const isWorkersAi = modelID.startsWith("workers-ai/") || modelID.startsWith("@cf/")
+          const unified = createUnified(isWorkersAi ? { apiKey: apiToken } : {})
           return aigateway(unified(modelID))
         },
         options: {},
@@ -1128,6 +1146,17 @@ function cost(c: ModelsDev.Model["cost"]): Model["cost"] {
   return result
 }
 
+// Cloudflare AI Gateway routes OpenAI and Anthropic models through their native
+// passthrough SDKs (Responses / Messages APIs). Resolving the native npm before
+// variants are computed makes reasoning variants produce payloads the native
+// SDKs understand (e.g. anthropic `effort` instead of compat `reasoningEffort`).
+function cloudflareGatewayNpm(providerID: string, modelID: string) {
+  if (providerID !== "cloudflare-ai-gateway") return undefined
+  if (modelID.startsWith("openai/")) return "@ai-sdk/openai"
+  if (modelID.startsWith("anthropic/")) return "@ai-sdk/anthropic"
+  return undefined
+}
+
 function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model): Model {
   const base: Model = {
     id: ModelID.make(model.id),
@@ -1137,7 +1166,11 @@ function fromModelsDevModel(provider: ModelsDev.Provider, model: ModelsDev.Model
     api: {
       id: model.id,
       url: model.provider?.api ?? provider.api ?? "",
-      npm: model.provider?.npm ?? provider.npm ?? "@ai-sdk/openai-compatible",
+      npm:
+        cloudflareGatewayNpm(provider.id, model.id) ??
+        model.provider?.npm ??
+        provider.npm ??
+        "@ai-sdk/openai-compatible",
     },
     status: model.status ?? "active",
     headers: {},
@@ -1301,6 +1334,9 @@ const layer: Layer.Layer<
               model.provider?.npm ??
               provider.npm ??
               existingModel?.api.npm ??
+              // Config-defined gateway models bypass fromModelsDevModel, so resolve the
+              // native passthrough npm here before falling back to the catalog default.
+              cloudflareGatewayNpm(providerID, apiID) ??
               modelsDev[providerID]?.npm ??
               "@ai-sdk/openai-compatible"
             const name = iife(() => {
@@ -1535,6 +1571,7 @@ const layer: Layer.Layer<
 
           for (const [modelID, model] of Object.entries(provider.models)) {
             model.api.id = model.api.id ?? model.id ?? modelID
+
             if (
               modelID === "gpt-5-chat-latest" ||
               (providerID === ProviderID.openrouter && modelID === "openai/gpt-5-chat")
