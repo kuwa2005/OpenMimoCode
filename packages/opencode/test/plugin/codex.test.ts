@@ -4,6 +4,7 @@ import {
   parseJwtClaims,
   extractAccountIdFromClaims,
   extractAccountId,
+  extractResidency,
   type IdTokenClaims,
 } from "../../src/plugin/codex"
 import type { PluginInput } from "@mimo-ai/plugin"
@@ -200,5 +201,105 @@ describe("plugin.codex", () => {
         }),
       ).toBe("acc-123")
     })
+  })
+
+  describe("extractResidency", () => {
+    test("extracts compute residency from the namespaced auth claims", () => {
+      expect(
+        extractResidency(
+          createTestJwt({
+            "https://api.openai.com/auth": { chatgpt_compute_residency: "eu" },
+          }),
+        ),
+      ).toBe("eu")
+    })
+
+    test("falls back to a root compute residency claim", () => {
+      expect(extractResidency(createTestJwt({ chatgpt_compute_residency: "us" }))).toBe("us")
+    })
+
+    test("supports compute residency values without maintaining a region list", () => {
+      expect(
+        extractResidency(
+          createTestJwt({
+            "https://api.openai.com/auth": { chatgpt_compute_residency: "ae" },
+          }),
+        ),
+      ).toBe("ae")
+      expect(
+        extractResidency(
+          createTestJwt({
+            "https://api.openai.com/auth": { chatgpt_compute_residency: "future-region_1" },
+          }),
+        ),
+      ).toBe("future-region_1")
+    })
+
+    test("ignores unconstrained and data residency values", () => {
+      expect(
+        extractResidency(
+          createTestJwt({
+            "https://api.openai.com/auth": { chatgpt_compute_residency: "no_constraint" },
+          }),
+        ),
+      ).toBeUndefined()
+      expect(
+        extractResidency(
+          createTestJwt({
+            "https://api.openai.com/auth": { chatgpt_data_residency: "gb" },
+          }),
+        ),
+      ).toBeUndefined()
+      expect(extractResidency(createTestJwt({ chatgpt_compute_residency: "" }))).toBeUndefined()
+      expect(extractResidency("not-a-jwt")).toBeUndefined()
+    })
+
+    test("prefers a namespaced unconstrained value over a root residency", () => {
+      expect(
+        extractResidency(
+          createTestJwt({
+            chatgpt_compute_residency: "eu",
+            "https://api.openai.com/auth": { chatgpt_compute_residency: "no_constraint" },
+          }),
+        ),
+      ).toBeUndefined()
+    })
+  })
+
+  test("sends token residency only to the ChatGPT Codex backend", async () => {
+    const requests: Array<{ path: string; residency: string | null }> = []
+    using server = Bun.serve({
+      port: 0,
+      fetch(request) {
+        requests.push({
+          path: new URL(request.url).pathname,
+          residency: request.headers.get("x-openai-internal-codex-residency"),
+        })
+        return new Response("{}")
+      },
+    })
+    const hooks = await CodexAuthPlugin(fakeInput, {
+      codexApiEndpoint: new URL("/backend-api/codex/responses", server.url).toString(),
+    })
+    const loaded = await hooks.auth!.loader!(
+      async () =>
+        ({
+          type: "oauth",
+          refresh: "refresh",
+          access: createTestJwt({
+            "https://api.openai.com/auth": { chatgpt_compute_residency: "eu" },
+          }),
+          expires: Date.now() + 60_000,
+        }) as never,
+      { models: {} } as never,
+    )
+
+    await loaded.fetch!("https://api.openai.com/v1/responses")
+    await loaded.fetch!(new URL("/other", server.url))
+
+    expect(requests).toEqual([
+      { path: "/backend-api/codex/responses", residency: "eu" },
+      { path: "/other", residency: null },
+    ])
   })
 })
