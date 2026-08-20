@@ -931,11 +931,6 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         apiKey: apiToken,
         ...(Object.values(opts).some((v) => v !== undefined) ? { options: opts } : {}),
       })
-<<<<<<< HEAD
-      const unified = createUnified()
-
-=======
->>>>>>> cba6b5f2f7 (feat(opencode): native OpenAI and Anthropic passthroughs for Cloudflare AI Gateway (#42634))
       return {
         autoload: true,
         async getModel(_sdk: any, modelID: string, _options?: Record<string, any>) {

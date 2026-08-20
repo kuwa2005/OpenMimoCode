@@ -1,4 +1,4 @@
-import { describe, expect, test } from "bun:test"
+import { describe, expect, mock, test } from "bun:test"
 import {
   accessTokenIsExpiring,
   pollDeviceCodeToken,
@@ -149,7 +149,7 @@ describe("plugin.xai", () => {
       ])
       for (const headers of captured) {
         expect(headers.get("authorization")).toBe("Bearer tok")
-        expect(headers.get("user-agent")).toMatch(/^opencode\//)
+        expect(headers.get("user-agent")).toMatch(/^oimo\//)
       }
     })
 
@@ -369,11 +369,19 @@ describe("plugin.xai", () => {
 
     test("network failure during refresh surfaces the underlying fetch error", async () => {
       const { input } = makeInput()
-      const opts = await (
-        await XaiAuthPlugin(input, { tokenUrl: "http://127.0.0.1:9/oauth2/token" })
-      ).auth!.loader!(async () => ({ type: "oauth", access: "old", refresh: "rt", expires: 0 }), {} as any)
+      const originalFetch = globalThis.fetch
+      globalThis.fetch = mock(() => Promise.reject(new Error("network down"))) as unknown as typeof fetch
+      try {
+        const opts = await (
+          await XaiAuthPlugin(input, { tokenUrl: "http://127.0.0.1:9/oauth2/token" })
+        ).auth!.loader!(async () => ({ type: "oauth", access: "old", refresh: "rt", expires: 0 }), {} as any)
 
-      await expect(opts.fetch!("https://api.x.ai/v1/chat/completions", { headers: {} })).rejects.toThrow()
+        await expect(opts.fetch!("https://api.x.ai/v1/chat/completions", { headers: {} })).rejects.toThrow(
+          "network down",
+        )
+      } finally {
+        globalThis.fetch = originalFetch
+      }
     })
   })
 
@@ -435,7 +443,7 @@ describe("plugin.xai", () => {
         expect(request.method).toBe("POST")
         expect(request.headers.get("content-type")).toBe("application/x-www-form-urlencoded")
         expect(request.headers.get("accept")).toBe("application/json")
-        expect(request.headers.get("user-agent")).toMatch(/^opencode\//)
+        expect(request.headers.get("user-agent")).toMatch(/^oimo\//)
         capturedBody = await request.text()
         return Response.json({ device_code: "DC", user_code: "UC", verification_uri: "https://x.ai/device" })
       })
