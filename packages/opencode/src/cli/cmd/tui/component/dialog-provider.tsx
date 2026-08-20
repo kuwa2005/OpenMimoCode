@@ -28,7 +28,9 @@ export function createDialogProviderOptions() {
       sortBy((x) => PROVIDER_PRIORITY[x.id] ?? 99),
       map((provider) => {
         const consoleManaged = isConsoleManagedProvider(sync.data.console_state.consoleManagedProviders, provider.id)
-        const connected = sync.data.provider_next.connected.includes(provider.id)
+        const connected =
+          sync.data.provider_next.connected.includes(provider.id) ||
+          sync.data.provider_next.authenticated.includes(provider.id)
 
         return {
           title: provider.name,
