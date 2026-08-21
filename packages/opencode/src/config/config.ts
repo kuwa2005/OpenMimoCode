@@ -168,6 +168,17 @@ const InfoSchema = Schema.Struct({
     description:
       "Named model groups (capability tiers, e.g. ultra/standard/lite). Each group has a default model and optional member models. A group name can be used anywhere a provider/model string is accepted.",
   }),
+  auto_free: Schema.optional(
+    Schema.Struct({
+      fallbacks: Schema.optional(Schema.mutable(Schema.Array(ConfigModelID))).annotate({
+        description:
+          "Ordered free provider/model refs for auto/free failover. When set, replaces the bundled FCC-synced catalog.",
+      }),
+    }),
+  ).annotate({
+    description:
+      "Auto (free) router settings. See docs/auto-free-fcc-sync.md. Future auto/paid and auto/hybrid: docs/auto-mode-roadmap.md",
+  }),
   default_agent: Schema.optional(Schema.String).annotate({
     description:
       "Default agent to use when none is specified. Must be a primary agent. Falls back to 'build' if not set or if the specified agent is invalid.",

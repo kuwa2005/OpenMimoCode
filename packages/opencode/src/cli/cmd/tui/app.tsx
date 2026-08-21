@@ -22,6 +22,7 @@ import { isSystemSession } from "@/session/auto-dream"
 import semver from "semver"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
 import { DialogMimoLogin } from "@tui/component/dialog-mimo-login"
+import { DialogAutoFreeSetup } from "@tui/component/dialog-auto-free-setup"
 import { ErrorComponent } from "@tui/component/error-component"
 import { PluginRouteMissing } from "@tui/component/plugin-route-missing"
 import { ProjectProvider } from "@tui/context/project"
@@ -849,6 +850,17 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       },
       onSelect: () => {
         dialog.replace(() => <DialogMimoLogin />)
+      },
+      category: "provider",
+    },
+    {
+      title: t("tui.command.provider.auto_free_setup.title"),
+      value: "provider.auto_free_setup",
+      slash: {
+        name: "free-setup",
+      },
+      onSelect: () => {
+        dialog.replace(() => <DialogAutoFreeSetup />)
       },
       category: "provider",
     },

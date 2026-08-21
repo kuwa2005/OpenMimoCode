@@ -46,46 +46,80 @@ export namespace ProviderTest {
   export function fake(override: Partial<Provider.Interface> & { model?: Provider.Model; info?: Provider.Info } = {}) {
     const mdl = override.model ?? model()
     const row = override.info ?? info({}, mdl)
+    const {
+      model: _model,
+      info: _info,
+      list,
+      getProvider,
+      getModel,
+      resolveModelRef,
+      getLanguage,
+      closest,
+      getSmallModel,
+      getVisionModel,
+      defaultModel,
+      resolveAutoFree,
+    } = override
     return {
       model: mdl,
       info: row,
       layer: Layer.succeed(
         Provider.Service,
         Provider.Service.of({
-          list: Effect.fn("TestProvider.list")(() => Effect.succeed({ [row.id]: row })),
-          getProvider: Effect.fn("TestProvider.getProvider")((providerID) => {
-            if (providerID === row.id) return Effect.succeed(row)
-            return Effect.die(new Error(`Unknown test provider: ${providerID}`))
-          }),
-          getModel: Effect.fn("TestProvider.getModel")((providerID, modelID) => {
-            if (providerID === row.id && modelID === mdl.id) return Effect.succeed(mdl)
-            return Effect.die(new Error(`Unknown test model: ${providerID}/${modelID}`))
-          }),
-          resolveModelRef: Effect.fn("TestProvider.resolveModelRef")((ref) => {
-            if (ref.includes("/")) {
-              const [providerID, ...rest] = ref.split("/")
-              const modelID = rest.join("/")
+          list:
+            list ??
+            Effect.fn("TestProvider.list")(() => Effect.succeed({ [row.id]: row })),
+          getProvider:
+            getProvider ??
+            Effect.fn("TestProvider.getProvider")((providerID) => {
+              if (providerID === row.id) return Effect.succeed(row)
+              return Effect.die(new Error(`Unknown test provider: ${providerID}`))
+            }),
+          getModel:
+            getModel ??
+            Effect.fn("TestProvider.getModel")((providerID, modelID) => {
               if (providerID === row.id && modelID === mdl.id) return Effect.succeed(mdl)
-              return Effect.die(new Error(`Unknown test model: ${ref}`))
-            }
-            return Effect.succeed(mdl)
-          }),
-          getLanguage: Effect.fn("TestProvider.getLanguage")(() =>
-            Effect.die(new Error("ProviderTest.getLanguage not configured")),
-          ),
-          closest: Effect.fn("TestProvider.closest")((providerID) =>
-            Effect.succeed(providerID === row.id ? { providerID: row.id, modelID: mdl.id } : undefined),
-          ),
-          getSmallModel: Effect.fn("TestProvider.getSmallModel")((providerID) =>
-            Effect.succeed(providerID === row.id ? mdl : undefined),
-          ),
-          getVisionModel: Effect.fn("TestProvider.getVisionModel")(() =>
-            Effect.succeed(mdl.capabilities.input.image ? mdl : undefined),
-          ),
-          defaultModel: Effect.fn("TestProvider.defaultModel")(() =>
-            Effect.succeed({ providerID: row.id, modelID: mdl.id }),
-          ),
-          ...override,
+              return Effect.die(new Error(`Unknown test model: ${providerID}/${modelID}`))
+            }),
+          resolveModelRef:
+            resolveModelRef ??
+            Effect.fn("TestProvider.resolveModelRef")((ref) => {
+              if (ref.includes("/")) {
+                const [providerID, ...rest] = ref.split("/")
+                const modelID = rest.join("/")
+                if (providerID === row.id && modelID === mdl.id) return Effect.succeed(mdl)
+                return Effect.die(new Error(`Unknown test model: ${ref}`))
+              }
+              return Effect.succeed(mdl)
+            }),
+          getLanguage:
+            getLanguage ??
+            Effect.fn("TestProvider.getLanguage")(() =>
+              Effect.die(new Error("ProviderTest.getLanguage not configured")),
+            ),
+          closest:
+            closest ??
+            Effect.fn("TestProvider.closest")((providerID) =>
+              Effect.succeed(providerID === row.id ? { providerID: row.id, modelID: mdl.id } : undefined),
+            ),
+          getSmallModel:
+            getSmallModel ??
+            Effect.fn("TestProvider.getSmallModel")((providerID) =>
+              Effect.succeed(providerID === row.id ? mdl : undefined),
+            ),
+          getVisionModel:
+            getVisionModel ??
+            Effect.fn("TestProvider.getVisionModel")(() =>
+              Effect.succeed(mdl.capabilities.input.image ? mdl : undefined),
+            ),
+          defaultModel:
+            defaultModel ??
+            Effect.fn("TestProvider.defaultModel")(() =>
+              Effect.succeed({ providerID: row.id, modelID: mdl.id }),
+            ),
+          resolveAutoFree:
+            resolveAutoFree ??
+            Effect.fn("TestProvider.resolveAutoFree")(() => Effect.succeed([mdl])),
         }),
       ),
     }

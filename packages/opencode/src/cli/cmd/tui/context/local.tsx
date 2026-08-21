@@ -213,10 +213,13 @@ export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
         })
         if (initial || !modelStore.ready) return initial
 
-        // No args/recent/config match: prefer the free OpenCode Zen default
-        // (opencode/big-pickle) so a clean install defaults to a usable free
-        // model rather than whatever provider happens to sit first (e.g. paid
-        // xiaomi/ultraspeed). Xiaomi's mimo channel is never chosen implicitly.
+        // No args/recent/config match: prefer Auto (free) so a clean install
+        // gets ordered free-model failover. Falls back to opencode/big-pickle
+        // if the virtual auto provider is missing. Xiaomi mimo is never implicit.
+        const auto = sync.data.provider.find((p) => p.id === "auto")
+        if (auto && "free" in auto.models) {
+          return { providerID: "auto", modelID: "free" }
+        }
         const opencode = sync.data.provider.find((p) => p.id === "opencode")
         if (opencode && "big-pickle" in opencode.models) {
           return { providerID: "opencode", modelID: "big-pickle" }

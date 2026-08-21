@@ -4,6 +4,7 @@ import { useSync } from "@tui/context/sync"
 import { map, pipe, flatMap, entries, filter, sortBy, take } from "remeda"
 import { DialogSelect } from "@tui/ui/dialog-select"
 import { useDialog, type DialogContext } from "@tui/ui/dialog"
+import { DialogAutoFreeSetup } from "./dialog-auto-free-setup"
 import { createDialogProviderOptions } from "./dialog-provider"
 import { DialogMimoLogin } from "./dialog-mimo-login"
 import { DialogVariant } from "./dialog-variant"
@@ -90,15 +91,46 @@ export function DialogModel(props: { providerID?: string }) {
       "Recent",
     )
 
-    // mimo-free and xiaomi provider pinned at top (after favorites/recents)
+    // Auto (free) + mimo/xiaomi pinned at top (after favorites/recents)
+    const autoProvider = sync.data.provider.find((p) => p.id === "auto")
     const mimoProvider = sync.data.provider.find((p) => p.id === "mimo")
     const xiaomiProvider = sync.data.provider.find((p) => p.id === "xiaomi")
     const pinnedCategory = xiaomiProvider?.name ?? "MiMo"
-    // Show pinned section when not scoped to a specific provider
+    // Auto is always pin-worthy (zero-config free router). MiMo pins when connected.
+    const showAutoPin = !props.providerID
     const showPinned = connected() && !props.providerID
+
+    const autoPinned =
+      showAutoPin && autoProvider && "free" in autoProvider.models && (!showSections || !inShortcuts("auto", "free"))
+        ? [
+            {
+              value: { providerID: "auto", modelID: "free" },
+              title: autoProvider.models["free"]?.name ?? "Auto (無料)",
+              description: "無料モデルを自動切替",
+              category: "Auto",
+              disabled: false,
+              footer: "Free" as "Free" | undefined,
+              onSelect() {
+                onSelect("auto", "free")
+              },
+            },
+            {
+              value: { providerID: "auto", modelID: "__setup_free__" },
+              title: t("tui.dialog.model.auto_free_setup"),
+              description: t("tui.dialog.model.auto_free_setup_desc"),
+              category: "Auto",
+              disabled: false,
+              footer: undefined as "Free" | undefined,
+              onSelect() {
+                dialog.replace(() => <DialogAutoFreeSetup />)
+              },
+            },
+          ]
+        : []
 
     const pinnedOptions = showPinned
       ? [
+          ...autoPinned,
           // mimo-free model
           ...(mimoProvider && "mimo-auto" in mimoProvider.models && mimoProvider.models["mimo-auto"].status !== "deprecated" && (!showSections || !inShortcuts("mimo", "mimo-auto"))
             ? [
@@ -154,12 +186,16 @@ export function DialogModel(props: { providerID?: string }) {
               ]
             : []),
         ]
-      : []
+      : autoPinned
 
     const providerOptions = pipe(
       sync.data.provider,
-      // Exclude xiaomi/mimo from regular list only when pinned section is shown
-      filter((provider) => !showPinned || (provider.id !== "xiaomi" && provider.id !== "mimo")),
+      // Exclude pinned providers from regular list when those sections are shown
+      filter(
+        (provider) =>
+          !(showAutoPin && provider.id === "auto") &&
+          !(showPinned && (provider.id === "xiaomi" || provider.id === "mimo")),
+      ),
       sortBy(
         (provider) => provider.id !== "opencode",
         (provider) => PROVIDER_PRIORITY[provider.id] ?? 99,
@@ -279,7 +315,7 @@ export function DialogModel(props: { providerID?: string }) {
           disabled: !connected(),
           onTrigger: (option) => {
             const v = option.value as { providerID: string; modelID: string }
-            if (v.modelID === ADD_MODEL_SENTINEL) return
+            if (v.modelID === ADD_MODEL_SENTINEL || v.modelID === "__setup_free__") return
             local.model.toggleFavorite(v)
           },
         },

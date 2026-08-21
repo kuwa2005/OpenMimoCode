@@ -1,0 +1,38 @@
+{
+  "version": 1,
+  "tier": "free",
+  "source": "fcc:/home/ubuntu/workspace/free-claude-code",
+  "updated_at": "2026-08-21",
+  "candidates": [
+    {
+      "ref": "opencode/big-pickle",
+      "tier": "free",
+      "note": "OpenCode Zen free pool; zero-config default"
+    },
+    {
+      "ref": "nvidia/nvidia/nemotron-3-super-120b-a12b",
+      "tier": "free",
+      "note": "FCC PROVIDER_SMOKE_DEFAULT_MODELS nvidia_nim"
+    },
+    {
+      "ref": "openrouter/nvidia/nemotron-3-super-120b-a12b:free",
+      "tier": "free",
+      "note": "FCC OPENROUTER_FREE_CLI_DEFAULT_MODELS"
+    },
+    {
+      "ref": "openrouter/openai/gpt-oss-120b:free",
+      "tier": "free",
+      "note": "FCC OPENROUTER_FREE_CLI_DEFAULT_MODELS"
+    },
+    {
+      "ref": "openrouter/poolside/laguna-m.1:free",
+      "tier": "free",
+      "note": "FCC OPENROUTER_FREE_CLI_DEFAULT_MODELS"
+    },
+    {
+      "ref": "groq/llama-3.3-70b-versatile",
+      "tier": "free",
+      "note": "FCC PROVIDER_SMOKE_DEFAULT_MODELS groq"
+    }
+  ]
+}

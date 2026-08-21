@@ -1,4 +1,4 @@
-import { Cause, Deferred, Effect, Layer, Context, Scope } from "effect"
+import { Cause, Deferred, Effect, Exit, Layer, Context, Scope } from "effect"
 import * as Stream from "effect/Stream"
 import { Agent } from "@/agent/agent"
 import { SYSTEM_SPAWNED_AGENT_TYPES } from "@/agent/config"
@@ -18,6 +18,8 @@ import { SessionRetry } from "./retry"
 import { SessionStatus } from "./status"
 import { SessionSummary } from "./summary"
 import type { Provider } from "@/provider"
+import { Provider as ProviderNS } from "@/provider"
+import { isAutoFreeModel, isCommitStreamEvent } from "@/provider/auto-free"
 import { Question } from "@/question"
 import { errorMessage } from "@/util/error"
 import { isRecoverableError } from "@/tool/recoverable"
@@ -200,6 +202,7 @@ export const layer: Layer.Layer<
   | Plugin.Service
   | SessionSummary.Service
   | SessionStatus.Service
+  | ProviderNS.Service
 > = Layer.effect(
   Service,
   Effect.gen(function* () {
@@ -214,6 +217,7 @@ export const layer: Layer.Layer<
     const summary = yield* SessionSummary.Service
     const scope = yield* Scope.Scope
     const status = yield* SessionStatus.Service
+    const provider = yield* ProviderNS.Service
 
     const create = Effect.fn("SessionProcessor.create")(function* (input: Input) {
       // Pre-capture snapshot before the LLM stream starts. The AI SDK
@@ -790,18 +794,34 @@ export const layer: Layer.Layer<
         ctx.needsOverflowHandling = false
         ctx.shouldBreak = (yield* config.get()).experimental?.continue_loop_on_deny !== true
 
-        return yield* Effect.gen(function* () {
-          yield* Effect.gen(function* () {
+        const clearStepParts = Effect.gen(function* () {
+          for (const partId of ctx.stepPartIds) {
+            yield* session.removePart({
+              sessionID: ctx.sessionID,
+              messageID: ctx.assistantMessage.id,
+              partID: partId,
+            })
+          }
+          ctx.stepPartIds = []
+        })
+
+        const drain = (model: Provider.Model, opts: { withSessionRetry: boolean; onCommit?: () => void; catchHalt: boolean }) => {
+          const body = Effect.gen(function* () {
             ctx.currentText = undefined
             ctx.reasoningMap = {}
             ctx.stepPartIds = []
             ctx.toolcalls = {}
             ctx.textNgramRepeat = false
             ctx.textNgramMonitor = createTextNgramMonitor()
-            const stream = llm.stream(streamInput)
+            ctx.model = model
+            const stream = llm.stream({ ...streamInput, model })
 
             yield* stream.pipe(
-              Stream.tap((event) => handleEvent(event)),
+              Stream.tap((event) =>
+                Effect.sync(() => {
+                  if (opts.onCommit && isCommitStreamEvent(event as { type: string; text?: string })) opts.onCommit()
+                }).pipe(Effect.andThen(handleEvent(event))),
+              ),
               Stream.takeUntil(() => ctx.needsOverflowHandling || ctx.textNgramRepeat || ctx.blocked),
               Stream.runDrain,
             )
@@ -818,41 +838,103 @@ export const layer: Layer.Layer<
               (cause) => !Cause.hasInterruptsOnly(cause),
               (cause) => Effect.fail(Cause.squash(cause)),
             ),
-            Effect.tapError(() =>
-              Effect.gen(function* () {
-                for (const partId of ctx.stepPartIds) {
-                  yield* session.removePart({
-                    sessionID: ctx.sessionID,
-                    messageID: ctx.assistantMessage.id,
-                    partID: partId,
-                  })
-                }
-                ctx.stepPartIds = []
-              }),
-            ),
-            Effect.retry(
-              SessionRetry.policy({
-                parse,
-                set: (info) =>
-                  isMain
-                    ? status.set(ctx.sessionID, {
-                        type: "retry",
-                        attempt: info.attempt,
-                        message: info.message,
-                        next: info.next,
-                      })
-                    : Effect.void,
-              }),
-            ),
-            Effect.catch(halt),
-            Effect.ensuring(cleanup()),
+            Effect.tapError(() => clearStepParts),
           )
 
-          if (ctx.needsOverflowHandling) return "overflow"
-          if (ctx.textNgramRepeat) return "text-repeat"
-          if (ctx.blocked || ctx.assistantMessage.error) return "stop"
-          return "continue"
-        })
+          const retried = opts.withSessionRetry
+            ? body.pipe(
+                Effect.retry(
+                  SessionRetry.policy({
+                    parse,
+                    set: (info) =>
+                      isMain
+                        ? status.set(ctx.sessionID, {
+                            type: "retry",
+                            attempt: info.attempt,
+                            message: info.message,
+                            next: info.next,
+                          })
+                        : Effect.void,
+                  }),
+                ),
+              )
+            : body
+
+          const finished = retried.pipe(Effect.ensuring(cleanup()))
+          return opts.catchHalt ? finished.pipe(Effect.catch(halt)) : finished
+        }
+
+        return yield* Effect.gen(function* () {
+          if (!isAutoFreeModel(streamInput.model)) {
+            yield* drain(streamInput.model, { withSessionRetry: true, catchHalt: true })
+          } else {
+            const candidates = yield* provider.resolveAutoFree()
+            if (candidates.length === 0) {
+              throw new Error(
+                "Auto (無料): 利用可能な無料モデルがありません。OpenCode Zen または無料 API キーを設定してください。",
+              )
+            }
+            slog.info("auto-free candidates", {
+              count: candidates.length,
+              refs: candidates.map((m) => `${m.providerID}/${m.id}`),
+            })
+
+            let lastError: unknown
+            let succeeded = false
+            for (let index = 0; index < candidates.length; index++) {
+              const candidate = candidates[index]!
+              let committed = false
+              const exit = yield* drain(candidate, {
+                withSessionRetry: false,
+                catchHalt: false,
+                onCommit: () => {
+                  committed = true
+                },
+              }).pipe(Effect.exit)
+
+              if (Exit.isSuccess(exit)) {
+                succeeded = true
+                break
+              }
+
+              lastError = Cause.squash(exit.cause)
+              const hasNext = index + 1 < candidates.length
+              const retryable = SessionRetry.isRetryableTransientError(lastError)
+              if (committed || !retryable || !hasNext) break
+
+              const next = candidates[index + 1]!
+              slog.info("auto-free failover", {
+                from: `${candidate.providerID}/${candidate.id}`,
+                to: `${next.providerID}/${next.id}`,
+                reason: "retryable-pre-commit",
+              })
+              if (isMain) {
+                yield* status.set(ctx.sessionID, {
+                  type: "retry",
+                  attempt: index + 1,
+                  message: `Switching free model → ${next.providerID}/${next.id}`,
+                  next: Date.now(),
+                })
+              }
+            }
+
+            if (!succeeded && lastError !== undefined) {
+              yield* halt(lastError)
+            }
+          }
+
+          if (ctx.needsOverflowHandling) return "overflow" as const
+          if (ctx.textNgramRepeat) return "text-repeat" as const
+          if (ctx.blocked || ctx.assistantMessage.error) return "stop" as const
+          return "continue" as const
+        }).pipe(
+          Effect.catchCause((cause) =>
+            Effect.gen(function* () {
+              yield* halt(Cause.squash(cause))
+              return "stop" as const
+            }),
+          ),
+        )
       })
 
       const replay = Effect.fn("SessionProcessor.replay")(function* (input: ReplayInput) {
@@ -1078,6 +1160,7 @@ export const defaultLayer = Layer.suspend(() =>
     Layer.provide(SessionStatus.defaultLayer),
     Layer.provide(Bus.layer),
     Layer.provide(Config.defaultLayer),
+    Layer.provide(ProviderNS.defaultLayer),
   ),
 )
 

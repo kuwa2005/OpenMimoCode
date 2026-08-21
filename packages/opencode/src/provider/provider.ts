@@ -27,6 +27,13 @@ import { AppFileSystem } from "@mimo-ai/shared/filesystem"
 import { isRecord } from "@/util/record"
 import { withStatics } from "@/util/schema"
 import { isFreeApiModel, isFreeApiSunset } from "@/util/free-api-sunset"
+import {
+  AUTO_PROVIDER_ID,
+  AUTO_FREE_MODEL_ID,
+  autoFreeProviderInfo,
+  isAutoFreeModel,
+  resolveAutoFreeCandidates,
+} from "./auto-free"
 
 import * as ProviderTransform from "./transform"
 import { ModelID, ProviderID } from "./schema"
@@ -1098,6 +1105,7 @@ export interface Interface {
   readonly getVisionModel: () => Effect.Effect<Model | undefined>
   readonly resolveModelRef: (ref: string, contextProviderID?: ProviderID) => Effect.Effect<Model>
   readonly defaultModel: () => Effect.Effect<{ providerID: ProviderID; modelID: ModelID }>
+  readonly resolveAutoFree: () => Effect.Effect<Model[]>
 }
 
 interface State {
@@ -1601,6 +1609,12 @@ const layer: Layer.Layer<
           log.info("found", { providerID })
         }
 
+        // Virtual Auto (free) router — always listed; streaming resolves real upstreams.
+        const autoID = ProviderID.make(AUTO_PROVIDER_ID)
+        if (!disabled.has(autoID) && isProviderAllowed(autoID)) {
+          providers[autoID] = autoFreeProviderInfo()
+        }
+
         return {
           models: languages,
           providers,
@@ -1789,6 +1803,9 @@ const layer: Layer.Layer<
       if (isFreeApiSunset() && isFreeApiModel({ providerID: model.providerID, modelID: model.id })) {
         throw new Error("MiMo free API service has ended. Sign in or configure a third-party API.")
       }
+      if (isAutoFreeModel(model)) {
+        throw new Error("auto/free is a router model; resolve upstream candidates before getLanguage")
+      }
       const s = yield* InstanceState.get(state)
       const envs = yield* env.all()
       const key = `${model.providerID}/${model.id}`
@@ -1831,6 +1848,15 @@ const layer: Layer.Layer<
         }
       }
       return undefined
+    })
+
+    const resolveAutoFree = Effect.fn("Provider.resolveAutoFree")(function* () {
+      const cfg = yield* config.get()
+      const s = yield* InstanceState.get(state)
+      return resolveAutoFreeCandidates({
+        fallbacks: cfg.auto_free?.fallbacks,
+        providers: s.providers,
+      })
     })
 
     const resolveModelRef = Effect.fn("Provider.resolveModelRef")(function* (
@@ -1932,16 +1958,17 @@ const layer: Layer.Layer<
         return { providerID: entry.providerID, modelID: entry.modelID }
       }
 
-      // Prefer the free OpenCode Zen default (opencode/big-pickle). Xiaomi's
-      // mimo channel is never chosen by default — it must be explicitly
-      // configured or logged into. Only applies when the user hasn't configured
-      // their own provider — "mimo" and "xiaomi" are plugin-injected defaults,
-      // so they don't count as a user choice; mirror the TUI's Model.initial
-      // behavior.
+      // Prefer Auto (free) when available (zero-config). Xiaomi's mimo channel
+      // is never chosen by default. "mimo"/"xiaomi" plugin defaults do not count
+      // as a user provider choice — mirror the TUI's Model.initial behavior.
       const userConfigured = cfg.provider
-        ? Object.keys(cfg.provider).filter((id) => id !== "mimo" && id !== "xiaomi")
+        ? Object.keys(cfg.provider).filter((id) => id !== "mimo" && id !== "xiaomi" && id !== "auto")
         : []
       if (userConfigured.length === 0) {
+        const auto = s.providers[ProviderID.make(AUTO_PROVIDER_ID)]
+        if (auto?.models[ModelID.make(AUTO_FREE_MODEL_ID)]) {
+          return { providerID: auto.id, modelID: ModelID.make(AUTO_FREE_MODEL_ID) }
+        }
         const opencode = s.providers[ProviderID.make("opencode")]
         if (opencode?.models[ModelID.make("big-pickle")]) {
           return { providerID: opencode.id, modelID: ModelID.make("big-pickle") }
@@ -1958,7 +1985,18 @@ const layer: Layer.Layer<
       }
     })
 
-    return Service.of({ list, getProvider, getModel, getLanguage, closest, getSmallModel, getVisionModel, defaultModel, resolveModelRef })
+    return Service.of({
+      list,
+      getProvider,
+      getModel,
+      getLanguage,
+      closest,
+      getSmallModel,
+      getVisionModel,
+      defaultModel,
+      resolveModelRef,
+      resolveAutoFree,
+    })
   }),
 )
 

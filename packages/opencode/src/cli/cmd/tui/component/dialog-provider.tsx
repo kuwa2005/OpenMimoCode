@@ -369,7 +369,7 @@ function ApiMethod(props: ApiMethodProps) {
               </text>
             </box>
           ),
-          "opencode-go": (
+            "opencode-go": (
             <box gap={1}>
               <text fg={theme.textMuted}>
                 OpenCode Go is a $10 per month subscription that provides reliable access to popular open coding models
@@ -377,6 +377,30 @@ function ApiMethod(props: ApiMethodProps) {
               </text>
               <text fg={theme.text}>
                 Go to <span style={{ fg: theme.primary }}>https://opencode.ai/zen</span> and enable OpenCode Go
+              </text>
+            </box>
+          ),
+          openrouter: (
+            <box gap={1}>
+              <text fg={theme.textMuted}>Free models use the :free suffix. Create an account, then paste an API key.</text>
+              <text fg={theme.text}>
+                Keys: <span style={{ fg: theme.primary }}>https://openrouter.ai/keys</span>
+              </text>
+            </box>
+          ),
+          nvidia: (
+            <box gap={1}>
+              <text fg={theme.textMuted}>NVIDIA NIM free API. Sign up at build.nvidia.com, then paste an API key.</text>
+              <text fg={theme.text}>
+                Keys: <span style={{ fg: theme.primary }}>https://build.nvidia.com/settings/api-keys</span>
+              </text>
+            </box>
+          ),
+          groq: (
+            <box gap={1}>
+              <text fg={theme.textMuted}>Groq free tier. Create an account, then paste an API key.</text>
+              <text fg={theme.text}>
+                Keys: <span style={{ fg: theme.primary }}>https://console.groq.com/keys</span>
               </text>
             </box>
           ),
