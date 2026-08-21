@@ -132,6 +132,11 @@ export const Flag = {
   MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS: truthy("MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS"),
   // Set by `oimo --autonomy` / `oimo --se`. Forces autonomy.enabled for this process.
   MIMOCODE_AUTONOMY: truthy("MIMOCODE_AUTONOMY"),
+  // Set by `oimo --spauto` (primary) / `oimo --autosp` (alias). Super Auto:
+  // autonomy with hearing_first=false — zero user prompts from the first turn.
+  get MIMOCODE_SPAUTO() {
+    return truthy("MIMOCODE_SPAUTO") || truthy("MIMOCODE_AUTOSP")
+  },
   MIMOCODE_DISABLE_DEFAULT_PLUGINS: truthy("MIMOCODE_DISABLE_DEFAULT_PLUGINS"),
   MIMOCODE_DISABLE_LSP_DOWNLOAD: truthy("MIMOCODE_DISABLE_LSP_DOWNLOAD"),
   MIMOCODE_ENABLE_EXPERIMENTAL_MODELS: truthy("MIMOCODE_ENABLE_EXPERIMENTAL_MODELS"),

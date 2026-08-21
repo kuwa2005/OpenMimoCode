@@ -10,6 +10,8 @@ export interface Args {
   neverAsk?: boolean
   /** SE-style autonomy (hearing-first). Implies compose agent when unset. */
   autonomy?: boolean
+  /** Super Auto (--spauto / --autosp): autonomy without hearing; never-ask from turn one. */
+  spauto?: boolean
 }
 
 export const { use: useArgs, provider: ArgsProvider } = createSimpleContext({

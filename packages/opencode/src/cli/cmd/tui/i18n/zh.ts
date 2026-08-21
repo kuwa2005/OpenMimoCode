@@ -600,4 +600,19 @@ export const dict = {
   "trust.dangerous.advice_root": "除非有明确的理由，否则不要信任文件系统根目录。",
   "trust.dangerous.option.yes": "我了解风险，仅本次信任",
   "trust.dangerous.option.no": "退出（推荐）",
+
+  "spauto.warn.banner": "  ⚠  SUPER AUTO — 完全无人值守模式  ⚠  ",
+  "spauto.warn.title": "即将启动 Super Auto（--spauto）。",
+  "spauto.warn.body":
+    "接受后，本会话将不再因审批或输入而暂停：\n" +
+    "  • 无需求澄清 — 模型自行决定所有歧义\n" +
+    "  • 权限自动批准（编辑、shell、网络、删除等）\n" +
+    "  • 破坏性命令也不会等待你\n" +
+    "  • 跳过工作区信任提示\n" +
+    "模型失误可能导致删文件、执行危险命令或未经询问修改仓库。\n" +
+    "本次启动即表示你接受这些风险。",
+  "spauto.warn.advice": "若非有意无人值守全自动，请拒绝并退出。",
+  "spauto.warn.option.no": "拒绝并退出（推荐）",
+  "spauto.warn.option.yes": "我了解风险 — 启动 Super Auto",
+  "spauto.warn.need_tty": "Super Auto（--spauto）需要交互终端以确认风险。已拒绝启动。",
 } satisfies Partial<Record<Keys, string>>

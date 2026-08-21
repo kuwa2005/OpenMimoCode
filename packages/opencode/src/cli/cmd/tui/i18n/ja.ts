@@ -557,4 +557,20 @@ export const dict = {
   "trust.dangerous.advice_root": "明確な理由がない限り、ファイルシステムのルートを信頼しないでください。",
   "trust.dangerous.option.yes": "リスクを理解した上で、今回のみ信頼する",
   "trust.dangerous.option.no": "終了（推奨）",
+
+  // Super Auto (--spauto / --autosp)
+  "spauto.warn.banner": "  ⚠  SUPER AUTO — 完全ノンストップ自律実行  ⚠  ",
+  "spauto.warn.title": "Super Auto（--spauto）を起動しようとしています。",
+  "spauto.warn.body":
+    "承認後、このセッションではユーザーの承認や入力待ちで止まりません:\n" +
+    "  • ヒアリング／確認質問なし — 曖昧点はモデルがすべて自己判断\n" +
+    "  • 権限リクエストは自動承認（編集・シェル・ネットワーク・削除など）\n" +
+    "  • 破壊的なコマンドも待機しません\n" +
+    "  • ワークスペース信頼プロンプトもスキップ\n" +
+    "判断ミスによりファイル削除・危険なコマンド実行・意図しない変更が起きても\n" +
+    "今回の起動についてはあなたがリスクを引き受けたものとみなします。",
+  "spauto.warn.advice": "完全無人の自律実行を意図していない場合は、拒否して終了してください。",
+  "spauto.warn.option.no": "拒否して終了（推奨）",
+  "spauto.warn.option.yes": "リスクを承知のうえで Super Auto を開始する",
+  "spauto.warn.need_tty": "Super Auto（--spauto）はリスク承認のため対話端末が必要です。起動を拒否しました。",
 } satisfies Partial<Record<Keys, string>>

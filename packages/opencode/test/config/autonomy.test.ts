@@ -36,4 +36,16 @@ describe("ConfigAutonomy helpers", () => {
     expect(text).toContain("Test specification")
     expect(text).toContain("Tests EXECUTED")
   })
+
+  test("buildGoalCondition Super Auto skips user hearing", () => {
+    const text = ConfigAutonomy.buildGoalCondition("電卓を作って", {
+      docsEvidence: true,
+      hearingFirst: false,
+    })
+    expect(text).toContain("Super Auto")
+    expect(text).toContain("never ask the user")
+    expect(text).not.toContain("Do NOT write implementation code until Requirements Lock is Approved")
+    expect(text).toContain("Execute immediately")
+    expect(text).toContain("Tests EXECUTED")
+  })
 })

@@ -95,6 +95,12 @@ export const SessionListCommand = cmd({
         describe: "選択したセッションを SE 自律モード (ヒアリング→要件ロック→自律実装) で起動する",
         type: "boolean",
       })
+      .option("spauto", {
+        alias: "autosp",
+        describe:
+          "選択したセッションを Super Auto で起動する (ヒアリングなし・完全ノンストップ。--autosp も可)",
+        type: "boolean",
+      })
   },
   handler: async (args) => {
     await bootstrap(process.cwd(), async () => {
@@ -128,10 +134,11 @@ export const SessionListCommand = cmd({
   },
 })
 
-export function launchFlags(args: { auto?: boolean; autonomy?: boolean }): string[] {
+export function launchFlags(args: { auto?: boolean; autonomy?: boolean; spauto?: boolean }): string[] {
   const flags: string[] = []
   if (args.auto) flags.push("--auto")
   if (args.autonomy) flags.push("--se")
+  if (args.spauto) flags.push("--spauto")
   return flags
 }
 

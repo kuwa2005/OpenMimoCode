@@ -124,6 +124,54 @@ async function promptWorkspaceTrust(directory: string, level: "untrusted" | "dan
   return result
 }
 
+/** Red risk gate shown every Super Auto (--spauto/--autosp) launch. No persistence. */
+async function promptSuperAutoWarning(): Promise<boolean> {
+  if (!process.stdin.isTTY || !process.stderr.isTTY) {
+    UI.error(t("spauto.warn.need_tty"))
+    return false
+  }
+
+  const prompts = await import("@clack/prompts")
+  const { EOL } = await import("os")
+  const red = (line: string) => UI.Style.BANNER_DANGER + line + UI.Style.TEXT_NORMAL
+  const redDim = (line: string) => UI.Style.BANNER_DANGER_DIM + line + UI.Style.TEXT_NORMAL
+  const pad = (s: string, width: number) => {
+    const len = [...s].length
+    if (len >= width) return s
+    return s + " ".repeat(width - len)
+  }
+  const banner = t("spauto.warn.banner")
+  const width = Math.max(64, [...banner].length)
+  const bar = " ".repeat(width)
+
+  process.stderr.write(EOL)
+  process.stderr.write(red(bar) + EOL)
+  process.stderr.write(red(pad(banner, width)) + EOL)
+  process.stderr.write(red(bar) + EOL)
+  process.stderr.write(EOL)
+
+  prompts.log.error(
+    [
+      UI.Style.TEXT_DANGER_BOLD + t("spauto.warn.title") + UI.Style.TEXT_NORMAL,
+      "",
+      t("spauto.warn.body"),
+      "",
+      UI.Style.TEXT_DANGER_BOLD + t("spauto.warn.advice") + UI.Style.TEXT_NORMAL,
+    ].join(EOL),
+  )
+
+  // Safe default first: refuse.
+  const result = await prompts.select({
+    message: redDim(" Super Auto "),
+    options: [
+      { label: t("spauto.warn.option.no"), value: false },
+      { label: t("spauto.warn.option.yes"), value: true },
+    ],
+  })
+  if (prompts.isCancel(result)) return false
+  return result
+}
+
 export const TuiThreadCommand = cmd({
   command: "$0 [project]",
   describe: "oimo TUI を起動する",
@@ -173,6 +221,13 @@ export const TuiThreadCommand = cmd({
           "SE 自律モード: 要件をヒアリングしてロックしてから、証跡ドキュメント付きでノンストップ実装する (compose エージェントになる)",
         default: false,
       })
+      .option("spauto", {
+        alias: ["autosp"],
+        type: "boolean",
+        describe:
+          "Super Auto: 起動時に赤警告でリスク承認後、ヒアリングなし・完全ノンストップ (compose・never-ask・権限自動承認)。--autosp も可",
+        default: false,
+      })
       .option("trust", {
         type: "boolean",
         describe: "ワークスペース信頼プロンプトをスキップし、ディレクトリを信頼する",
@@ -220,7 +275,19 @@ export const TuiThreadCommand = cmd({
       }
       const cwd = Filesystem.resolve(process.cwd())
 
-      if (!args.trust && !args.auto && !args["dangerously-skip-permissions"]) {
+      const spauto = !!args.spauto
+      // Super Auto: dramatic risk acknowledgment EVERY launch, before any auto-approve.
+      // After accept, TUI will not stop for trust / permissions / questions.
+      if (spauto) {
+        const accepted = await promptSuperAutoWarning()
+        if (!accepted) {
+          process.exitCode = 1
+          return
+        }
+      }
+
+      const skipTrust = args.trust || args.auto || args["dangerously-skip-permissions"] || spauto
+      if (!skipTrust) {
         const trustLevel = await checkTrust(cwd)
         if (trustLevel !== "trusted") {
           const accepted = await promptWorkspaceTrust(cwd, trustLevel)
@@ -231,7 +298,7 @@ export const TuiThreadCommand = cmd({
         }
       }
 
-      if (args.auto || args["dangerously-skip-permissions"]) {
+      if (args.auto || args["dangerously-skip-permissions"] || spauto) {
         // Propagate to the worker (which loads config) via the env it inherits
         // from sanitizedProcessEnv. Config injects an allow-all base under the
         // user's permission rules so denies still win.
@@ -239,14 +306,18 @@ export const TuiThreadCommand = cmd({
         // Forced-ask (bash_delete) is the only ask that still blocks under
         // --auto, so a `rm -rf /tmp/...` would halt the run waiting for a
         // human. Route deletes through the regular (auto-allow) ask instead:
-        // --auto must never stop mid-run.
+        // --auto / Super Auto must never stop mid-run.
         process.env.MIMOCODE_AUTO_APPROVE_DELETE = "1"
       }
 
-      if (args.autonomy) {
+      if (args.autonomy || spauto) {
         process.env.MIMOCODE_AUTONOMY = "1"
-        // Safe permission auto-approve base (forced-ask still human-gated).
+        // Safe permission auto-approve base (forced-ask still human-gated unless spauto/auto).
         process.env.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS = "1"
+      }
+
+      if (spauto) {
+        process.env.MIMOCODE_SPAUTO = "1"
       }
 
       const env = sanitizedProcessEnv({
@@ -325,7 +396,7 @@ export const TuiThreadCommand = cmd({
         client.call("checkUpgrade", { directory: cwd }).catch(() => {})
       }, 1000).unref?.()
 
-      const autonomy = args.autonomy
+      const autonomy = args.autonomy || spauto
       try {
         await tui({
           url: transport.url,
@@ -345,8 +416,9 @@ export const TuiThreadCommand = cmd({
             model: args.model,
             prompt,
             fork: args.fork,
-            neverAsk: args["never-ask"],
+            neverAsk: args["never-ask"] || spauto,
             autonomy,
+            spauto,
           },
         })
       } finally {

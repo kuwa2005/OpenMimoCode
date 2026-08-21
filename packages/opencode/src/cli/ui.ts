@@ -26,6 +26,9 @@ export const Style = {
   TEXT_SUCCESS_BOLD: "\x1b[92m\x1b[1m",
   TEXT_INFO: "\x1b[94m",
   TEXT_INFO_BOLD: "\x1b[94m\x1b[1m",
+  /** White on bright-red — Super Auto risk gate */
+  BANNER_DANGER: "\x1b[97m\x1b[41m\x1b[1m",
+  BANNER_DANGER_DIM: "\x1b[97m\x1b[41m",
 }
 
 export function println(...message: string[]) {

@@ -593,4 +593,20 @@ export const dict: Record<string, string> = {
   "trust.dangerous.advice_root": "Unless you have a very specific reason, DO NOT trust the filesystem root.",
   "trust.dangerous.option.yes": "I understand the risks, trust for this session",
   "trust.dangerous.option.no": "Exit (recommended)",
+
+  // Super Auto (--spauto / --autosp) launch gate — shown every start
+  "spauto.warn.banner": "  ⚠  SUPER AUTO — FULL UNATTENDED MODE  ⚠  ",
+  "spauto.warn.title": "You are about to start Super Auto (--spauto).",
+  "spauto.warn.body":
+    "After you accept, this session will NOT stop for your approval or input:\n" +
+    "  • No hearing / clarifying questions — the model decides every ambiguity itself\n" +
+    "  • Permissions auto-approved (edit, bash, network, deletes, …)\n" +
+    "  • Destructive commands will not wait for you\n" +
+    "  • Workspace trust prompts are skipped\n" +
+    "Mistakes can delete files, run dangerous commands, or change the repo without asking.\n" +
+    "You accept those risks for this launch only.",
+  "spauto.warn.advice": "Unless you intend unattended full autonomy, refuse and exit.",
+  "spauto.warn.option.no": "Refuse and exit (recommended)",
+  "spauto.warn.option.yes": "I understand the risks — start Super Auto",
+  "spauto.warn.need_tty": "Super Auto (--spauto) requires an interactive terminal to acknowledge risk. Refusing.",
 }

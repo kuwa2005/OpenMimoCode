@@ -974,8 +974,12 @@ export const layer = Layer.effect(
           })
         }
 
-        if (Flag.MIMOCODE_AUTONOMY) {
+        if (Flag.MIMOCODE_AUTONOMY || Flag.MIMOCODE_SPAUTO) {
           result.autonomy = { ...result.autonomy, enabled: true }
+        }
+        if (Flag.MIMOCODE_SPAUTO) {
+          // Super Auto (--spauto / --autosp): skip hearing; decide and execute non-stop.
+          result.autonomy = { ...result.autonomy, enabled: true, hearing_first: false }
         }
 
         if (Flag.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS || ConfigAutonomy.enabled(result)) {

@@ -576,15 +576,16 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
 
   // Seed skip-permissions when autonomy is active. never-ask waits until
   // Requirements Lock (goal.phase === "execute") when hearing_first is on.
+  // Super Auto (--spauto) forces never-ask immediately (hearing_first=false).
   let seededAutonomy = false
   createEffect(() => {
     if (seededAutonomy || !connected()) return
     const cfg = sync.data.config
-    if (!args.neverAsk && !args.autonomy && !ConfigAutonomy.enabled(cfg)) return
+    if (!args.neverAsk && !args.autonomy && !args.spauto && !ConfigAutonomy.enabled(cfg)) return
     seededAutonomy = true
-    const hearing = ConfigAutonomy.hearingFirst(cfg.autonomy) && !args.neverAsk
+    const hearing = ConfigAutonomy.hearingFirst(cfg.autonomy) && !args.neverAsk && !args.spauto
     if (!hearing) local.neverAsk.set(true)
-    if (ConfigAutonomy.enabled(cfg) || args.autonomy) local.skipPermissions.set(true)
+    if (ConfigAutonomy.enabled(cfg) || args.autonomy || args.spauto) local.skipPermissions.set(true)
   })
 
   // When hearing completes (Requirements Lock), enable never-ask for non-stop delivery.

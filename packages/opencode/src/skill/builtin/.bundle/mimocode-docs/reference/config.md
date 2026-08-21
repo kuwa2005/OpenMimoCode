@@ -153,9 +153,11 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 | `autonomy.judge_max_retries` | Judge retries before `judge_failed` stop (default 2) |
 | `experimental.auto_continue` | **Deprecated** — alias for `autonomy.enabled` (does not auto-submit predicted prompts) |
 
-CLI: `oimo --autonomy` or `oimo --se` starts this mode (compose agent, hearing-first). After a `Requirements Lock` approval, never-ask engages for non-stop implementation.
+CLI: `oimo --autonomy` or `oimo --se` starts hearing-first SE mode (compose agent). After a `Requirements Lock` approval, never-ask engages for non-stop implementation.
 
-High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) still require explicit user approval even in autonomy mode.
+**Super Auto:** `oimo --spauto` (alias `--autosp`) enables the same autonomy stack with `hearing_first=false` — never-ask and skip-permissions from turn one; the agent self-decides all clarifying questions and still leaves documentary evidence for the judge. **Every launch** shows a red risk acknowledgment screen (refuse is default; interactive TTY required). Only after you accept does the session run fully unattended.
+
+High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) still require explicit user approval in `--se` mode; `--spauto` (after the launch gate) also sets `MIMOCODE_AUTO_APPROVE_DELETE` so even those do not block (same as `--auto`).
 
 ### Experimental
 | Key | Purpose |

@@ -83,7 +83,9 @@ export function isLockApproval(answers: ReadonlyArray<ReadonlyArray<string> | un
 
 export function buildGoalCondition(userText: string, opts: { docsEvidence: boolean; hearingFirst: boolean }): string {
   const lines = [
-    "Deliver the user's request as an excellent SE would: uncover hidden needs, lock requirements with the customer, leave documentary evidence, then implement and verify without stopping.",
+    opts.hearingFirst
+      ? "Deliver the user's request as an excellent SE would: uncover hidden needs, lock requirements with the customer, leave documentary evidence, then implement and verify without stopping."
+      : "Deliver the user's request in Super Auto mode: decide every ambiguity yourself from project context, leave documentary evidence, then implement and verify completely non-stop with zero user prompts.",
     "",
     "User request:",
     userText,
@@ -99,11 +101,21 @@ export function buildGoalCondition(userText: string, opts: { docsEvidence: boole
       "- Do NOT write implementation code until Requirements Lock is Approved.",
     )
   }
+  if (!opts.hearingFirst) {
+    lines.push(
+      "",
+      "Phase A — Super Auto (no user hearing; never ask the user):",
+      "- Do NOT use the question tool to wait on a human. never-ask is already on — resolve decisions yourself.",
+      "- Infer hidden needs and constraints from the repo, docs, and request text.",
+      "- Record each material decision as self-answered Q&A in the hearing log: why / background / chosen result.",
+      "- Skip Requirements Lock with the user; treat your recorded assumptions as locked and proceed immediately.",
+    )
+  }
   if (opts.docsEvidence) {
     lines.push(
       "",
       "Documentary evidence — ALL numbered items below are MANDATORY before stop. Judge: verify each item against the transcript individually; if ANY item lacks evidence, the condition is NOT satisfied:",
-      "1. Hearing log: every question asked, each with why / background / result",
+      "1. Hearing log: every question asked (or self-answered in Super Auto), each with why / background / result",
       "2. Requirements + functional specification covering the delivered scope",
       "3. Test specification written as part of the specs: concrete test cases with inputs and expected results (unit / integration / smoke / e2e as applicable — at minimum unit cases for core logic plus an acceptance checklist)",
       "4. Tests EXECUTED, not merely written: an automated test program was created and run (preferred), or a manual test run is documented case-by-case; actual pass/fail results recorded in a report",
@@ -114,7 +126,9 @@ export function buildGoalCondition(userText: string, opts: { docsEvidence: boole
   }
   lines.push(
     "",
-    "Phase B — After Requirements Lock: implement, then write and RUN the tests defined in the test specification, record results, and finish non-stop. Do not stop until the request is done with verifiable evidence in the transcript and docs.",
+    opts.hearingFirst
+      ? "Phase B — After Requirements Lock: implement, then write and RUN the tests defined in the test specification, record results, and finish non-stop. Do not stop until the request is done with verifiable evidence in the transcript and docs."
+      : "Phase B — Execute immediately: implement, then write and RUN the tests defined in the test specification, record results, and finish non-stop. Do not stop for user input. Do not stop until the request is done with verifiable evidence in the transcript and docs.",
   )
   return lines.join("\n")
 }

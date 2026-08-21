@@ -604,4 +604,19 @@ export const dict = {
   "trust.dangerous.advice_root": "Sauf raison très spécifique, NE faites PAS confiance à la racine du système de fichiers.",
   "trust.dangerous.option.yes": "Je comprends les risques, faire confiance pour cette session",
   "trust.dangerous.option.no": "Quitter (recommandé)",
+
+  "spauto.warn.banner": "  ⚠  SUPER AUTO — MODE ENTIÈREMENT NON SUPERVISÉ  ⚠  ",
+  "spauto.warn.title": "Vous allez démarrer Super Auto (--spauto).",
+  "spauto.warn.body":
+    "Après acceptation, cette session ne s'arrêtera plus pour votre approbation ou saisie :\n" +
+    "  • Pas d'audition / questions — le modèle tranche chaque ambiguïté\n" +
+    "  • Permissions auto-approuvées (édition, bash, réseau, suppressions…)\n" +
+    "  • Les commandes destructrices n'attendront pas\n" +
+    "  • Les invites de confiance d'espace de travail sont ignorées\n" +
+    "Des erreurs peuvent supprimer des fichiers, lancer des commandes dangereuses ou modifier le dépôt sans demander.\n" +
+    "Vous acceptez ces risques pour ce lancement uniquement.",
+  "spauto.warn.advice": "Sauf autonomie totale voulue, refusez et quittez.",
+  "spauto.warn.option.no": "Refuser et quitter (recommandé)",
+  "spauto.warn.option.yes": "Je comprends les risques — démarrer Super Auto",
+  "spauto.warn.need_tty": "Super Auto (--spauto) nécessite un terminal interactif pour accepter le risque. Refus.",
 } satisfies Partial<Record<Keys, string>>
