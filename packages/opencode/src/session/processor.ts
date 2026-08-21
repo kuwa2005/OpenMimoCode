@@ -881,8 +881,35 @@ export const layer: Layer.Layer<
 
             let lastError: unknown
             let succeeded = false
+            let noticePartID: PartID | undefined
             for (let index = 0; index < candidates.length; index++) {
               const candidate = candidates[index]!
+              const ref = `${candidate.providerID}/${candidate.id}`
+
+              // Persist the upstream model on the assistant message and leave a
+              // visible chat note so exports / footer / transcript show what ran.
+              ctx.assistantMessage.providerID = candidate.providerID
+              ctx.assistantMessage.modelID = candidate.id
+              yield* session.updateMessage(ctx.assistantMessage)
+              if (noticePartID) {
+                yield* session.removePart({
+                  sessionID: ctx.sessionID,
+                  messageID: ctx.assistantMessage.id,
+                  partID: noticePartID,
+                })
+                noticePartID = undefined
+              }
+              noticePartID = PartID.ascending()
+              yield* session.updatePart({
+                id: noticePartID,
+                messageID: ctx.assistantMessage.id,
+                sessionID: ctx.sessionID,
+                type: "text",
+                text: `Auto (無料) → ${ref}`,
+                synthetic: true,
+                time: { start: Date.now(), end: Date.now() },
+              })
+
               let committed = false
               const exit = yield* drain(candidate, {
                 withSessionRetry: false,
@@ -894,6 +921,7 @@ export const layer: Layer.Layer<
 
               if (Exit.isSuccess(exit)) {
                 succeeded = true
+                slog.info("auto-free using", { ref })
                 break
               }
 
@@ -904,7 +932,7 @@ export const layer: Layer.Layer<
 
               const next = candidates[index + 1]!
               slog.info("auto-free failover", {
-                from: `${candidate.providerID}/${candidate.id}`,
+                from: ref,
                 to: `${next.providerID}/${next.id}`,
                 reason: "retryable-pre-commit",
               })

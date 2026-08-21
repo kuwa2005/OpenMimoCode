@@ -1713,11 +1713,21 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
   const t = useLanguage().t
   const [copyHover, setCopyHover] = createSignal(false)
   const messages = createMemo(() => sync.data.message[props.message.sessionID]?.[props.message.agentID ?? "main"] ?? [])
-  const model = createMemo(() =>
-    isFreeApiModel({ providerID: props.message.providerID, modelID: props.message.modelID })
+  const model = createMemo(() => {
+    const resolved = isFreeApiModel({ providerID: props.message.providerID, modelID: props.message.modelID })
       ? t(freeApiModelNameKey(ctx.freeApiSunset()))
-      : Model.name(ctx.providers(), props.message.providerID, props.message.modelID),
-  )
+      : Model.name(ctx.providers(), props.message.providerID, props.message.modelID)
+    const parent = messages().find((x) => x.role === "user" && x.id === props.message.parentID)
+    if (
+      parent?.role === "user" &&
+      parent.model.providerID === "auto" &&
+      parent.model.modelID === "free" &&
+      !(props.message.providerID === "auto" && props.message.modelID === "free")
+    ) {
+      return `Auto (無料) → ${resolved}`
+    }
+    return resolved
+  })
 
   const final = createMemo(() => {
     return props.message.finish && props.message.finish !== "tool-calls"

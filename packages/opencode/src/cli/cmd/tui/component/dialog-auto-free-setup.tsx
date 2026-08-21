@@ -87,15 +87,14 @@ function DialogAutoFreeProvider(props: { provider: FreeSetupProvider }) {
     <DialogPrompt
       title={t("tui.dialog.auto_free_setup.key_title", { name: provider.name })}
       placeholder={provider.envHint ?? "API key"}
-      description={
+      description={() => (
         <box gap={1}>
           <text fg={theme.textMuted}>{provider.blurb}</text>
-          <text fg={theme.text}>
-            {t("tui.dialog.auto_free_setup.open_signup")} <Link href={provider.signupUrl} fg={theme.primary} />
-          </text>
+          <text fg={theme.textMuted}>{t("tui.dialog.auto_free_setup.open_signup")}</text>
+          <Link href={provider.signupUrl} fg={theme.primary} />
           <text fg={theme.textMuted}>{t("tui.dialog.auto_free_setup.paste_key")}</text>
         </box>
-      }
+      )}
       onConfirm={async (value) => {
         const key = value?.trim()
         if (!key) return
