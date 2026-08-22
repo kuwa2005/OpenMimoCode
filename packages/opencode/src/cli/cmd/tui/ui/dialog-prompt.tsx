@@ -8,7 +8,7 @@ import { useLanguage } from "@tui/context/language"
 
 export type DialogPromptProps = {
   title: string
-  description?: () => JSX.Element
+  description?: JSX.Element | (() => JSX.Element)
   placeholder?: string
   value?: string
   busy?: boolean
@@ -61,6 +61,12 @@ export function DialogPrompt(props: DialogPromptProps) {
     textarea.focus()
   })
 
+  const description = () => {
+    const value = props.description
+    if (typeof value === "function") return value()
+    return value
+  }
+
   return (
     <box paddingLeft={2} paddingRight={2} gap={1}>
       <box flexDirection="row" justifyContent="space-between">
@@ -72,7 +78,7 @@ export function DialogPrompt(props: DialogPromptProps) {
         </text>
       </box>
       <box gap={1}>
-        {props.description}
+        {description()}
         <textarea
           onSubmit={() => {
             if (props.busy) return

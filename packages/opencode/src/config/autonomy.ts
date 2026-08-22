@@ -58,6 +58,57 @@ export function enabled(cfg: { autonomy?: Info; experimental?: { auto_continue?:
   return cfg.experimental?.auto_continue === true
 }
 
+/** Runtime / UI auto-mode tiers selectable via `/auto`. */
+export type Mode = "none" | "normal" | "special"
+
+const MODES: readonly Mode[] = ["none", "normal", "special"]
+
+export function isMode(value: string): value is Mode {
+  return (MODES as readonly string[]).includes(value)
+}
+
+/** Resolve current mode from merged config (after Flag overlays). */
+export function mode(cfg: { autonomy?: Info; experimental?: { auto_continue?: boolean } }): Mode {
+  if (!enabled(cfg)) return "none"
+  if (!hearingFirst(cfg.autonomy)) return "special"
+  return "normal"
+}
+
+/** Config patch written by `/auto` (global oimo.json). */
+export function patchForMode(next: Mode): { autonomy: Info } {
+  if (next === "none") return { autonomy: { enabled: false } }
+  if (next === "special") return { autonomy: { enabled: true, hearing_first: false } }
+  return { autonomy: { enabled: true, hearing_first: true } }
+}
+
+/**
+ * Align process env with `/auto` so Flag.MIMOCODE_* matches the chosen mode
+ * after instance dispose/reload (CLI --spauto/--autonomy must not stick).
+ */
+export function applyProcessEnv(next: Mode) {
+  const clear = (...keys: string[]) => {
+    for (const key of keys) delete process.env[key]
+  }
+  if (next === "none") {
+    clear(
+      "MIMOCODE_AUTONOMY",
+      "MIMOCODE_SPAUTO",
+      "MIMOCODE_AUTOSP",
+      "MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS",
+      "MIMOCODE_AUTO_APPROVE_DELETE",
+    )
+    return
+  }
+  process.env.MIMOCODE_AUTONOMY = "1"
+  process.env.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS = "1"
+  if (next === "special") {
+    process.env.MIMOCODE_SPAUTO = "1"
+    process.env.MIMOCODE_AUTO_APPROVE_DELETE = "1"
+    return
+  }
+  clear("MIMOCODE_SPAUTO", "MIMOCODE_AUTOSP", "MIMOCODE_AUTO_APPROVE_DELETE")
+}
+
 /** Default true: clarify with the user before never-ask execution. */
 export function hearingFirst(cfg?: Info): boolean {
   return cfg?.hearing_first !== false
@@ -85,7 +136,7 @@ export function buildGoalCondition(userText: string, opts: { docsEvidence: boole
   const lines = [
     opts.hearingFirst
       ? "Deliver the user's request as an excellent SE would: uncover hidden needs, lock requirements with the customer, leave documentary evidence, then implement and verify without stopping."
-      : "Deliver the user's request in Super Auto mode: decide every ambiguity yourself from project context, leave documentary evidence, then implement and verify completely non-stop with zero user prompts.",
+      : "Deliver the user's request in Super Auto (special) mode: raise every material doubt, answer it yourself from context, leave documentary evidence, then implement and verify completely non-stop with zero user waits.",
     "",
     "User request:",
     userText,
@@ -104,11 +155,12 @@ export function buildGoalCondition(userText: string, opts: { docsEvidence: boole
   if (!opts.hearingFirst) {
     lines.push(
       "",
-      "Phase A — Super Auto (no user hearing; never ask the user):",
-      "- Do NOT use the question tool to wait on a human. never-ask is already on — resolve decisions yourself.",
-      "- Infer hidden needs and constraints from the repo, docs, and request text.",
+      "Phase A — Super Auto / special (self-hearing; never wait on the user):",
+      "- Raise the same questions an SE would ask (hidden needs, platforms, constraints, success criteria).",
+      "- Answer them yourself from the repo, docs, and prior user answers in this session. Prefer the question tool for structure, but never-ask is on — you will get [Never-Ask]; choose immediately and continue.",
+      "- Do NOT block on a human. Do NOT end a turn waiting for input.",
       "- Record each material decision as self-answered Q&A in the hearing log: why / background / chosen result.",
-      "- Skip Requirements Lock with the user; treat your recorded assumptions as locked and proceed immediately.",
+      "- Skip Requirements Lock with the user; treat recorded assumptions as locked and proceed immediately.",
     )
   }
   if (opts.docsEvidence) {
@@ -131,4 +183,11 @@ export function buildGoalCondition(userText: string, opts: { docsEvidence: boole
       : "Phase B — Execute immediately: implement, then write and RUN the tests defined in the test specification, record results, and finish non-stop. Do not stop for user input. Do not stop until the request is done with verifiable evidence in the transcript and docs.",
   )
   return lines.join("\n")
+}
+
+/** Pull the original user request out of a goal condition built by `buildGoalCondition`. */
+export function extractUserRequest(condition: string): string | undefined {
+  const match = condition.match(/User request:\n([\s\S]*?)(?:\n\nPhase [AB]|\n\nDocumentary evidence|$)/)
+  const text = match?.[1]?.trim()
+  return text || undefined
 }

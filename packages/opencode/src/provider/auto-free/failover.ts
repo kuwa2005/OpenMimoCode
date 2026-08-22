@@ -46,7 +46,7 @@ export async function runWithFailover<C, R>(input: {
   attempt: (candidate: C, index: number, signal: { markCommitted: () => void; committed: () => boolean }) => Promise<R>
   onAdvance?: (from: C, to: C, index: number, reason: string) => void
 }): Promise<R> {
-  if (input.candidates.length === 0) throw new Error("Auto (free): no available free model candidates")
+  if (input.candidates.length === 0) throw new Error("Auto Model (free): no available free model candidates")
 
   let lastError: unknown
   for (let index = 0; index < input.candidates.length; index++) {

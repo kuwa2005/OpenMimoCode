@@ -1803,8 +1803,18 @@ const layer: Layer.Layer<
       if (isFreeApiSunset() && isFreeApiModel({ providerID: model.providerID, modelID: model.id })) {
         throw new Error("MiMo free API service has ended. Sign in or configure a third-party API.")
       }
+      // Auto Model (auto/free) is a router — judge/title/prompt_async must not die here.
+      // Stream path already resolves candidates in SessionProcessor; this is the backstop
+      // for side channels (goal judge, title, predict) that still carry the virtual ref.
       if (isAutoFreeModel(model)) {
-        throw new Error("auto/free is a router model; resolve upstream candidates before getLanguage")
+        const candidates = yield* resolveAutoFree()
+        const upstream = candidates[0]
+        if (!upstream) {
+          throw new Error(
+            "Auto Model (free): no available free model candidates for getLanguage",
+          )
+        }
+        model = upstream
       }
       const s = yield* InstanceState.get(state)
       const envs = yield* env.all()

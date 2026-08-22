@@ -760,7 +760,7 @@ export const SessionTool = Tool.define<typeof parameters, Metadata, Deps>(
               .pipe(Effect.catchTag("InboxReceiverNotFound", () => Effect.succeed({ inboxID: null as string | null })))
             if (sendResult.inboxID !== null) {
               return {
-                title: `Reused topic '${op.topic}' → relayed to ${childID}`,
+                title: `Reused topic '${op.topic}' -> relayed to ${childID}`,
                 output:
                   `Found standing child ${childID} for topic '${op.topic}'. ` +
                   `Enqueued the task into it and woke it — it runs the relayed task as its next turn.` +

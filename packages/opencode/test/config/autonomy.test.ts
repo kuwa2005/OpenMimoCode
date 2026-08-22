@@ -43,9 +43,43 @@ describe("ConfigAutonomy helpers", () => {
       hearingFirst: false,
     })
     expect(text).toContain("Super Auto")
-    expect(text).toContain("never ask the user")
+    expect(text).toContain("never wait")
     expect(text).not.toContain("Do NOT write implementation code until Requirements Lock is Approved")
     expect(text).toContain("Execute immediately")
     expect(text).toContain("Tests EXECUTED")
+  })
+
+  test("mode maps enabled + hearing_first", () => {
+    expect(ConfigAutonomy.mode({})).toBe("none")
+    expect(ConfigAutonomy.mode({ autonomy: { enabled: true } })).toBe("normal")
+    expect(ConfigAutonomy.mode({ autonomy: { enabled: true, hearing_first: true } })).toBe("normal")
+    expect(ConfigAutonomy.mode({ autonomy: { enabled: true, hearing_first: false } })).toBe("special")
+    expect(ConfigAutonomy.mode({ experimental: { auto_continue: true } })).toBe("normal")
+  })
+
+  test("patchForMode and isMode", () => {
+    expect(ConfigAutonomy.isMode("none")).toBe(true)
+    expect(ConfigAutonomy.isMode("weird")).toBe(false)
+    expect(ConfigAutonomy.patchForMode("none")).toEqual({ autonomy: { enabled: false } })
+    expect(ConfigAutonomy.patchForMode("normal")).toEqual({ autonomy: { enabled: true, hearing_first: true } })
+    expect(ConfigAutonomy.patchForMode("special")).toEqual({ autonomy: { enabled: true, hearing_first: false } })
+  })
+
+  test("extractUserRequest pulls the request block", () => {
+    const condition = ConfigAutonomy.buildGoalCondition("電卓を作って", {
+      docsEvidence: true,
+      hearingFirst: false,
+    })
+    expect(ConfigAutonomy.extractUserRequest(condition)).toBe("電卓を作って")
+  })
+
+  test("buildGoalCondition special emphasizes self-answer", () => {
+    const text = ConfigAutonomy.buildGoalCondition("席を外す", {
+      docsEvidence: true,
+      hearingFirst: false,
+    })
+    expect(text).toContain("self-answer")
+    expect(text).toContain("never wait")
+    expect(text).toContain("[Never-Ask]")
   })
 })

@@ -109,6 +109,8 @@ Your response must be a JSON object with one of these shapes:
 
 Always include a "reason" field, quoting specific text from the transcript whenever possible. If the transcript does not contain clear evidence that the condition is satisfied, return {"ok": false, "reason": "insufficient evidence in transcript"}.
 
+A final assistant message with no tool calls can still satisfy the condition when it cites concrete completed evidence already in the transcript (file paths, test pass counts, commit hashes, reports). Do NOT require another tool call just to "prove" work that the transcript already shows. Conversely, a message that only announces intended next steps without evidence of completion is NOT satisfied.
+
 Only use {"ok": false, "impossible": true} when the condition is genuinely unachievable in this session — for example: the condition is self-contradictory, it depends on a resource or capability that is unavailable, or the assistant has explicitly tried, exhausted reasonable approaches, and stated it cannot be done. Apply your own judgment when deciding this — the assistant claiming the goal is impossible is evidence, not proof; independently confirm the condition is genuinely unachievable rather than deferring to the assistant's self-assessment. Do not use it just because the goal has not been reached yet or because progress is slow. When in doubt, return {"ok": false} without "impossible".`
 
 // The closing question appended after the full conversation.
@@ -131,6 +133,9 @@ export interface Interface {
   readonly clear: (sessionID: SessionID, stopReason?: GoalStopReason) => Effect.Effect<void>
   /** Move hearing → execute after Requirements Lock approval. */
   readonly setPhase: (sessionID: SessionID, phase: GoalPhase) => Effect.Effect<GoalPhase | undefined>
+  /** Promote an in-flight goal into Super Auto (special): execute phase + rewritten condition. */
+  readonly enterSpecial: (sessionID: SessionID) => Effect.Effect<Goal | undefined>
+  readonly enterSpecialAll: () => Effect.Effect<number>
   /** Increment the re-entry counter, returning the new count. */
   readonly bumpReact: (sessionID: SessionID) => Effect.Effect<number>
   readonly addCost: (sessionID: SessionID, deltaUsd: number) => Effect.Effect<void>
@@ -186,7 +191,7 @@ export const layer = Layer.effect(
 
     const state = yield* InstanceState.make(
       Effect.fn("SessionGoal.state")(function* () {
-        return { goals: new Map<string, Goal>() }
+        return { goals: new Map<SessionID, Goal>() }
       }),
     )
 
@@ -256,6 +261,35 @@ export const layer = Layer.effect(
       yield* elog.info("goal phase", { sessionID, phase })
       yield* publish({ sessionID, goal })
       return phase
+    })
+
+    const enterSpecial = Effect.fn("SessionGoal.enterSpecial")(function* (sessionID: SessionID) {
+      const data = yield* InstanceState.get(state)
+      const goal = data.goals.get(sessionID)
+      if (!goal) return undefined
+      const cfg = yield* config.get()
+      const userText =
+        ConfigAutonomy.extractUserRequest(goal.condition) ??
+        goal.condition.slice(0, 2000)
+      goal.condition = ConfigAutonomy.buildGoalCondition(userText, {
+        docsEvidence: ConfigAutonomy.docsEvidence(cfg.autonomy),
+        hearingFirst: false,
+      })
+      goal.autonomous = true
+      goal.phase = "execute"
+      yield* elog.info("goal enter special", { sessionID })
+      yield* publish({ sessionID, goal })
+      return goal
+    })
+
+    const enterSpecialAll = Effect.fn("SessionGoal.enterSpecialAll")(function* () {
+      const data = yield* InstanceState.get(state)
+      let n = 0
+      for (const sessionID of data.goals.keys()) {
+        const next = yield* enterSpecial(sessionID as SessionID)
+        if (next) n++
+      }
+      return n
     })
 
     // Bridge for question-tool Requirements Lock without a ToolRegistry↔Goal cycle.
@@ -353,14 +387,28 @@ export const layer = Layer.effect(
       sessionID: SessionID
     }) {
       const cfg = yield* config.get()
-      const resolved = yield* provider.getModel(input.model.providerID, input.model.modelID)
+      // Prefer the last concrete assistant upstream (Auto Model rewrites
+      // providerID/modelID on the assistant message). Fall back to the caller's
+      // ref — getLanguage resolves auto/free if still virtual.
+      const lastAssistant = input.msgs.findLast((m) => m.info.role === "assistant")
+      const judgeRef =
+        lastAssistant?.info.role === "assistant" &&
+        lastAssistant.info.providerID &&
+        lastAssistant.info.modelID &&
+        !(lastAssistant.info.providerID === "auto" && lastAssistant.info.modelID === "free")
+          ? {
+              providerID: lastAssistant.info.providerID as ProviderID,
+              modelID: lastAssistant.info.modelID as ModelID,
+            }
+          : input.model
+      const resolved = yield* provider.getModel(judgeRef.providerID, judgeRef.modelID)
       const language = yield* provider.getLanguage(resolved)
       const tracer = cfg.experimental?.openTelemetry
         ? Option.getOrUndefined(yield* Effect.serviceOption(OtelTracer.OtelTracer))
         : undefined
 
-      const authInfo = yield* auth.get(input.model.providerID).pipe(Effect.orDie)
-      const isOpenaiOauth = input.model.providerID === "openai" && authInfo?.type === "oauth"
+      const authInfo = yield* auth.get(resolved.providerID).pipe(Effect.orDie)
+      const isOpenaiOauth = resolved.providerID === "openai" && authInfo?.type === "oauth"
 
       // Convert the conversation to native model messages so the judge sees the
       // real tool calls/results/images — same context the working agent had.
@@ -450,6 +498,8 @@ export const layer = Layer.effect(
       get,
       clear,
       setPhase,
+      enterSpecial,
+      enterSpecialAll,
       bumpReact,
       addCost,
       syncCostFromTranscript,

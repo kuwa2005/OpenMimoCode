@@ -83,7 +83,7 @@ export const ChangeDirectoryTool = Tool.define(
           return {
             title: path.relative(ins.worktree, normalized) || ".",
             metadata: { from: currentCwd, to: normalized },
-            output: `Working directory changed: ${currentCwd} → ${normalized}`,
+            output: `Working directory changed: ${currentCwd} -> ${normalized}`,
           }
         }),
     }

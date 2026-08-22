@@ -82,7 +82,7 @@ export function renderWorkflowCatalog(): string {
   const list = BuiltinWorkflow.list()
   if (list.length === 0) return ""
   const entries = list.map((w) => {
-    const phases = w.phases?.length ? "\n  Phases: " + w.phases.map((p) => p.title).join(" → ") : ""
+    const phases = w.phases?.length ? "\n  Phases: " + w.phases.map((p) => p.title).join(" -> ") : ""
     const when = w.whenToUse ? `\n  When to use: ${w.whenToUse}` : ""
     return `- ${w.name}: ${w.description}${when}${phases}`
   })

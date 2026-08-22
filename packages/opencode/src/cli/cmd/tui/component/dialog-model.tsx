@@ -91,12 +91,12 @@ export function DialogModel(props: { providerID?: string }) {
       "Recent",
     )
 
-    // Auto (free) + mimo/xiaomi pinned at top (after favorites/recents)
+    // Auto Model (free) + mimo/xiaomi pinned at top (after favorites/recents)
     const autoProvider = sync.data.provider.find((p) => p.id === "auto")
     const mimoProvider = sync.data.provider.find((p) => p.id === "mimo")
     const xiaomiProvider = sync.data.provider.find((p) => p.id === "xiaomi")
     const pinnedCategory = xiaomiProvider?.name ?? "MiMo"
-    // Auto is always pin-worthy (zero-config free router). MiMo pins when connected.
+    // Auto Model is always pin-worthy (zero-config free router). MiMo pins when connected.
     const showAutoPin = !props.providerID
     const showPinned = connected() && !props.providerID
 
@@ -105,9 +105,9 @@ export function DialogModel(props: { providerID?: string }) {
         ? [
             {
               value: { providerID: "auto", modelID: "free" },
-              title: autoProvider.models["free"]?.name ?? "Auto (無料)",
-              description: "無料モデルを自動切替",
-              category: "Auto",
+              title: autoProvider.models["free"]?.name ?? "Auto Model (無料)",
+              description: "無料モデルを自動切替（自律モード /auto とは別）",
+              category: "Auto Model",
               disabled: false,
               footer: "Free" as "Free" | undefined,
               onSelect() {

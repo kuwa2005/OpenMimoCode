@@ -33,6 +33,7 @@ import type {
 } from "@mimo-ai/sdk/v2"
 import { useLocal } from "@tui/context/local"
 import { Locale } from "@/util"
+import { sanitizeDisplayText } from "../../util/display-width"
 import { verifySessionRenderable, type SessionActorInput } from "@/session/visibility"
 import type { Tool } from "@/tool"
 import type { ReadTool } from "@/tool/read"
@@ -1660,7 +1661,7 @@ function UserMessage(props: {
             backgroundColor={hover() ? theme.backgroundElement : theme.backgroundPanel}
             flexShrink={0}
           >
-            <text fg={theme.text}>{text()?.text}</text>
+            <text fg={theme.text} wrapMode="none">{sanitizeDisplayText(text()?.text ?? "")}</text>
             <Show when={files().length}>
               <box flexDirection="row" paddingBottom={metadataVisible() ? 1 : 0} paddingTop={1} gap={1} flexWrap="wrap">
                 <For each={files()}>
@@ -1724,9 +1725,9 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
       parent.model.modelID === "free" &&
       !(props.message.providerID === "auto" && props.message.modelID === "free")
     ) {
-      return `Auto (無料) → ${resolved}`
+      return { kind: "auto-free" as const, resolved }
     }
-    return resolved
+    return { kind: "plain" as const, label: resolved }
   })
 
   const final = createMemo(() => {
@@ -1831,34 +1832,68 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
       </Show>
       <Switch>
         <Match when={showFooter()}>
-          <box paddingLeft={3} flexDirection="row" justifyContent="space-between" marginTop={1}>
-            <text>
-              <span
-                style={{
-                  fg:
-                    props.message.error?.name === "MessageAbortedError"
-                      ? theme.textMuted
-                      : local.agent.color(props.message.agent),
-                }}
+          <box paddingLeft={3} flexDirection="row" justifyContent="space-between" marginTop={1} flexShrink={0}>
+            {/* Avoid ambiguous-width glyphs (· →) next to CJK — OpenTUI/terminals
+                disagree on cell width and drop/overwrite characters like 無.
+                Keep CJK in its own <text> node; use ASCII separators only. */}
+            <box flexDirection="row" flexShrink={0}>
+              <text
+                wrapMode="none"
+                fg={
+                  props.message.error?.name === "MessageAbortedError"
+                    ? theme.textMuted
+                    : local.agent.color(props.message.agent)
+                }
               >
                 ▣{" "}
-              </span>{" "}
-              <span style={{ fg: theme.text }}>{Locale.titlecase(props.message.mode)}</span>
-              <span style={{ fg: theme.textMuted }}> · {model()}</span>
+              </text>
+              <text wrapMode="none" fg={theme.text}>
+                {Locale.titlecase(props.message.mode)}
+              </text>
+              <Show
+                when={model().kind === "auto-free" ? model() : undefined}
+                fallback={
+                  <text wrapMode="none" fg={theme.textMuted}>
+                    {" | "}
+                    {model().kind === "plain" ? model().label : ""}
+                  </text>
+                }
+              >
+                {(m) => (
+                  <>
+                    <text wrapMode="none" fg={theme.textMuted}>
+                      {" | Auto Model ("}
+                    </text>
+                    <text wrapMode="none" fg={theme.textMuted}>
+                      無料
+                    </text>
+                    <text wrapMode="none" fg={theme.textMuted}>
+                      {`) -> ${m().kind === "auto-free" ? m().resolved : ""}`}
+                    </text>
+                  </>
+                )}
+              </Show>
               <Show when={duration()}>
-                <span style={{ fg: theme.textMuted }}> · {Locale.duration(duration())}</span>
+                <text wrapMode="none" fg={theme.textMuted}>
+                  {" | "}
+                  {Locale.duration(duration())}
+                </text>
               </Show>
               <Show when={props.message.error?.name === "MessageAbortedError"}>
-                <span style={{ fg: theme.textMuted }}> · interrupted</span>
+                <text wrapMode="none" fg={theme.textMuted}>
+                  {" | interrupted"}
+                </text>
               </Show>
-            </text>
+            </box>
             <Show when={props.message.time.completed}>
               <box
                 onMouseOver={() => setCopyHover(true)}
                 onMouseOut={() => setCopyHover(false)}
                 onMouseUp={handleCopy}
               >
-                <text fg={copyHover() ? theme.text : theme.textMuted}>⎘ copy</text>
+                <text wrapMode="none" fg={copyHover() ? theme.text : theme.textMuted}>
+                  ⎘ copy
+                </text>
               </box>
             </Show>
           </box>
@@ -2052,9 +2087,10 @@ function ReasoningPart(props: { last: boolean; part: ReasoningPart; message: Ass
               drawUnstyledText={false}
               streaming={true}
               syntaxStyle={subtleSyntax()}
-              content={summary().body}
+              content={sanitizeDisplayText(summary().body)}
               conceal={ctx.conceal()}
               fg={theme.textMuted}
+              wrapMode="char"
             />
           </box>
         </Show>
@@ -2097,7 +2133,7 @@ function ReasoningHeader(props: {
           </Show>
           <Show when={props.duration}>
             <span>
-              {props.title ? " · " : ""}
+              {props.title ? " | " : ""}
               {props.duration}
             </span>
           </Show>
@@ -2118,7 +2154,7 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
             <markdown
               syntaxStyle={syntax()}
               streaming={true}
-              content={props.part.text.trim()}
+              content={sanitizeDisplayText(props.part.text.trim())}
               conceal={ctx.conceal()}
               fg={theme.markdownText}
               bg={theme.background}
@@ -2130,9 +2166,10 @@ function TextPart(props: { last: boolean; part: TextPart; message: AssistantMess
               drawUnstyledText={false}
               streaming={true}
               syntaxStyle={syntax()}
-              content={props.part.text.trim()}
+              content={sanitizeDisplayText(props.part.text.trim())}
               conceal={ctx.conceal()}
               fg={theme.text}
+              wrapMode="char"
             />
           </Match>
         </Switch>
@@ -3116,7 +3153,7 @@ function Write(props: ToolProps<typeof WriteTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="←" pending="Preparing write..." complete={props.input.file_path} part={props.part}>
+        <InlineTool icon="<" pending="Preparing write..." complete={props.input.file_path} part={props.part}>
           Write {normalizePath(props.input.file_path!)}
         </InlineTool>
       </Match>
@@ -3148,7 +3185,7 @@ function Read(props: ToolProps<typeof ReadTool>) {
   return (
     <>
       <InlineTool
-        icon="→"
+        icon=">"
         pending="Reading file..."
         complete={props.input.file_path}
         spinner={isRunning()}
@@ -3160,7 +3197,8 @@ function Read(props: ToolProps<typeof ReadTool>) {
         {(filepath) => (
           <box paddingLeft={3}>
             <text paddingLeft={3} fg={theme.textMuted}>
-              ↳ Loaded {normalizePath(filepath)}
+              {"-> Loaded "}
+              {normalizePath(filepath)}
             </text>
           </box>
         )}
@@ -3339,12 +3377,12 @@ function Task(props: ToolProps<typeof ActorTool>) {
       if (current()) {
         const state = current()!.state
         const title = state.status === "running" || state.status === "completed" ? state.title : undefined
-        content.push(`↳ ${Locale.titlecase(current()!.tool)} ${title}`)
-      } else content.push(`↳ ${tools().length} toolcalls`)
+        content.push(`-> ${Locale.titlecase(current()!.tool)} ${title}`)
+      } else content.push(`-> ${tools().length} toolcalls`)
     }
 
     if (props.part.state.status === "completed" && !isRunning()) {
-      content.push(`└ ${tools().length} toolcalls · ${Locale.duration(duration())}`)
+      content.push(`└ ${tools().length} toolcalls | ${Locale.duration(duration())}`)
     }
 
     return content.join("\n")
@@ -3395,7 +3433,7 @@ function Edit(props: ToolProps<typeof EditTool>) {
   return (
     <Switch>
       <Match when={props.metadata.diff !== undefined}>
-        <BlockTool title={"← Edit " + normalizePath(props.input.file_path!)} part={props.part}>
+        <BlockTool title={"< Edit " + normalizePath(props.input.file_path!)} part={props.part}>
           <box paddingLeft={1}>
             <diff
               diff={diffContent()}
@@ -3421,7 +3459,7 @@ function Edit(props: ToolProps<typeof EditTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="←" pending="Preparing edit..." complete={props.input.file_path} part={props.part}>
+        <InlineTool icon="<" pending="Preparing edit..." complete={props.input.file_path} part={props.part}>
           Edit {normalizePath(props.input.file_path!)} {input({ replace_all: props.input.replace_all })}
         </InlineTool>
       </Match>
@@ -3471,8 +3509,8 @@ function ApplyPatch(props: ToolProps<typeof ApplyPatchTool>) {
   function title(file: { type: string; relativePath: string; filePath: string; deletions: number }) {
     if (file.type === "delete") return "# Deleted " + file.relativePath
     if (file.type === "add") return "# Created " + file.relativePath
-    if (file.type === "move") return "# Moved " + normalizePath(file.filePath) + " → " + file.relativePath
-    return "← Patched " + file.relativePath
+    if (file.type === "move") return "# Moved " + normalizePath(file.filePath) + " -> " + file.relativePath
+    return "< Patched " + file.relativePath
   }
 
   function toggle(filePath: string) {
@@ -3557,7 +3595,7 @@ function Question(props: ToolProps<typeof QuestionTool>) {
         </BlockTool>
       </Match>
       <Match when={true}>
-        <InlineTool icon="→" pending="Asking questions..." complete={count()} part={props.part}>
+        <InlineTool icon=">" pending="Asking questions..." complete={count()} part={props.part}>
           Asked {count()} question{count() !== 1 ? "s" : ""}
         </InlineTool>
       </Match>
@@ -3567,7 +3605,7 @@ function Question(props: ToolProps<typeof QuestionTool>) {
 
 function Skill(props: ToolProps<typeof SkillTool>) {
   return (
-    <InlineTool icon="→" pending="Loading skill..." complete={props.input.name} part={props.part}>
+    <InlineTool icon=">" pending="Loading skill..." complete={props.input.name} part={props.part}>
       Skill "{props.input.name}"
     </InlineTool>
   )

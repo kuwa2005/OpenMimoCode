@@ -241,6 +241,19 @@ export const layer = Layer.effect(
       const s = yield* InstanceState.get(state)
       s.neverAsk = enabled
       log.info("never-ask", { enabled })
+      if (!enabled) return
+      // Unblock any UI waiting on a question so special/never-ask can proceed.
+      for (const [id, entry] of [...s.pending.entries()]) {
+        s.pending.delete(id)
+        const answers = entry.info.questions.map(() => ["[Never-Ask]"])
+        yield* bus.publish(Event.Replied, {
+          sessionID: entry.info.sessionID,
+          requestID: entry.info.id,
+          answers,
+        })
+        yield* Deferred.succeed(entry.deferred, answers)
+        log.info("never-ask auto-replied pending question", { requestID: id })
+      }
     })
 
     return Service.of({ ask, reply, reject, list, neverAsk, setNeverAsk })

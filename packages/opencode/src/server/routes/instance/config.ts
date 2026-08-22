@@ -3,9 +3,16 @@ import { describeRoute, validator, resolver } from "hono-openapi"
 import z from "zod"
 import { Config } from "@/config"
 import { Provider } from "@/provider"
+import { Question } from "@/question"
+import { Permission } from "@/permission"
+import { Goal } from "@/session/goal"
 import { errors } from "../../error"
 import { lazy } from "@/util/lazy"
 import { jsonRequest } from "./trace"
+
+const AutonomyModeBody = z.object({
+  mode: z.enum(["none", "normal", "special"]),
+})
 
 export const ConfigRoutes = lazy(() =>
   new Hono()
@@ -57,6 +64,59 @@ export const ConfigRoutes = lazy(() =>
           const cfg = yield* Config.Service
           yield* cfg.update(config)
           return config
+        }),
+    )
+    .post(
+      "/autonomy-mode",
+      describeRoute({
+        summary: "Set autonomy mode",
+        description:
+          "Switch none/normal/special without disposing the instance so in-flight session goals survive. Special enables never-ask, skip-permissions, and promotes goals to execute.",
+        operationId: "config.autonomyMode",
+        responses: {
+          200: {
+            description: "Updated config",
+            content: {
+              "application/json": {
+                schema: resolver(
+                  z.object({
+                    config: Config.Info,
+                    mode: z.enum(["none", "normal", "special"]),
+                    goalsPromoted: z.number(),
+                  }),
+                ),
+              },
+            },
+          },
+          ...errors(400),
+        },
+      }),
+      validator("json", AutonomyModeBody),
+      async (c) =>
+        jsonRequest("ConfigRoutes.autonomyMode", c, function* () {
+          const mode = c.req.valid("json").mode
+          const cfg = yield* Config.Service
+          const config = yield* cfg.setAutonomyMode(mode)
+
+          const question = yield* Question.Service
+          const permission = yield* Permission.Service
+          if (mode === "none") {
+            yield* question.setNeverAsk(false)
+            yield* permission.setSkipAll(false)
+          }
+          if (mode === "normal") {
+            yield* question.setNeverAsk(false)
+            yield* permission.setSkipAll(true)
+          }
+          let goalsPromoted = 0
+          if (mode === "special") {
+            yield* question.setNeverAsk(true)
+            yield* permission.setSkipAll(true)
+            const goal = yield* Goal.Service
+            goalsPromoted = yield* goal.enterSpecialAll()
+          }
+
+          return { config, mode, goalsPromoted }
         }),
     )
     .get(

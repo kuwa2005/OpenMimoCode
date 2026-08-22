@@ -525,6 +525,8 @@ export interface Interface {
   readonly getConsoleState: () => Effect.Effect<ConsoleState>
   readonly update: (config: Info) => Effect.Effect<void>
   readonly updateGlobal: (config: Info) => Effect.Effect<Info>
+  /** In-memory autonomy mode switch without instance dispose (keeps session goals alive). */
+  readonly setAutonomyMode: (mode: import("./autonomy").Mode) => Effect.Effect<Info>
   readonly invalidate: (wait?: boolean) => Effect.Effect<void>
   readonly directories: () => Effect.Effect<string[]>
   readonly waitForDependencies: () => Effect.Effect<void>
@@ -1105,12 +1107,34 @@ export const layer = Layer.effect(
       return next
     })
 
+    const setAutonomyMode = Effect.fn("Config.setAutonomyMode")(function* (mode: import("./autonomy").Mode) {
+      ConfigAutonomy.applyProcessEnv(mode)
+      const patch = ConfigAutonomy.patchForMode(mode)
+      const s = yield* InstanceState.get(state)
+      s.config = { ...s.config, autonomy: { ...s.config.autonomy, ...patch.autonomy } }
+
+      // Persist to global config without dispose/invalidate so in-flight goals survive.
+      const file = globalConfigFile()
+      const before = (yield* readConfigFile(file)) ?? "{}"
+      if (!file.endsWith(".jsonc")) {
+        const existing = ConfigParse.schema(Info, ConfigParse.jsonc(before, file), file)
+        const merged = mergeDeep(writable(existing), writable(patch))
+        yield* fs.writeFileString(file, JSON.stringify(merged, null, 2)).pipe(Effect.orDie)
+      } else {
+        const updated = patchJsonc(before, writable(patch))
+        yield* fs.writeFileString(file, updated).pipe(Effect.orDie)
+      }
+      yield* invalidateGlobal
+      return s.config
+    })
+
     return Service.of({
       get,
       getGlobal,
       getConsoleState,
       update,
       updateGlobal,
+      setAutonomyMode,
       invalidate,
       directories,
       waitForDependencies,

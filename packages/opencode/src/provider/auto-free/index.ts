@@ -16,6 +16,22 @@ export {
   classifyFailoverFailure,
   runWithFailover,
 } from "./failover"
+export {
+  AUTO_FREE_COOLDOWN_MS,
+  autoFreeRef,
+  catalogPrior,
+  excellenceScore,
+  responseRate,
+  rememberAutoFreeSuccess,
+  rememberAutoFreeFailure,
+  rememberAutoFreeGood,
+  rememberAutoFreeBad,
+  reorderAutoFreeCandidates,
+  snapshotAutoFreeStats,
+  resetAutoFreeSticky,
+  resetAutoFreeStats,
+} from "./stats"
+export type { AutoFreeRefStats } from "./stats"
 export { FCC_TO_OIMO_PROVIDER, mapFccProvider, fccRefToOimo, parseFccRef } from "./provider-map"
 export { FREE_SETUP_PROVIDERS, freeSetupProvider } from "./setup-providers"
 export type { FreeSetupProvider } from "./setup-providers"
@@ -24,12 +40,14 @@ import { AUTO_PROVIDER_ID, AUTO_FREE_MODEL_ID } from "./catalog"
 import { ProviderID, ModelID } from "../schema"
 import type { Model, Info } from "../provider"
 
-/** Synthetic provider entry so TUI / API can list Auto (free). */
+/** Synthetic provider entry so TUI / API can list Auto Model (free).
+ *  Distinct from autonomy "Auto" (/auto, --se/--autonomy, --spauto/--autosp).
+ *  Note: CLI --auto is permission skip only, not autonomy. */
 export function autoFreeProviderInfo(): Info {
   const model = autoFreeVirtualModel()
   return {
     id: ProviderID.make(AUTO_PROVIDER_ID),
-    name: "Auto",
+    name: "Auto Model",
     source: "custom",
     env: [],
     options: {},
@@ -43,7 +61,7 @@ export function autoFreeVirtualModel(): Model {
   return {
     id: ModelID.make(AUTO_FREE_MODEL_ID),
     providerID: ProviderID.make(AUTO_PROVIDER_ID),
-    name: "Auto (無料)",
+    name: "Auto Model (無料)",
     family: "auto",
     api: {
       id: AUTO_FREE_MODEL_ID,

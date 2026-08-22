@@ -510,6 +510,27 @@ describe("isRetryableTransientError", () => {
     const err400 = Object.assign(new Error("bad req"), { status: 400 })
     expect(isRetryableTransientError(err400)).toBe(false)
   })
+
+  test("plaintext rate-limit message is transient (Auto Model failover)", () => {
+    expect(
+      isRetryableTransientError(
+        new Error("Failed after 3 attempts. Last error: Error from provider (Console): Rate limit exceeded."),
+      ),
+    ).toBe(true)
+  })
+
+  test("AI_RetryError unwraps last underlying 429 for Auto Model failover", () => {
+    const wrapped = new RetryError({
+      message: "Failed after 3 attempts. Last error: Rate limit exceeded",
+      reason: "maxRetriesExceeded",
+      errors: [
+        Object.assign(new Error("rate"), { statusCode: 429 }),
+        Object.assign(new Error("rate"), { statusCode: 429 }),
+        Object.assign(new Error("rate"), { statusCode: 429 }),
+      ],
+    })
+    expect(isRetryableTransientError(wrapped)).toBe(true)
+  })
 })
 
 describe("retryable() with raw Error (Spec ③ P2 regression)", () => {

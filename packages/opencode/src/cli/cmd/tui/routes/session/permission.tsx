@@ -215,7 +215,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const raw = props.request.metadata?.filepath
               const filepath = typeof raw === "string" ? raw : ""
               return {
-                icon: "→",
+                icon: ">",
                 title: `Edit ${normalizePath(filepath)}`,
                 body: <EditBody request={props.request} />,
               }
@@ -231,7 +231,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const fromPattern = typeof props.request.patterns?.[0] === "string" ? props.request.patterns[0] : ""
               const filePath = fromInput || fromPattern
               return {
-                icon: "→",
+                icon: ">",
                 title: `Read ${normalizePath(filePath)}`,
                 body: (
                   <Show when={filePath}>
@@ -277,7 +277,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const raw = data.path
               const dir = typeof raw === "string" ? raw : ""
               return {
-                icon: "→",
+                icon: ">",
                 title: `List ${normalizePath(dir)}`,
                 body: (
                   <Show when={dir}>
@@ -405,7 +405,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
               const patterns = (props.request.patterns ?? []).filter((p): p is string => typeof p === "string")
 
               return {
-                icon: "←",
+                icon: "<",
                 title: `Access external directory ${dir}`,
                 body: (
                   <Show when={patterns.length > 0}>

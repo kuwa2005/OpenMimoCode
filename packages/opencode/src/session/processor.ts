@@ -19,7 +19,13 @@ import { SessionStatus } from "./status"
 import { SessionSummary } from "./summary"
 import type { Provider } from "@/provider"
 import { Provider as ProviderNS } from "@/provider"
-import { isAutoFreeModel, isCommitStreamEvent } from "@/provider/auto-free"
+import {
+  isAutoFreeModel,
+  isCommitStreamEvent,
+  rememberAutoFreeFailure,
+  rememberAutoFreeSuccess,
+  reorderAutoFreeCandidates,
+} from "@/provider/auto-free"
 import { Question } from "@/question"
 import { errorMessage } from "@/util/error"
 import { isRecoverableError } from "@/tool/recoverable"
@@ -868,15 +874,18 @@ export const layer: Layer.Layer<
           if (!isAutoFreeModel(streamInput.model)) {
             yield* drain(streamInput.model, { withSessionRetry: true, catchHalt: true })
           } else {
-            const candidates = yield* provider.resolveAutoFree()
+            // Rank by local excellence stats; short cooldown after rate-limit only
+            // (no sticky last-winner — big-pickle returns when cooldown ends).
+            const candidates = reorderAutoFreeCandidates(yield* provider.resolveAutoFree())
             if (candidates.length === 0) {
               throw new Error(
-                "Auto (無料): 利用可能な無料モデルがありません。OpenCode Zen または無料 API キーを設定してください。",
+                "Auto Model (無料): 利用可能な無料モデルがありません。OpenCode Zen または無料 API キーを設定してください。",
               )
             }
             slog.info("auto-free candidates", {
               count: candidates.length,
               refs: candidates.map((m) => `${m.providerID}/${m.id}`),
+              ranking: "excellence+cooldown",
             })
 
             let lastError: unknown
@@ -905,7 +914,7 @@ export const layer: Layer.Layer<
                 messageID: ctx.assistantMessage.id,
                 sessionID: ctx.sessionID,
                 type: "text",
-                text: `Auto (無料) → ${ref}`,
+                text: `Auto Model (無料) -> ${ref}`,
                 synthetic: true,
                 time: { start: Date.now(), end: Date.now() },
               })
@@ -921,6 +930,7 @@ export const layer: Layer.Layer<
 
               if (Exit.isSuccess(exit)) {
                 succeeded = true
+                rememberAutoFreeSuccess(ref)
                 slog.info("auto-free using", { ref })
                 break
               }
@@ -930,6 +940,7 @@ export const layer: Layer.Layer<
               const retryable = SessionRetry.isRetryableTransientError(lastError)
               if (committed || !retryable || !hasNext) break
 
+              rememberAutoFreeFailure(ref)
               const next = candidates[index + 1]!
               slog.info("auto-free failover", {
                 from: ref,
@@ -940,7 +951,7 @@ export const layer: Layer.Layer<
                 yield* status.set(ctx.sessionID, {
                   type: "retry",
                   attempt: index + 1,
-                  message: `Switching free model → ${next.providerID}/${next.id}`,
+                  message: `Switching free model -> ${next.providerID}/${next.id}`,
                   next: Date.now(),
                 })
               }

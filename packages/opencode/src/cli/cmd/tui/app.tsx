@@ -23,6 +23,7 @@ import semver from "semver"
 import { DialogProvider, useDialog } from "@tui/ui/dialog"
 import { DialogMimoLogin } from "@tui/component/dialog-mimo-login"
 import { DialogAutoFreeSetup } from "@tui/component/dialog-auto-free-setup"
+import { DialogAutoMode } from "@tui/component/dialog-auto-mode"
 import { ErrorComponent } from "@tui/component/error-component"
 import { PluginRouteMissing } from "@tui/component/plugin-route-missing"
 import { ProjectProvider } from "@tui/context/project"
@@ -864,6 +865,17 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         dialog.replace(() => <DialogAutoFreeSetup />)
       },
       category: "provider",
+    },
+    {
+      title: t("tui.command.auto_mode.title"),
+      value: "session.auto_mode",
+      slash: {
+        name: "auto",
+      },
+      onSelect: () => {
+        dialog.replace(() => <DialogAutoMode />)
+      },
+      category: "agent",
     },
     {
       title: t("tui.command.provider.logout.title"),

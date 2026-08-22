@@ -13,6 +13,7 @@ import { renderActorNotification } from "@/inbox/render"
 import { parseReturnHeader } from "@/actor/return-header"
 import { Provider } from "../provider"
 import { ModelID, ProviderID } from "../provider/schema"
+import { isAutoFreeRef, rememberAutoFreeBad, rememberAutoFreeGood } from "@/provider/auto-free"
 import {
   type Tool as AITool,
   type ModelMessage,
@@ -44,6 +45,7 @@ import BUILD_SWITCH from "../session/prompt/build-switch.txt"
 import MAX_STEPS from "../session/prompt/max-steps.txt"
 import PROMPT_COMPOSE from "../session/prompt/compose.txt"
 import PROMPT_AUTONOMY_SE from "../session/prompt/autonomy-se.txt"
+import PROMPT_AUTONOMY_SP from "../session/prompt/autonomy-sp.txt"
 import {
   RECOVERY_PROMPT_MILD,
   RECOVERY_PROMPT_STRONG,
@@ -132,6 +134,29 @@ const SKILL_CATALOG_REMINDER_MARKER = "Skills available in this session:"
 // shell-mode sessions never see a JSON-shaped example (which primes models to
 // emit JSON and crash the shell parser). `memory` has no shell form, so it is
 // always JSON. Exported for unit testing.
+function recordAutoFreeQuality(
+  user: { model: { providerID: string; modelID: string } },
+  assistant: { providerID: string; modelID: string },
+  classification: { type: string },
+) {
+  if (!isAutoFreeRef(user.model.providerID, user.model.modelID)) return
+  if (isAutoFreeRef(assistant.providerID, assistant.modelID)) return
+  const ref = `${assistant.providerID}/${assistant.modelID}`
+  if (
+    classification.type === "think-only" ||
+    classification.type === "invalid" ||
+    classification.type === "failed" ||
+    classification.type === "text-tool-call"
+  ) {
+    rememberAutoFreeBad(ref)
+    return
+  }
+  // Count completed usable answers only — per-tool continues would flood stats.
+  if (classification.type === "final") {
+    rememberAutoFreeGood(ref)
+  }
+}
+
 export function recallHintLines(toolCfg: ToolStyleConfig | undefined): string[] {
   const taskHint =
     resolveInvocationStyle(toolCfg, "task") === "shell" ? "- task list" : `- task({ operation: "list" })`
@@ -951,8 +976,10 @@ export const layer = Layer.effect(
       if (ConfigAutonomy.enabled(cfg)) {
         const activeGoal = yield* goal.get(input.session.id)
         if (activeGoal?.autonomous) {
-          const phaseHint =
-            activeGoal.phase === "hearing"
+          const special = !ConfigAutonomy.hearingFirst(cfg.autonomy)
+          const phaseHint = special
+            ? "\nCurrent mode: SPECIAL (Super Auto) — raise doubts, self-answer, never wait; deliver non-stop with documentary evidence."
+            : activeGoal.phase === "hearing"
               ? "\nCurrent phase: HEARING — clarify and lock requirements before implementation."
               : "\nCurrent phase: EXECUTE — requirements are locked; deliver non-stop with documentary evidence."
           userMessage.parts.unshift({
@@ -960,7 +987,7 @@ export const layer = Layer.effect(
             messageID: userMessage.info.id,
             sessionID: userMessage.info.sessionID,
             type: "text",
-            text: PROMPT_AUTONOMY_SE + phaseHint,
+            text: (special ? PROMPT_AUTONOMY_SP : PROMPT_AUTONOMY_SE) + phaseHint,
             synthetic: true,
           })
         }
@@ -2725,6 +2752,11 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         // counter — do not add a second one. Local to runLoop so a fresh user
         // turn resets it (no cross-message pollution), same as outputLengthContinuations.
         let invalidContinuations = 0
+        // Under autonomy / Super Auto, free models often emit think-only steps;
+        // the default limit of 2 exits earlier than permission-only --auto.
+        const invalidOutputLimit = ConfigAutonomy.enabled(yield* config.get())
+          ? Math.max(INVALID_OUTPUT_CONTINUATION_LIMIT, 8)
+          : INVALID_OUTPUT_CONTINUATION_LIMIT
         // structured-output 专用 retry：上限来自 lastUser.format.retryCount（默认 2），
         // 与 invalidContinuations（generic invalid）分离，互不污染。局部于 runLoop，
         // 新一轮用户 turn 自动归零。
@@ -2958,6 +2990,71 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               sessionID,
             })
 
+          const injectReentry = Effect.fn("SessionPrompt.goalGate.injectReentry")(function* (reason: string) {
+            const count = yield* goal.bumpReact(sessionID)
+            const refreshed = yield* goal.get(sessionID)
+            if (!refreshed || count >= refreshed.maxTurns) {
+              yield* slog.warn("goal hit max turns cap; stopping", {
+                sessionID,
+                condition: active.condition,
+                count,
+              })
+              yield* goal.stopWithReason({
+                sessionID,
+                reason: "budget_turns",
+                lastVerdict: {
+                  ok: false,
+                  reason,
+                  attempt: count,
+                  messageID: judgedMessageID,
+                },
+              })
+              return false
+            }
+            yield* slog.info("goal not satisfied; re-entering", { sessionID, attempt: count })
+            yield* bus.publish(Goal.Event.Updated, {
+              sessionID,
+              goal: {
+                condition: refreshed.condition,
+                react: refreshed.react,
+                startedAt: refreshed.startedAt,
+                costUsd: refreshed.costUsd,
+                maxTurns: refreshed.maxTurns,
+                maxDurationMs: refreshed.maxDurationMs,
+                maxCostUsd: refreshed.maxCostUsd,
+                autonomous: refreshed.autonomous,
+              },
+              lastVerdict: { ok: false, reason, attempt: count, messageID: judgedMessageID },
+            })
+            const reentry = yield* sessions.updateMessage({
+              id: MessageID.ascending(),
+              role: "user" as const,
+              sessionID,
+              agentID: lastUser.agentID,
+              agent: lastUser.agent,
+              model: lastUser.model,
+              tools: lastUser.tools,
+              format: lastUser.format,
+              time: { created: Date.now() },
+            })
+            yield* sessions.updatePart({
+              id: PartID.ascending(),
+              messageID: reentry.id,
+              sessionID,
+              type: "text",
+              synthetic: true,
+              text: [
+                "<system-reminder>",
+                `Your goal is not yet satisfied: "${active.condition}".`,
+                reason,
+                "Keep working toward the goal. Call a concrete tool now — do not stop after announcing the next step.",
+                "Do not stop until it is genuinely met or impossible.",
+                "</system-reminder>",
+              ].join("\n"),
+            } satisfies MessageV2.TextPart)
+            return true
+          })
+
           let verdict: Goal.Verdict & { judgeFailed?: boolean }
           if (autonomous) {
             let resolved: Goal.Verdict | undefined
@@ -2971,21 +3068,22 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               const failures = yield* goal.recordJudgeFailure(sessionID)
               const refreshed = yield* goal.get(sessionID)
               if (!refreshed || failures >= refreshed.judgeMaxRetries) {
-                yield* goal.stopWithReason({
+                // Fail-OPEN to continue (not stop). Rate limits / flaky judges must
+                // not kill Super Auto — old permission-only --auto never had this trap.
+                yield* slog.warn("goal judge unavailable; forcing re-entry", {
                   sessionID,
-                  reason: "judge_failed",
-                  lastVerdict: {
-                    ok: false,
-                    reason: `Judge unavailable after ${failures} attempts.`,
-                    attempt: active.react,
-                    messageID: judgedMessageID,
-                    error: true,
-                  },
+                  failures,
                 })
-                return false
+                return yield* injectReentry(
+                  "The completion judge is temporarily unavailable (rate limit or error). Assume the goal is NOT done and continue with the next concrete tool call.",
+                )
               }
             }
-            if (!resolved) return false
+            if (!resolved) {
+              return yield* injectReentry(
+                "The completion judge returned no verdict. Assume the goal is NOT done and continue.",
+              )
+            }
             verdict = resolved
           } else {
             verdict = yield* runJudge().pipe(
@@ -3018,64 +3116,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             return false
           }
 
-          const count = yield* goal.bumpReact(sessionID)
-          const refreshed = yield* goal.get(sessionID)
-          if (!refreshed || count >= refreshed.maxTurns) {
-            yield* slog.warn("goal hit max turns cap; stopping", {
-              sessionID,
-              condition: active.condition,
-              count,
-            })
-            yield* goal.stopWithReason({
-              sessionID,
-              reason: "budget_turns",
-              lastVerdict: { ...verdict, attempt: count, messageID: judgedMessageID },
-            })
-            return false
-          }
-
-          yield* slog.info("goal not satisfied; re-entering", { sessionID, attempt: count })
-          yield* bus.publish(Goal.Event.Updated, {
-            sessionID,
-            goal: {
-              condition: refreshed.condition,
-              react: refreshed.react,
-              startedAt: refreshed.startedAt,
-              costUsd: refreshed.costUsd,
-              maxTurns: refreshed.maxTurns,
-              maxDurationMs: refreshed.maxDurationMs,
-              maxCostUsd: refreshed.maxCostUsd,
-              autonomous: refreshed.autonomous,
-            },
-            lastVerdict: { ...verdict, attempt: count, messageID: judgedMessageID },
-          })
-          const reentry = yield* sessions.updateMessage({
-            id: MessageID.ascending(),
-            role: "user" as const,
-            sessionID,
-            agentID: lastUser.agentID,
-            agent: lastUser.agent,
-            model: lastUser.model,
-            tools: lastUser.tools,
-            format: lastUser.format,
-            time: { created: Date.now() },
-          })
-          yield* sessions.updatePart({
-            id: PartID.ascending(),
-            messageID: reentry.id,
-            sessionID,
-            type: "text",
-            synthetic: true,
-            text: [
-              "<system-reminder>",
-              `Your goal is not yet satisfied: "${active.condition}".`,
+          return yield* injectReentry(
+            [
               "A judge reviewed the transcript and reported what is still missing:",
               verdict.reason,
-              "Keep working toward the goal. Do not stop until it is genuinely met or impossible.",
-              "</system-reminder>",
             ].join("\n"),
-          } satisfies MessageV2.TextPart)
-          return true
+          )
         })
 
         // think-only (reasoning only) / empty (nothing at all) steps finish with
@@ -3089,7 +3135,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           reason: string
         }) {
           if (input.assistant.error || input.assistant.summary || input.assistant.structured !== undefined) return false
-          if (invalidContinuations >= INVALID_OUTPUT_CONTINUATION_LIMIT) {
+          if (invalidContinuations >= invalidOutputLimit) {
             input.assistant.error = new MessageV2.InvalidOutputError({ message: input.reason }).toObject()
             yield* sessions.updateMessage(input.assistant)
             yield* bus.publish(Session.Event.Error, {
@@ -3100,7 +3146,11 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           }
 
           invalidContinuations++
-          yield* slog.info("auto-continuing invalid output", { attempt: invalidContinuations, reason: input.reason })
+          yield* slog.info("auto-continuing invalid output", {
+            attempt: invalidContinuations,
+            limit: invalidOutputLimit,
+            reason: input.reason,
+          })
           const policy = resolveInvalidOutputPolicy({
             agentName: input.lastUser.agent,
             agentID: input.lastUser.agentID,
@@ -3448,24 +3498,35 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               assistant: lastAssistant,
               parts: lastAssistantMsg?.parts ?? [],
             })
+            recordAutoFreeQuality(lastUser, lastAssistant, classification)
             if (classification.type === "filtered") {
               yield* writeContentFilterError({ assistant: lastAssistant })
               yield* slog.info("exiting loop", { classification: classification.type })
               break
             }
             if (classification.type === "failed") {
+              // InvalidOutputError after think-only exhaustion: prefer goal
+              // re-entry under autonomy instead of permanently stopping.
+              if (
+                lastAssistant.error?.name === "InvalidOutputError" &&
+                (yield* goalGate(lastUser))
+              ) {
+                continue
+              }
               yield* writeModelError({ assistant: lastAssistant, reason: classification.reason })
               yield* slog.info("exiting loop", { classification: classification.type, reason: classification.reason })
               break
             }
             if (classification.type === "text-tool-call") {
               if (yield* autoRetryTextToolCall({ lastUser, assistant: lastAssistant })) continue
+              if (yield* goalGate(lastUser)) continue
               yield* slog.info("exiting loop", { classification: classification.type })
               break
             }
             if (classification.type === "think-only" || classification.type === "invalid") {
               const reason = classification.type === "invalid" ? classification.reason : "think-only"
               if (yield* autoContinueInvalidOutput({ lastUser, assistant: lastAssistant, reason })) continue
+              if (yield* goalGate(lastUser)) continue
               yield* slog.info("exiting loop", { classification: classification.type })
               break
             }
@@ -4005,6 +4066,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 parts: MessageV2.parts(handle.message.id),
                 processResult: result,
               })
+              recordAutoFreeQuality(lastUser, handle.message, forkClassification)
               if (forkClassification.type === "filtered") {
                 yield* writeContentFilterError({ assistant: handle.message })
                 return "break" as const
@@ -4223,6 +4285,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               parts: MessageV2.parts(handle.message.id),
               processResult: result,
             })
+            recordAutoFreeQuality(lastUser, handle.message, classification)
             if (classification.type === "filtered") {
               yield* writeContentFilterError({ assistant: handle.message })
               return "break" as const
@@ -4247,6 +4310,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               const reason = classification.type === "invalid" ? classification.reason : "think-only"
               if (yield* autoContinueInvalidOutput({ lastUser, assistant: handle.message, reason }))
                 return "continue" as const
+              // Exhausted nudges — still let the goal gate keep Super Auto / autonomy alive.
               return "break" as const
             }
 

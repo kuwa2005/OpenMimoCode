@@ -111,7 +111,7 @@ function read(info: ToolProps<typeof ReadTool>) {
   })
   const description = pairs.length ? `[${pairs.map(([key, value]) => `${key}=${value}`).join(", ")}]` : undefined
   inline({
-    icon: "→",
+    icon: ">",
     title: `Read ${file}`,
     ...(description && { description }),
   })
@@ -178,7 +178,7 @@ function task(info: ToolProps<typeof ActorTool>) {
 
 function skill(info: ToolProps<typeof SkillTool>) {
   inline({
-    icon: "→",
+    icon: ">",
     title: `Skill "${info.input.name}"`,
   })
 }

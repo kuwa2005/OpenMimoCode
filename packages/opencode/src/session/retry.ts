@@ -48,6 +48,18 @@ const RETRYABLE_HTTP_STATUS = new Set([429, 500, 502, 503, 504, 529])
 export function isRetryableTransientError(error: unknown): boolean {
   if (!(error instanceof Error)) return false
 
+  // AI SDK wraps exhausted internal retries as AI_RetryError / RetryError.
+  // Auto Model (free) failover uses THIS helper — without unwrapping, a Console
+  // "Rate limit exceeded" after 3 SDK attempts never advances to the next
+  // free candidate and the turn dies on big-pickle alone.
+  const bag = error as { lastError?: unknown; errors?: unknown[] }
+  const nested =
+    bag.lastError ?? (Array.isArray(bag.errors) ? bag.errors[bag.errors.length - 1] : undefined)
+  if (nested && nested !== error && isRetryableTransientError(nested)) return true
+
+  // Plaintext rate-limit (common on wrapped RetryError.message after SDK retries).
+  if (isRateLimitMessage(error.message)) return true
+
   const status =
     (error as { status?: number | string }).status ??
     (error as { statusCode?: number | string }).statusCode ??

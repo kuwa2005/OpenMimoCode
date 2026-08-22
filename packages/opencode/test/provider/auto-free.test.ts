@@ -8,6 +8,15 @@ import {
   mapFccProvider,
   isAutoFreeRef,
   AUTO_FREE_REF,
+  AUTO_FREE_COOLDOWN_MS,
+  rememberAutoFreeFailure,
+  rememberAutoFreeSuccess,
+  rememberAutoFreeGood,
+  rememberAutoFreeBad,
+  reorderAutoFreeCandidates,
+  resetAutoFreeSticky,
+  excellenceScore,
+  snapshotAutoFreeStats,
 } from "../../src/provider/auto-free"
 import { ProviderID, ModelID } from "../../src/provider/schema"
 import type { Model } from "../../src/provider/provider"
@@ -172,6 +181,58 @@ describe("auto-free.failover", () => {
     expect(advanced).toEqual(["a->b"])
     expect(result).toBeInstanceOf(Error)
     expect((result as Error).message).toBe("busy")
+  })
+})
+
+describe("auto-free.stats", () => {
+  test("cold start prefers catalog order (big-pickle first)", () => {
+    resetAutoFreeSticky()
+    const a = model("opencode", "big-pickle")
+    const b = model("nvidia", "nvidia/nemotron-3-super-120b-a12b")
+    const c = model("groq", "llama-3.3-70b-versatile")
+    expect(reorderAutoFreeCandidates([a, b, c]).map((m) => `${m.providerID}/${m.id}`)).toEqual([
+      "opencode/big-pickle",
+      "nvidia/nvidia/nemotron-3-super-120b-a12b",
+      "groq/llama-3.3-70b-versatile",
+    ])
+  })
+
+  test("rate-limit cooldown defers a model briefly, then catalog leader returns", () => {
+    resetAutoFreeSticky()
+    const a = model("opencode", "big-pickle")
+    const b = model("nvidia", "nvidia/nemotron-3-super-120b-a12b")
+    rememberAutoFreeFailure("opencode/big-pickle", 1_000)
+    rememberAutoFreeSuccess("nvidia/nvidia/nemotron-3-super-120b-a12b", 1_000)
+    for (let i = 0; i < 3; i++) rememberAutoFreeGood("nvidia/nvidia/nemotron-3-super-120b-a12b", 1_000)
+
+    expect(
+      reorderAutoFreeCandidates([a, b], 1_000 + 60_000).map((m) => `${m.providerID}/${m.id}`),
+    ).toEqual(["nvidia/nvidia/nemotron-3-super-120b-a12b", "opencode/big-pickle"])
+
+    // After 3m cooldown, big-pickle's catalog prior wins again (few quality samples).
+    expect(
+      reorderAutoFreeCandidates([a, b], 1_000 + AUTO_FREE_COOLDOWN_MS + 1).map((m) => `${m.providerID}/${m.id}`),
+    ).toEqual(["opencode/big-pickle", "nvidia/nvidia/nemotron-3-super-120b-a12b"])
+  })
+
+  test("sustained poor quality demotes a model behind healthier ones", () => {
+    resetAutoFreeSticky()
+    const a = model("opencode", "big-pickle")
+    const b = model("nvidia", "nvidia/nemotron-3-super-120b-a12b")
+    for (let i = 0; i < 12; i++) rememberAutoFreeBad("opencode/big-pickle")
+    for (let i = 0; i < 12; i++) rememberAutoFreeGood("nvidia/nvidia/nemotron-3-super-120b-a12b")
+    expect(reorderAutoFreeCandidates([a, b]).map((m) => `${m.providerID}/${m.id}`)).toEqual([
+      "nvidia/nvidia/nemotron-3-super-120b-a12b",
+      "opencode/big-pickle",
+    ])
+  })
+
+  test("excellenceScore rises with good outcomes", () => {
+    resetAutoFreeSticky()
+    expect(excellenceScore(undefined, 0)).toBeGreaterThan(excellenceScore(undefined, 1))
+    rememberAutoFreeGood("opencode/big-pickle")
+    const snap = snapshotAutoFreeStats()
+    expect(excellenceScore(snap.refs["opencode/big-pickle"], 0)).toBeGreaterThan(excellenceScore(undefined, 0))
   })
 })
 
