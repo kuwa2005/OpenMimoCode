@@ -209,7 +209,7 @@ describe("auto-free.stats", () => {
       reorderAutoFreeCandidates([a, b], 1_000 + 60_000).map((m) => `${m.providerID}/${m.id}`),
     ).toEqual(["nvidia/nvidia/nemotron-3-super-120b-a12b", "opencode/big-pickle"])
 
-    // After 3m cooldown, big-pickle's catalog prior wins again (few quality samples).
+    // After 15m cooldown, big-pickle's catalog prior wins again (few quality samples).
     expect(
       reorderAutoFreeCandidates([a, b], 1_000 + AUTO_FREE_COOLDOWN_MS + 1).map((m) => `${m.providerID}/${m.id}`),
     ).toEqual(["opencode/big-pickle", "nvidia/nvidia/nemotron-3-super-120b-a12b"])

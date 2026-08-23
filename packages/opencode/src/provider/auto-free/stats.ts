@@ -12,7 +12,7 @@ import fs from "fs"
 import path from "path"
 import { Global } from "@/global"
 
-export const AUTO_FREE_COOLDOWN_MS = 3 * 60 * 1000
+export const AUTO_FREE_COOLDOWN_MS = 15 * 60 * 1000
 
 export type AutoFreeRefStats = {
   /** Pre-commit stream finished without error */

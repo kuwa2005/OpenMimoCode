@@ -33,6 +33,7 @@ import {
   autoFreeProviderInfo,
   isAutoFreeModel,
   resolveAutoFreeCandidates,
+  reorderAutoFreeCandidates,
 } from "./auto-free"
 
 import * as ProviderTransform from "./transform"
@@ -1863,10 +1864,12 @@ const layer: Layer.Layer<
     const resolveAutoFree = Effect.fn("Provider.resolveAutoFree")(function* () {
       const cfg = yield* config.get()
       const s = yield* InstanceState.get(state)
-      return resolveAutoFreeCandidates({
-        fallbacks: cfg.auto_free?.fallbacks,
-        providers: s.providers,
-      })
+      return reorderAutoFreeCandidates(
+        resolveAutoFreeCandidates({
+          fallbacks: cfg.auto_free?.fallbacks,
+          providers: s.providers,
+        }),
+      )
     })
 
     const resolveModelRef = Effect.fn("Provider.resolveModelRef")(function* (
