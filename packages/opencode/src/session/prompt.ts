@@ -35,6 +35,7 @@ import { Config } from "@/config"
 import * as ConfigAutonomy from "@/config/autonomy"
 import { isMemoryWriteEnabled } from "@/memory/write-gate"
 import { Global } from "@/global"
+import { NotFoundError } from "@/storage"
 import { Bus } from "../bus"
 import { ProviderTransform } from "../provider"
 import { SystemPrompt } from "./system"
@@ -266,6 +267,8 @@ const elog = EffectLogger.create({ service: "session.prompt" })
 export interface Interface {
   readonly cancel: (sessionID: SessionID) => Effect.Effect<void>
   readonly prompt: (input: PromptInput) => Effect.Effect<MessageV2.WithParts>
+  readonly recovery: (input: { sessionID: SessionID; agentID?: string }) => Effect.Effect<RecoveryCandidate[]>
+  readonly resume: (input: ResumeTurnInput) => Effect.Effect<MessageV2.WithParts, InstanceType<typeof NotFoundError>>
   readonly loop: (input: z.infer<typeof LoopInput>) => Effect.Effect<MessageV2.WithParts>
   readonly shell: (input: ShellInput) => Effect.Effect<MessageV2.WithParts>
   readonly command: (input: CommandInput) => Effect.Effect<MessageV2.WithParts>
@@ -273,6 +276,19 @@ export interface Interface {
   readonly sweepOrphanAssistants: (sessionID: SessionID, immediate?: boolean) => Effect.Effect<void>
   readonly sweepOrphanToolParts: (sessionID: SessionID) => Effect.Effect<void>
   readonly predict: (input: { sessionID: SessionID }) => Effect.Effect<string>
+}
+
+export interface RecoveryCandidate {
+  assistantMessageID: MessageID
+  parentMessageID: MessageID
+  created: number
+}
+
+export interface ResumeTurnInput {
+  sessionID: SessionID
+  assistantMessageID: MessageID
+  agentID?: string
+  task_id?: string
 }
 
 export class Service extends Context.Service<Service, Interface>()("@opencode/SessionPrompt") {}
@@ -2737,6 +2753,39 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       throw new Error("Impossible")
     })
 
+    const recovery = Effect.fn("SessionPrompt.recovery")(function* (input: { sessionID: SessionID; agentID?: string }) {
+      if ((yield* status.get(input.sessionID)).type !== "idle") return []
+      const msgs = yield* sessions.messages({ sessionID: input.sessionID, agentID: input.agentID ?? "main" })
+      const candidates: RecoveryCandidate[] = []
+      for (const [index, msg] of msgs.entries()) {
+        if (msg.info.role !== "assistant" || "completed" in msg.info.time) continue
+        const assistant = msg.info
+        if (!msgs.some((parent) => parent.info.role === "user" && parent.info.id === assistant.parentID)) continue
+        if (msgs.slice(index + 1).some((later) => later.info.role === "user" || later.info.role === "assistant")) continue
+        candidates.push({
+          assistantMessageID: assistant.id,
+          parentMessageID: assistant.parentID,
+          created: assistant.time.created,
+        })
+      }
+      return candidates
+    })
+
+    const abandonRecoveredAssistant = Effect.fn("SessionPrompt.abandonRecoveredAssistant")(function* (input: {
+      sessionID: SessionID
+      assistantMessageID: MessageID
+      agentID?: string
+    }) {
+      const messages = yield* sessions.messages({ sessionID: input.sessionID, agentID: input.agentID ?? "main" })
+      const message = messages.find((item) => item.info.id === input.assistantMessageID)
+      if (!message || message.info.role !== "assistant" || "completed" in message.info.time) return
+      yield* sessions.updateMessage({
+        ...message.info,
+        time: { ...message.info.time, completed: Date.now() },
+        error: new MessageV2.AbortedError({ message: "Abandoned: resumed as a new assistant turn" }).toObject(),
+      })
+    })
+
     const runLoop: (
       sessionID: SessionID,
       agentID?: string,
@@ -4031,6 +4080,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   system: additions,
                   prebuiltSystem,
                   messages: [...modelMsgs, ...(isLastStep ? [{ role: "user" as const, content: MAX_STEPS }] : [])],
+                  mergeTurnContextIntoLastUser: true,
                   tools,
                   activeTools,
                   model,
@@ -4197,6 +4247,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               system: additions,
               prebuiltSystem,
               messages: [...modelMsgs, ...(isLastStep ? [{ role: "user" as const, content: MAX_STEPS }] : [])],
+              mergeTurnContextIntoLastUser: true,
               tools,
               activeTools,
               model,
@@ -4859,9 +4910,43 @@ NOTE: At any point in time through this workflow you should feel free to ask the
       return result
     })
 
+    const resume = Effect.fn("SessionPrompt.resume")(function* (input: ResumeTurnInput) {
+      yield* state.assertNotBusy(input.sessionID)
+      const candidates = yield* recovery({ sessionID: input.sessionID, agentID: input.agentID })
+      const candidate = candidates.find((item) => item.assistantMessageID === input.assistantMessageID)
+      if (candidate === undefined) {
+        return yield* Effect.fail(
+          new NotFoundError({
+            message: "No resumable interrupted turn found for assistant message " + input.assistantMessageID,
+          }),
+        )
+      }
+      const agentID = input.agentID ?? "main"
+      return yield* state.ensureRunning(
+        input.sessionID,
+        agentID,
+        lastAssistant(input.sessionID, agentID),
+        runLoop(input.sessionID, agentID, input.task_id).pipe(
+          Effect.ensuring(
+            abandonRecoveredAssistant({ sessionID: input.sessionID, assistantMessageID: input.assistantMessageID, agentID }).pipe(
+              Effect.catchCause((cause) =>
+                elog.warn("recovered-assistant-abandon-failed", {
+                  sessionID: input.sessionID,
+                  messageID: input.assistantMessageID,
+                  cause,
+                }),
+              ),
+            ),
+          ),
+        ),
+      )
+    })
+
     const impl = Service.of({
       cancel,
       prompt,
+      recovery,
+      resume,
       loop,
       shell,
       command,

@@ -197,6 +197,19 @@ export function Session() {
     return messages().findLast((x) => x.role === "assistant")
   })
 
+  const recoveryCandidate = createMemo(() => {
+    const message = lastAssistant()
+    if (!message || currentAgentID() !== "main") return undefined
+    return sync.data.session_recovery[route.sessionID]?.find(
+      (candidate) => candidate.assistantMessageID === message.id,
+    )
+  })
+
+  const canRecover = createMemo(() => {
+    const status = sync.data.session_status[route.sessionID]
+    return Boolean(recoveryCandidate()) && status?.type !== "busy" && status?.type !== "retry"
+  })
+
   const dimensions = useTerminalDimensions()
   const [sidebar, setSidebar] = kv.signal<SidebarPreference>("sidebar", "auto")
   const [conceal, setConceal] = createSignal(true)
@@ -491,7 +504,56 @@ export function Session() {
 
   const command = useCommandDialog()
   const t = useLanguage().t
+  const recoveryErrorMessage = (error: unknown) => {
+    const message = error instanceof Error ? error.message : String(error)
+    return /busy|409/i.test(message) ? t("tui.toast.session.recover.busy") : message
+  }
+
+  const recover = async (assistantMessageID?: string) => {
+    const candidates = await sdk.client.session.recovery(
+      { sessionID: route.sessionID },
+      { throwOnError: true },
+    )
+    const candidate = assistantMessageID
+      ? candidates.data?.find((item) => item.assistantMessageID === assistantMessageID)
+      : candidates.data?.at(-1)
+    if (!candidate) {
+      toast.show({ message: t("tui.toast.session.recover.none"), variant: "info" })
+      return
+    }
+    await sdk.client.session.resume(
+      { sessionID: route.sessionID, assistantMessageID: candidate.assistantMessageID },
+      { throwOnError: true },
+    )
+    sync.set("session_recovery_active", route.sessionID, candidate.assistantMessageID)
+    toast.show({ message: t("tui.toast.session.recover.started"), variant: "info" })
+  }
+
   command.register(() => [
+    {
+      title: t("tui.command.session.recover.title"),
+      value: "session.recover",
+      suggested: canRecover(),
+      category: "session",
+      slash: {
+        name: "recover",
+      },
+      onSelect: async (dialog) => {
+        try {
+          const candidate = recoveryCandidate()
+          const status = sync.data.session_status[route.sessionID]
+          if (status?.type === "busy" || status?.type === "retry") {
+            toast.show({ message: t("tui.toast.session.recover.busy"), variant: "info" })
+          } else await recover(candidate?.assistantMessageID)
+        } catch (error) {
+          toast.show({
+            message: recoveryErrorMessage(error),
+            variant: "error",
+          })
+        }
+        dialog.clear()
+      },
+    },
     {
       title: t(session()?.share?.url ? "tui.command.session.share.copy_link" : "tui.command.session.share.title"),
       value: "session.share",
@@ -1432,6 +1494,12 @@ export function Session() {
                         last={lastAssistant()?.id === message.id}
                         message={message as AssistantMessage}
                         parts={sync.data.part[message.id] ?? []}
+                        recoverable={
+                          recoveryCandidate()?.assistantMessageID === message.id &&
+                          sync.session.status(route.sessionID) === "idle"
+                        }
+                        recovering={sync.data.session_recovery_active[route.sessionID] === message.id}
+                        onRecover={recover}
                       />
                     </Match>
                   </Switch>
@@ -1704,7 +1772,14 @@ function UserMessage(props: {
   )
 }
 
-function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; last: boolean }) {
+function AssistantMessage(props: {
+  message: AssistantMessage
+  parts: Part[]
+  last: boolean
+  recoverable: boolean
+  recovering: boolean
+  onRecover: (assistantMessageID: string) => Promise<void>
+}) {
   const ctx = use()
   const local = useLocal()
   const { theme } = useTheme()
@@ -1713,6 +1788,7 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
   const renderer = useRenderer()
   const t = useLanguage().t
   const [copyHover, setCopyHover] = createSignal(false)
+  const [recoverHover, setRecoverHover] = createSignal(false)
   const messages = createMemo(() => sync.data.message[props.message.sessionID]?.[props.message.agentID ?? "main"] ?? [])
   const model = createMemo(() => {
     const resolved = isFreeApiModel({ providerID: props.message.providerID, modelID: props.message.modelID })
@@ -1745,6 +1821,7 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
   // while a last message is streaming (finish undefined) or for the final/aborted
   // message, which preserves non-orchestrator behavior.
   const showFooter = createMemo(() => {
+    if (props.recovering) return true
     if (props.message.error?.name === "MessageAbortedError") return true
     if (final()) return true
     return props.last && props.message.finish !== "tool-calls"
@@ -1884,7 +1961,36 @@ function AssistantMessage(props: { message: AssistantMessage; parts: Part[]; las
                   {" | interrupted"}
                 </text>
               </Show>
+              <Show when={props.recovering}>
+                <text wrapMode="none" fg={theme.warning}>
+                  {" | "}
+                  {t("tui.session.recovering")}
+                </text>
+              </Show>
             </box>
+            <Show when={props.recoverable}>
+              <box
+                onMouseOver={() => setRecoverHover(true)}
+                onMouseOut={() => setRecoverHover(false)}
+                onMouseUp={() => {
+                  void props.onRecover(props.message.id).catch((error) => {
+                    toast.show({
+                      message:
+                        error instanceof Error && /busy|409/i.test(error.message)
+                          ? t("tui.toast.session.recover.busy")
+                          : error instanceof Error
+                            ? error.message
+                            : t("tui.toast.session.recover.failed"),
+                      variant: "error",
+                    })
+                  })
+                }}
+              >
+                <text wrapMode="none" fg={recoverHover() ? theme.warning : theme.textMuted}>
+                  {"↻ /recover"}
+                </text>
+              </box>
+            </Show>
             <Show when={props.message.time.completed}>
               <box
                 onMouseOver={() => setCopyHover(true)}

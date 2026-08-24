@@ -657,6 +657,408 @@ it.live("loop calls LLM and returns assistant message", () =>
   ),
 )
 
+it.live("locks system and harness to the first user query", () =>
+  provideTmpdirServer(
+    Effect.fnUntraced(function* ({ llm }) {
+      const prompt = yield* SessionPrompt.Service
+      const sessions = yield* Session.Service
+      const chat = yield* sessions.create({ title: "Pinned" })
+
+      yield* prompt.prompt({
+        sessionID: chat.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        system: "first system prompt",
+        systemMode: "replace-agent",
+        harness: "codex",
+        parts: [{ type: "text", text: "first query" }],
+      })
+
+      const synthetic = yield* sessions.updateMessage({
+        id: MessageID.ascending(),
+        sessionID: chat.id,
+        role: "user",
+        time: { created: Date.now() },
+        agent: "build",
+        model: ref,
+      })
+      yield* sessions.updatePart({
+        id: PartID.ascending(),
+        messageID: synthetic.id,
+        sessionID: chat.id,
+        type: "text",
+        text: "synthetic recovery",
+        synthetic: true,
+      })
+      yield* llm.text("recovered")
+      yield* prompt.loop({ sessionID: chat.id })
+
+      const input = (yield* llm.inputs)[0]
+      const request = JSON.stringify(input)
+      expect(request).not.toContain("You are Codex")
+      expect(request).toContain("first system prompt")
+      expect((input.tools as Array<Record<string, unknown>>).map(wireToolName)).toEqual(["exec"])
+
+      yield* prompt.prompt({
+        sessionID: chat.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        system: "second system prompt",
+        systemMode: "append",
+        harness: "default",
+        parts: [{ type: "text", text: "second query" }],
+      })
+
+      const users = (yield* sessions.messages({ sessionID: chat.id }))
+        .map((message) => message.info)
+        .filter((message): message is MessageV2.User => message.role === "user")
+      expect(users.map((message) => message.harness)).toEqual(["codex", undefined, "codex"])
+      expect(users.map((message) => message.system)).toEqual(["first system prompt", undefined, "first system prompt"])
+      expect(users.map((message) => message.systemMode)).toEqual(["replace-agent", undefined, "replace-agent"])
+      expect((yield* sessions.get(chat.id)).prompt).toEqual({
+        system: "first system prompt",
+        systemMode: "replace-agent",
+        harness: "codex",
+      })
+      expect((yield* sessions.create({ parentID: chat.id })).prompt).toEqual({
+        system: "first system prompt",
+        systemMode: "replace-agent",
+        harness: "codex",
+      })
+
+      const legacy = yield* sessions.create({ title: "Legacy" })
+      const legacyFirst = yield* sessions.updateMessage({
+        id: MessageID.ascending(),
+        sessionID: legacy.id,
+        role: "user",
+        time: { created: Date.now() },
+        agent: "build",
+        model: ref,
+        system: "legacy first system",
+        harness: "default",
+      })
+      yield* sessions.updatePart({
+        id: PartID.ascending(),
+        messageID: legacyFirst.id,
+        sessionID: legacy.id,
+        type: "text",
+        text: "legacy real query",
+      })
+      const legacySynthetic = yield* sessions.updateMessage({
+        id: MessageID.ascending(),
+        sessionID: legacy.id,
+        role: "user",
+        time: { created: Date.now() },
+        agent: "build",
+        model: ref,
+      })
+      yield* sessions.updatePart({
+        id: PartID.ascending(),
+        messageID: legacySynthetic.id,
+        sessionID: legacy.id,
+        type: "text",
+        text: "legacy synthetic recovery",
+        synthetic: true,
+      })
+      expect(yield* sessions.resolvePrompt({ sessionID: legacy.id })).toEqual({
+        system: "legacy first system",
+        systemMode: "append",
+        harness: "default",
+      })
+      expect((yield* sessions.get(legacy.id)).prompt).toBeUndefined()
+      expect(
+        yield* sessions.resolvePrompt({
+          sessionID: legacy.id,
+          fallback: { system: "wrong fallback", harness: "codex" },
+        }),
+      ).toEqual({
+        system: "legacy first system",
+        systemMode: "append",
+        harness: "default",
+      })
+    }),
+    { git: true, config: providerCfg },
+  ),
+)
+
+it.live("does not pin an empty parent while creating a child", () =>
+  provideTmpdirServer(
+    Effect.fnUntraced(function* () {
+      const prompt = yield* SessionPrompt.Service
+      const sessions = yield* Session.Service
+      const parent = yield* sessions.create({ title: "Empty parent" })
+      const child = yield* sessions.create({ parentID: parent.id, title: "Early child" })
+      const fork = yield* sessions.fork({ sessionID: parent.id })
+
+      expect((yield* sessions.get(parent.id)).prompt).toBeUndefined()
+      expect(child.prompt).toBeUndefined()
+      expect(fork.prompt).toBeUndefined()
+
+      const empty = yield* prompt.prompt({
+        sessionID: parent.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        system: "empty system",
+        harness: "codex",
+        parts: [{ type: "text", text: "   " }],
+      })
+      expect(empty.parts).toEqual([])
+      expect((yield* sessions.get(parent.id)).prompt).toBeUndefined()
+
+      yield* prompt.prompt({
+        sessionID: parent.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        system: "synthetic system",
+        harness: "codex",
+        parts: [{ type: "text", text: "synthetic cron", synthetic: true }],
+      })
+      expect((yield* sessions.get(parent.id)).prompt).toBeUndefined()
+
+      yield* prompt.shell({
+        sessionID: parent.id,
+        agent: "build",
+        model: ref,
+        command: "echo before-query",
+      })
+      expect((yield* sessions.get(parent.id)).prompt).toBeUndefined()
+
+      yield* prompt.prompt({
+        sessionID: parent.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        system: "parent system",
+        harness: "default",
+        parts: [{ type: "text", text: "parent first query" }],
+      })
+      yield* prompt.prompt({
+        sessionID: child.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        system: "child system",
+        harness: "codex",
+        parts: [{ type: "text", text: "child first query" }],
+      })
+
+      expect((yield* sessions.get(parent.id)).prompt).toEqual({ system: "parent system", systemMode: "append", harness: "default" })
+      expect((yield* sessions.get(child.id)).prompt).toEqual({ system: "child system", systemMode: "append", harness: "codex" })
+    }),
+    { git: true, config: providerCfg },
+  ),
+)
+
+it.live("persists auto as its own harness mode", () =>
+  provideTmpdirServer(
+    Effect.fnUntraced(function* () {
+      const prompt = yield* SessionPrompt.Service
+      const sessions = yield* Session.Service
+      const explicit = yield* sessions.create({ title: "Explicit auto" })
+      const omitted = yield* sessions.create({ title: "Omitted harness" })
+
+      yield* prompt.prompt({
+        sessionID: explicit.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        harness: "auto",
+        parts: [{ type: "text", text: "first explicit auto query" }],
+      })
+      yield* prompt.prompt({
+        sessionID: explicit.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        harness: "codex",
+        parts: [{ type: "text", text: "later override" }],
+      })
+      yield* prompt.prompt({
+        sessionID: omitted.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        parts: [{ type: "text", text: "first omitted query" }],
+      })
+
+      expect((yield* sessions.get(explicit.id)).prompt?.harness).toBe("auto")
+      expect((yield* sessions.get(omitted.id)).prompt?.harness).toBe("auto")
+      const users = (yield* sessions.messages({ sessionID: explicit.id }))
+        .map((message) => message.info)
+        .filter((message): message is MessageV2.User => message.role === "user")
+      expect(users.map((message) => message.harness)).toEqual(["auto", "auto"])
+    }),
+    { git: true, config: providerCfg },
+  ),
+)
+
+it.live("restores the pinned prompt after compaction without sending it to the summarizer", () =>
+  provideTmpdirServer(
+    Effect.fnUntraced(function* ({ llm }) {
+      const prompt = yield* SessionPrompt.Service
+      const sessions = yield* Session.Service
+      const compaction = yield* SessionCompaction.Service
+      const chat = yield* sessions.create({ title: "Compaction prompt" })
+      const marker = "SESSION_SYSTEM_MUST_SKIP_COMPACTION"
+
+      const first = yield* prompt.prompt({
+        sessionID: chat.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        system: marker,
+        systemMode: "replace-agent",
+        harness: "codex",
+        parts: [{ type: "text", text: "first query" }],
+      })
+
+      yield* llm.text("summary")
+      expect(
+        yield* compaction.process({
+          parentID: first.info.id,
+          messages: yield* sessions.messages({ sessionID: chat.id }),
+          sessionID: chat.id,
+          auto: false,
+        }),
+      ).toBe("continue")
+      expect(JSON.stringify((yield* llm.inputs)[0])).not.toContain(marker)
+
+      yield* prompt.prompt({
+        sessionID: chat.id,
+        agent: "build",
+        model: ref,
+        noReply: true,
+        parts: [{ type: "text", text: "after compaction" }],
+      })
+      yield* llm.text("continued")
+      yield* prompt.loop({ sessionID: chat.id })
+
+      const request = (yield* llm.inputs)[1]
+      expect(JSON.stringify(request)).toContain(marker)
+      expect((request.tools as Array<Record<string, unknown>>).map(wireToolName)).toEqual(["exec"])
+      expect((yield* sessions.get(chat.id)).prompt).toEqual({
+        system: marker,
+        systemMode: "replace-agent",
+        harness: "codex",
+      })
+    }),
+    { git: true, config: providerCfg },
+  ),
+)
+
+it.live("serializes concurrent first-query pinning", () =>
+  provideTmpdirServer(
+    Effect.fnUntraced(function* () {
+      const prompt = yield* SessionPrompt.Service
+      const sessions = yield* Session.Service
+      const session = yield* sessions.create({ title: "Concurrent pin" })
+
+      yield* Effect.all(
+        [
+          prompt.prompt({
+            sessionID: session.id,
+            agent: "build",
+            model: ref,
+            noReply: true,
+            system: "system a",
+            harness: "codex",
+            parts: [{ type: "text", text: "query a" }],
+          }),
+          prompt.prompt({
+            sessionID: session.id,
+            agent: "build",
+            model: ref,
+            noReply: true,
+            system: "system b",
+            harness: "default",
+            parts: [{ type: "text", text: "query b" }],
+          }),
+        ],
+        { concurrency: "unbounded" },
+      )
+
+      const pinned = (yield* sessions.get(session.id)).prompt
+      const users = (yield* sessions.messages({ sessionID: session.id }))
+        .map((message) => message.info)
+        .filter((message): message is MessageV2.User => message.role === "user")
+      expect(pinned).toBeDefined()
+      expect(users).toHaveLength(2)
+      expect(users.every((message) => message.system === pinned?.system)).toBe(true)
+      expect(users.every((message) => message.systemMode === pinned?.systemMode)).toBe(true)
+      expect(users.every((message) => message.harness === pinned?.harness)).toBe(true)
+    }),
+    { git: true, config: providerCfg },
+  ),
+)
+
+it.live("resume continues an incomplete assistant without creating or rewriting a user message", () =>
+  provideTmpdirServer(
+    Effect.fnUntraced(function* ({ llm }) {
+      const prompt = yield* SessionPrompt.Service
+      const sessions = yield* Session.Service
+      const chat = yield* sessions.create({
+        title: "Pinned",
+        permission: [{ permission: "*", pattern: "*", action: "allow" }],
+      })
+      const seeded = yield* seed(chat.id)
+      const before = yield* sessions.messages({ sessionID: chat.id })
+      yield* llm.text("world")
+
+      const candidate = yield* prompt.recovery({ sessionID: chat.id })
+      expect(candidate).toEqual([{ assistantMessageID: seeded.assistant.id, parentMessageID: seeded.user.id, created: expect.any(Number) }])
+      const result = yield* prompt.resume({
+        sessionID: chat.id,
+        assistantMessageID: seeded.assistant.id,
+      })
+
+      const after = yield* sessions.messages({ sessionID: chat.id })
+      expect(after.filter((message) => message.info.role === "user")).toHaveLength(1)
+      expect(after.length).toBe(before.length + 1)
+      expect(after.find((message) => message.info.id === seeded.assistant.id)?.info).toMatchObject(seeded.assistant)
+      expect(result.info.role).toBe("assistant")
+      expect(result.info.id).not.toBe(seeded.assistant.id)
+      expect(result.parts.some((part) => part.type === "text" && part.text === "world")).toBe(true)
+    }),
+    { git: true, config: providerCfg },
+  ),
+)
+
+it.live("loop does not inject dynamic system prompt additions", () =>
+  withoutDynamicSystemPrompt(() =>
+    provideTmpdirServer(
+      Effect.fnUntraced(function* ({ llm }) {
+        const prompt = yield* SessionPrompt.Service
+        const sessions = yield* Session.Service
+        const marker = "dynamic-instruction-marker"
+        yield* Effect.promise(() => Bun.write(path.join(Instance.directory, "AGENTS.md"), marker))
+        const chat = yield* sessions.create({
+          title: "No cwd",
+          permission: [{ permission: "*", pattern: "*", action: "allow" }],
+        })
+        yield* prompt.prompt({
+          sessionID: chat.id,
+          agent: "build",
+          model: ref,
+          noReply: true,
+          parts: [{ type: "text", text: "hello" }],
+        })
+        yield* llm.text("world")
+
+        yield* prompt.loop({ sessionID: chat.id })
+
+        const inputs = JSON.stringify(yield* llm.inputs)
+        expect(inputs).not.toContain("Working directory:")
+        expect(inputs).not.toContain(marker)
+      }),
+      { git: true, config: providerCfg },
+    ),
+  ),
+)
+
 it.live("static loop returns assistant text through local provider", () =>
   provideTmpdirServer(
     Effect.fnUntraced(function* ({ llm }) {
