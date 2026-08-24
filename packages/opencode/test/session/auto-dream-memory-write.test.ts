@@ -4,6 +4,7 @@ import { eq } from "drizzle-orm"
 import { Bus } from "../../src/bus"
 import { Config } from "../../src/config"
 import { AutoDream } from "../../src/session/auto-dream"
+import { shouldAutoEvolve } from "../../src/session/auto-evolve"
 import { Session as SessionNs } from "../../src/session"
 import { SessionTable } from "../../src/session/session.sql"
 import { Database } from "../../src/storage"
@@ -106,6 +107,34 @@ describe("shouldAutoDistill × memory write switch", () => {
           expect(yield* AutoDream.shouldAutoDistill(cfg)).toBe(false)
         }),
       { outsideGit: true, config: { distill: { auto: true }, memory: { disable_write: true } } },
+    ),
+  )
+})
+
+describe("shouldAutoEvolve × memory write switch", () => {
+  it.live(
+    "disable_write: true → no auto evolve, even on a project old enough to be due",
+    provideTmpdirInstance(
+      () =>
+        Effect.gen(function* () {
+          yield* seedOldProject()
+          const cfg = yield* (yield* Config.Service).get()
+          expect(yield* shouldAutoEvolve(cfg)).toBe(false)
+        }),
+      { outsideGit: true, config: { memory: { disable_write: true } } },
+    ),
+  )
+
+  it.live(
+    "disable_write: true beats an explicit evolve.auto: true",
+    provideTmpdirInstance(
+      () =>
+        Effect.gen(function* () {
+          yield* seedOldProject()
+          const cfg = yield* (yield* Config.Service).get()
+          expect(yield* shouldAutoEvolve(cfg)).toBe(false)
+        }),
+      { outsideGit: true, config: { evolve: { auto: true }, memory: { disable_write: true } } },
     ),
   )
 })

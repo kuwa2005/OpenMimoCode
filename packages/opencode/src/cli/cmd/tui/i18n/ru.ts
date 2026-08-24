@@ -276,6 +276,10 @@ export const dict = {
     "вручную консолидировать память проекта из memory-файлов и сырой траектории",
   "tui.slash.distill.description":
     "найти повторяющиеся workflow в недавней работе и упаковать их в skills, субагентов или команды",
+  "tui.slash.evolve.description":
+    "Self Improvement Session: skills, backlog, friction/HAC и AI-to-AI briefs для эволюции oimo",
+  "tui.slash.self-improve.description":
+    "алиас /evolve — запустить Self Improvement Session",
   "tui.slash.goal.description":
     "задать цель с условием остановки; выполняется, пока судья не подтвердит. /goal clear для отмены",
   "tui.slash.deep-research.description":

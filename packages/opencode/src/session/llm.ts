@@ -241,6 +241,8 @@ export type StreamInput = {
   retries?: number
   toolChoice?: "auto" | "required" | "none"
   agentID?: string
+  /** When true, skip LLM-layer persistent capacity retry — SessionRetry owns visible backoff. */
+  skipPersistentRetry?: boolean
 }
 
 export type StreamRequest = StreamInput & {
@@ -835,12 +837,17 @@ const live: Layer.Layer<
                 })
               )
 
-              const result = yield* streamWithTelemetry.pipe(
-                Effect.retry({
-                  while: isTransientCapacityError,
-                  schedule: persistentRetrySchedule,
-                }),
-              )
+              // SessionRetry owns long-haul visible backoff when the processor
+              // opts in (Auto Model / normal turns). Keep this silent LLM layer
+              // for quick blips only when SessionRetry is not in play.
+              const result = input.skipPersistentRetry
+                ? yield* streamWithTelemetry
+                : yield* streamWithTelemetry.pipe(
+                    Effect.retry({
+                      while: isTransientCapacityError,
+                      schedule: persistentRetrySchedule,
+                    }),
+                  )
 
               // Structurally identical to the pre-guard stream: a bare scoped
               // stream over the provider's fullStream. No per-event combinator, no

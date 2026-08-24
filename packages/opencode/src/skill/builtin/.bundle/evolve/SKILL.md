@@ -1,150 +1,92 @@
 ---
 name: evolve
-description: Use when you want to modify ANY aspect of yourself — your capabilities (new/overridden tools), your behavior (hooks that intercept every tool call, LLM request, session and subagent lifecycle), your knowledge (skills that persist across sessions), your orchestration (workflow scripts), or even your UI (TUI panels, commands, dialogs). Nothing about you is fixed: every layer from what tools you expose, to how you react to events, to what the user sees on screen is rewritable through files in .oimo/. Use proactively — repeated manual sequence 3+ times, repeated user correction, durable project knowledge, or any "I wish I could..." moment is a trigger to evolve.
+description: Use when you want to modify ANY aspect of yourself — tools, hooks, knowledge skills (living knowledge base), workflows, UI — or when durable learnings should become skills, when oimo-the-product needs an AI-to-AI improvement brief under .oimo/evolve/briefs/, when friction/Human Attention Cost warrants analysis, or when the Self Improvement Backlog should be updated. Use proactively on repeated sequences, user corrections, "I wish I could…", or time-sink patterns. For a full Self Improvement Session run /evolve or /self-improve.
 ---
 
-# Evolve — Total Self-Modification
+# Evolve — Continuous Self-Evolution
 
-Every layer of you is rewritable by writing files to `.oimo/` (reload semantics differ per layer — see File Locations):
+You are not only a coder. You observe your own work, crystallize knowledge, quantify
+waste (especially **Human Attention Cost**), and propose improvements.
 
-- **What you can do** — create tools, or override any built-in (bash, read, edit, ...) with your own implementation
-- **How you behave** — hooks intercept everything: every tool call (block/rewrite args/rewrite output), every LLM request (system prompt, message list, temperature, headers), every session and subagent lifecycle event (cancel a run before it starts, gate a subagent's delivery and force it to redo work, inspect full trajectories after each step)
-- **What you know** — skills persist domain knowledge across sessions
-- **How you orchestrate** — workflow scripts encode multi-agent pipelines deterministically
-- **What the user sees** — TUI plugins add panels, commands, dialogs, routes to the interface itself
+Full pipeline: `/evolve` or `/self-improve` (same Self Improvement Session).
 
-This skill is not documentation — it is a standing instruction to **notice when you should evolve, and act on it**.
-
-## When to evolve (triggers)
-
-Act on these signals — don't wait for the user to ask:
-
-| Signal | Action |
-|--------|--------|
-| You ran the same bash/API sequence 3+ times (this or past sessions) | Wrap it into a **tool** |
-| You keep making the same mistake, or the user keeps correcting the same behavior | Add a **hook** to block/fix it structurally |
-| You learned non-obvious project knowledge that future sessions will need | Write a **skill** to persist it |
-| A built-in tool's behavior conflicts with project needs | **Override** it (same-name tool) |
-| A workflow you hand-orchestrated worked well and may repeat | Save it as a **workflow** script |
-
-Before creating: check whether the extension already exists (`ls .oimo/tools .oimo/hooks .oimo/skills`). Prefer improving an existing one over adding a near-duplicate.
+Reactive path (this skill): notice triggers mid-work and act immediately on the
+smallest useful artifact.
 
 ## Decision flow
 
 ```
-Need to change WHAT you can do  → tool   (new capability, wraps commands/APIs)
-Need to change HOW you behave   → hook   (intercept/modify/block existing behavior)
-Need to remember HOW to do X    → skill  (knowledge, loaded on demand)
-Need to redo a multi-agent run  → workflow (.oimo/workflows/*.js)
-Need to change the UI           → TUI plugin (.oimo/tui/*.tsx)
+Project-local knowledge / procedure  → skill (.oimo/skills)
+WHAT you can do                      → tool
+HOW you behave                       → hook
+Multi-agent pipeline                 → workflow
+UI                                   → TUI plugin
+oimo PRODUCT behavior                → brief (.oimo/evolve/briefs) for external agent
+Time / HAC waste                     → friction report + backlog item
 ```
 
-Rule of thumb: tools add verbs, hooks add reflexes, skills add memories.
+**Never** force every fix into product source. Prefer skill/hook when the knowledge
+is tech- or project-specific.
 
-## Creating Tools
+## Triggers
 
-Write to `.oimo/tools/<name>.ts`:
+| Signal | Action |
+|--------|--------|
+| Same bash/API 3+ times | tool |
+| Same mistake / user correction | hook or skill |
+| Durable project knowledge | skill (knowledge base) |
+| Built-in conflicts with project | override tool |
+| Good multi-agent run may repeat | workflow |
+| Agent-common failure (retries, over-ask, no skill search, context thrash) | **product brief** |
+| Measurable time / HAC sink | friction + backlog |
 
-```ts
-import { tool } from "@mimo-ai/plugin"
+## Knowledge base (skills)
 
-export default tool({
-  description: "What this tool does",
-  args: {
-    param1: tool.schema.string().describe("Parameter description"),
-  },
-  async execute(args, ctx) {
-    // ctx.directory — project root
-    // ctx.worktree — git worktree root
-    // ctx.abort — AbortSignal
-    return `Result: ${args.param1}`
-  },
-})
+Write `.oimo/skills/<name>/SKILL.md` with WHAT+WHEN description.
+Lifecycle: create / append / revise / merge / split / deprecate.
+See @reference/skill-api.md.
+
+## Product briefs (AI-to-AI)
+
+When the fix belongs in oimo itself, write:
+
+`.oimo/evolve/briefs/<YYYY-MM-DD>-<slug>.md`
+
+Use the **9 required sections** in @reference/brief-template.md
+(現状 / 問題点 / 具体例 / 原因 / 方針 / 実装案 / 期待動作 / 受け入れ条件 / 副作用).
+
+Tell the user they can load the brief into an external agent (e.g. Cursor) to patch oimo.
+Disable: `evolve.briefs.enabled: false` (default on / opt-out).
+
+## Friction & HAC
+
+See @reference/metrics.md. Prefer numbers over vibes.
+Disable: `evolve.friction.enabled: false`.
+
+## Backlog
+
+Maintain `.oimo/evolve/backlog/BACKLOG.md` — see @reference/backlog.md.
+Disable: `evolve.backlog.enabled: false`.
+
+## Closed loop
+
+```
+Create → Verify → Tell user → Iterate or delete
 ```
 
-Multiple tools per file: use named exports instead of default.
-A tool with the same id as a built-in (bash, read, edit, ...) **replaces** it.
+Broken extensions are worse than none. Briefs need complete sections, not essays.
+Keep `.oimo/evolve/INDEX.md` and append `.oimo/evolve/history/HISTORY.md` when you
+write evolve artifacts.
 
-## Creating Hooks
+## Creating tools / hooks
 
-Write to `.oimo/hooks/<name>.ts` — export a Hooks object:
-
-```ts
-export default {
-  "tool.execute.before": async (input, output) => {
-    if (input.tool === "bash" && output.args.command?.includes("rm -rf /")) {
-      output.cancel = true
-      output.cancelReason = "Blocked dangerous command"
-    }
-  },
-  "experimental.chat.system.transform": async (input, output) => {
-    output.system.push("Additional instruction here.")
-  },
-}
-```
-
-### Hook Events
-
-| Event | Capability |
-|-------|-----------|
-| `tool.execute.before` | Modify `output.args` or set `output.cancel=true` to block |
-| `tool.execute.after` | Modify tool result via `output.output` (string), `output.title`, `output.metadata` — NOT `output.result` |
-| `tool.definition` | Modify tool description/parameters |
-| `chat.params` | Modify temperature, topP, maxOutputTokens |
-| `experimental.chat.system.transform` | Append to system prompt |
-| `experimental.chat.messages.transform` | Modify message list sent to LLM |
-| `session.pre` / `session.post` | Session runLoop lifecycle; `post` receives the full trajectory |
-| `session.userQuery.pre` / `.post` | Per-LLM-step lifecycle; cancel or inspect each step |
-| `actor.preStop` / `actor.postStop` | Gate subagent delivery; `continue=true` forces another turn |
-| `permission.ask` | Auto-allow/deny permission requests (not yet wired) |
-| `shell.env` | Inject environment variables |
-
-Field names must match exactly — a typo'd field (e.g. `output.result`) fails
-silently. Always check @reference/hook-api.md for the exact input/output shape
-before writing a hook.
-
-## Creating Skills
-
-Write to `.oimo/skills/<name>/SKILL.md`:
-
-```markdown
----
-name: my-skill
-description: Use when [triggering conditions — not a workflow summary]
----
-Instructions here...
-```
-
-## File Locations
-
-| Type | Path | Hot-reload |
-|------|------|-----------|
-| Tools | `.oimo/tools/*.ts` | next turn |
-| Hooks | `.oimo/hooks/*.ts` | next turn |
-| Skills | `.oimo/skills/*/SKILL.md` | next turn |
-| Workflows | `.oimo/workflows/*.js` | on invoke |
-| TUI | `.oimo/tui/*.tsx` | restart |
-
-## Evolution loop (do this every time)
-
-1. **Create** the extension (smallest thing that works).
-2. **Verify immediately** — invoke the tool / trigger the hook on the next turn. A broken extension is worse than none.
-3. **Tell the user** what you created and why, in one sentence.
-4. **Iterate or delete** — if it misfires later, fix it or remove it. Don't leave dead extensions; they pollute your own tool list.
-
-## Detailed API Reference
-
-For full type signatures, all available fields, and more examples:
-
-- See @reference/tool-api.md for Tool schema and ToolContext
-- See @reference/hook-api.md for all hook events with input/output types
-- See @reference/skill-api.md for SKILL.md format and frontmatter fields
-- See @reference/tui-api.md for TUI plugin slots, commands, dialogs, and state
+Same as before — `.oimo/tools/*.ts`, `.oimo/hooks/*.ts`.
+API details: @reference/tool-api.md, @reference/hook-api.md, @reference/tui-api.md.
 
 ## Constraints
 
-- Tools/hooks have same permissions as bash — no privilege escalation
-- Cannot modify the permission system
-- Tool output truncated at 50KB / 2000 lines
-- Prefer small, composable extensions over monolithic ones
-- Never create an extension that hides information from the user or bypasses confirmation prompts
+- No privilege escalation; cannot modify the permission system
+- No secrets in briefs/friction/backlog
+- Prefer small composable extensions
+- Never hide information or bypass confirmations
+- Auto-apply of product changes is **out of scope** — Human-in-the-loop only for now

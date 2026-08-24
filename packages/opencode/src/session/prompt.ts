@@ -113,6 +113,11 @@ import { resolveInvocationStyle, type ToolStyleConfig } from "../tool/invocation
 import { ToolResultError } from "../tool/result-error"
 import { RecoverableError } from "../tool/recoverable"
 import { shouldAutoDream, shouldAutoDistill, DREAM_TASK, DISTILL_TASK, AUTO_DREAM_TITLE, AUTO_DISTILL_TITLE } from "./auto-dream"
+import {
+  shouldAutoEvolve,
+  evolveTaskForConfig,
+  AUTO_EVOLVE_TITLE,
+} from "./auto-evolve"
 import { skillSearchReminderForSession } from "./skill-search-reminder"
 import {
   createMcpToolSearchCatalog,
@@ -3555,12 +3560,14 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             const cfg = yield* config.get()
             const dreamTrigger = yield* shouldAutoDream(cfg).pipe(Effect.catch(() => Effect.succeed(false)))
             const distillTrigger = yield* shouldAutoDistill(cfg).pipe(Effect.catch(() => Effect.succeed(false)))
+            const evolveTrigger = yield* shouldAutoEvolve(cfg).pipe(Effect.catch(() => Effect.succeed(false)))
             const mdl = { providerID: lastUser.model.providerID, modelID: lastUser.model.modelID }
             // AppRuntime is imported dynamically (not at module top level) to keep
             // the session layer out of the app-runtime module-init cycle
             // (prompt → app-runtime → AppLayer → SessionPrompt). Only loaded when a
             // trigger actually fires. Detached fire-and-forget on the full runtime.
-            const needAppRuntime = dreamTrigger || distillTrigger || Flag.MIMOCODE_EXPERIMENTAL_CRON
+            const needAppRuntime =
+              dreamTrigger || distillTrigger || evolveTrigger || Flag.MIMOCODE_EXPERIMENTAL_CRON
             if (needAppRuntime) {
               const { AppRuntime } = yield* Effect.promise(() => import("@/effect/app-runtime"))
               if (dreamTrigger) {
@@ -3584,6 +3591,23 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                     }),
                   ),
                 ).catch((err) => log.error("auto-distill prompt failed", { error: String(err) }))
+              }
+              if (evolveTrigger) {
+                const evolveTask = evolveTaskForConfig(cfg)
+                AppRuntime.runPromise(
+                  Session.Service.use((svc) =>
+                    Effect.gen(function* () {
+                      const s = yield* svc.create({ title: AUTO_EVOLVE_TITLE })
+                      const sp = yield* Service
+                      yield* sp.prompt({
+                        sessionID: s.id,
+                        agent: "evolve",
+                        model: mdl,
+                        parts: [{ type: "text", text: evolveTask }],
+                      })
+                    }),
+                  ),
+                ).catch((err) => log.error("auto-evolve prompt failed", { error: String(err) }))
               }
               // T18-bridge mount: fire CronBridge.start(sessionID, workspaceRoot)
               // once per new top-level session boot. The bridge itself no-ops when

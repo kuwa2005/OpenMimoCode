@@ -6,11 +6,11 @@ const VALID_SCOPES = ["global", "projects", "sessions"] as const
 
 /** Agents that may write memory or the project's `.oimo/` directory. The
  *  checkpoint writer has a stricter memory-only policy below. */
-const WRITE_SANDBOXED_AGENTS: ReadonlySet<string> = new Set(["dream", "distill"])
+const WRITE_SANDBOXED_AGENTS: ReadonlySet<string> = new Set(["dream", "distill", "evolve"])
 
 /**
  * Hard write-boundary for sandboxed system agents. checkpoint-writer is
- * memory-only; dream/distill may also write under `<worktree>/.oimo/`.
+ * memory-only; dream/distill/evolve may also write under `<worktree>/.oimo/`.
  * Pure — does not touch the filesystem.
  *
  * This is enforced in the single write gate (assertWriteAllowed), so it cannot

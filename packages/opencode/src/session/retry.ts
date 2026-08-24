@@ -26,10 +26,13 @@ export function isRateLimitMessage(message: string): boolean {
   )
 }
 
-export const RETRY_INITIAL_DELAY = 2000
+export const RETRY_INITIAL_DELAY = 1000
 export const RETRY_BACKOFF_FACTOR = 2
-export const RETRY_MAX_DELAY_NO_HEADERS = 30_000 // 30 seconds
+/** @deprecated OpenCode capped no-header waits at 30s; we now grow until RETRY_MODEL_SWITCH_MS. */
+export const RETRY_MAX_DELAY_NO_HEADERS = 30_000
 export const RETRY_MAX_DELAY = 2_147_483_647 // max 32-bit signed integer for setTimeout
+/** If a single wait would exceed this, SessionRetry stops so Auto Model can switch candidates. */
+export const RETRY_MODEL_SWITCH_MS = 5 * 60 * 1000
 
 const NETWORK_ERROR_CODES = new Set(["ECONNRESET", "EPIPE", "ETIMEDOUT"])
 const SSE_TIMEOUT_MESSAGE = "SSE read timed out"
@@ -111,7 +114,9 @@ export function delay(attempt: number, error?: MessageV2.APIError) {
     }
   }
 
-  return cap(Math.min(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1), RETRY_MAX_DELAY_NO_HEADERS))
+  // OpenCode-style exponential: 1s, 2s, 4s, 8s, 16s, ... (no 30s soft-cap).
+  // SessionRetry.policy stops when a single wait would exceed RETRY_MODEL_SWITCH_MS.
+  return cap(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1))
 }
 
 export function retryable(error: Err) {
@@ -217,14 +222,29 @@ export function retryable(error: Err) {
 export function policy(opts: {
   parse: (error: unknown) => Err
   set: (input: { attempt: number; message: string; next: number }) => Effect.Effect<void>
+  /**
+   * When a computed wait exceeds this, stop retrying and let the error
+   * propagate (Auto Model uses this to switch free candidates at 5 minutes).
+   */
+  maxWaitMs?: number
+  /** Cap each individual wait (non-auto models keep retrying under this ceiling). */
+  capWaitMs?: number
 }) {
   return Schedule.fromStepWithMetadata(
     Effect.succeed((meta: Schedule.InputMetadata<unknown>) => {
       const error = opts.parse(meta.input)
       const message = retryable(error)
       if (!message) return Cause.done(meta.attempt)
+      let wait = delay(meta.attempt, MessageV2.APIError.isInstance(error) ? error : undefined)
+      if (opts.maxWaitMs !== undefined && wait > opts.maxWaitMs) {
+        // Wait would exceed the model-switch threshold — stop so the caller
+        // can failover (or surface a recoverable main-agent stop).
+        return Cause.done(meta.attempt)
+      }
+      if (opts.capWaitMs !== undefined && wait > opts.capWaitMs) {
+        wait = opts.capWaitMs
+      }
       return Effect.gen(function* () {
-        const wait = delay(meta.attempt, MessageV2.APIError.isInstance(error) ? error : undefined)
         const now = yield* Clock.currentTimeMillis
         yield* opts.set({ attempt: meta.attempt, message, next: now + wait })
         return [meta.attempt, Duration.millis(wait)] as [number, Duration.Duration]

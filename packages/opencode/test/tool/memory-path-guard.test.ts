@@ -640,7 +640,7 @@ describe("assertAgentWriteSandbox", () => {
     ).toThrow(/may only write under the memory tree/)
   })
 
-  for (const agent of ["dream", "distill"] as const) {
+  for (const agent of ["dream", "distill", "evolve"] as const) {
     test(`${agent} may write under the memory tree`, () => {
       expect(() =>
         assertAgentWriteSandbox({

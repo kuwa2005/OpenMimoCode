@@ -262,9 +262,9 @@ describe("runtime-spawned agent hosts are never rendered — the rule", () => {
     }),
   )
 
-  it.live("dream and distill are refused for the same reason as checkpoint-writer", () =>
+  it.live("dream, distill, and evolve are refused for the same reason as checkpoint-writer", () =>
     Effect.sync(() => {
-      for (const agent of ["checkpoint-writer", "dream", "distill"]) {
+      for (const agent of ["checkpoint-writer", "dream", "distill", "evolve"]) {
         const verdict = classifySession({ id: "ses_kid", parentID: "ses_root" }, [{ mode: "subagent", agent }])
         expect(verdict.renderable).toBe(false)
         if (!verdict.renderable) expect(verdict.reason).toContain(agent)

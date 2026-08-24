@@ -359,7 +359,7 @@ const InfoSchema = Schema.Struct({
     Schema.Struct({
       disable_write: Schema.optional(Schema.Boolean).annotate({
         description:
-          "Stop WRITING new memory. Default: false (memory is written). When true, no new memory is produced — session checkpoint.md, project MEMORY.md, notes.md and per-task progress.md are never written, the high-pressure 'save your learnings to memory' nudge is suppressed, and automatic dream/distill runs are skipped. Existing memory stays READABLE on demand: the builtin `memory` search tool keeps working and the files can still be read directly. What does stop is the AUTOMATIC injection — checkpoint rebuild is short-circuited to compaction while writing is off, and the memory dumps that a rebuild would have placed in context are only produced by that rebuild, so nothing is loaded on its own; an agent that wants memory has to search or read for it. Nothing is ever deleted — set it back to false to resume writing on top of the existing files.",
+          "Stop WRITING new memory. Default: false (memory is written). When true, no new memory is produced — session checkpoint.md, project MEMORY.md, notes.md and per-task progress.md are never written, the high-pressure 'save your learnings to memory' nudge is suppressed, and automatic dream/distill/evolve runs are skipped. Existing memory stays READABLE on demand: the builtin `memory` search tool keeps working and the files can still be read directly. What does stop is the AUTOMATIC injection — checkpoint rebuild is short-circuited to compaction while writing is off, and the memory dumps that a rebuild would have placed in context are only produced by that rebuild, so nothing is loaded on its own; an agent that wants memory has to search or read for it. Nothing is ever deleted — set it back to false to resume writing on top of the existing files.",
       }),
       cc_index: Schema.optional(Schema.Boolean).annotate({
         description:
@@ -389,6 +389,61 @@ const InfoSchema = Schema.Struct({
       }),
       interval_days: Schema.optional(NonNegativeInt).annotate({
         description: "Minimum days between automatic distill runs. Default: 30.",
+      }),
+    }),
+  ),
+  evolve: Schema.optional(
+    Schema.Struct({
+      auto: Schema.optional(Schema.Boolean).annotate({
+        description:
+          "Auto-trigger Self Improvement Session (evolve) on new session start. Default: false.",
+      }),
+      interval_days: Schema.optional(NonNegativeInt).annotate({
+        description: "Minimum days between automatic evolve runs. Default: 14.",
+      }),
+      skills: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean).annotate({
+            description:
+              "Crystallize durable project knowledge into .oimo/skills (knowledge base). Default: true (opt-out). Planned to become opt-in later.",
+          }),
+        }),
+      ),
+      briefs: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean).annotate({
+            description:
+              "Write AI-to-AI product-modification briefs under .oimo/evolve/briefs/ for an external coding agent. Default: true (opt-out). Planned to become opt-in later.",
+          }),
+        }),
+      ),
+      friction: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean).annotate({
+            description:
+              "Analyze friction / Human Attention Cost and write docs under .oimo/evolve/friction/. Default: true (opt-out). Planned to become opt-in later.",
+          }),
+        }),
+      ),
+      backlog: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean).annotate({
+            description:
+              "Maintain prioritized Self Improvement Backlog at .oimo/evolve/backlog/BACKLOG.md. Default: true (opt-out). Planned to become opt-in later.",
+          }),
+        }),
+      ),
+      session_review: Schema.optional(
+        Schema.Struct({
+          enabled: Schema.optional(Schema.Boolean).annotate({
+            description:
+              "Write session self-evaluation reviews under .oimo/evolve/reviews/. Default: true (opt-out). Planned to become opt-in later.",
+          }),
+        }),
+      ),
+      condition_triggers: Schema.optional(Schema.Boolean).annotate({
+        description:
+          "Allow auto-evolve to fire early when HAC/corrections/tool-churn thresholds are hit (still requires evolve.auto). Default: true.",
       }),
     }),
   ),

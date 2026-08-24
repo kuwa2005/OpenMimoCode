@@ -262,6 +262,10 @@ export const dict = {
     "consolider manuellement la mémoire du projet à partir des fichiers memory et de la trajectoire brute",
   "tui.slash.distill.description":
     "trouver les workflows répétés dans le travail récent et les empaqueter en skills, sous-agents ou commandes",
+  "tui.slash.evolve.description":
+    "Self Improvement Session : skills, backlog, friction/HAC et briefs AI-to-AI pour faire évoluer oimo",
+  "tui.slash.self-improve.description":
+    "alias de /evolve — lancer une Self Improvement Session",
   "tui.slash.goal.description":
     "définir un objectif avec condition d'arrêt ; s'exécute jusqu'à ce qu'un juge confirme. /goal clear pour annuler",
   "tui.slash.deep-research.description":

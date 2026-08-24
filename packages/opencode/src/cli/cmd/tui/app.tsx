@@ -35,6 +35,7 @@ import { LocalProvider, useLocal } from "@tui/context/local"
 import { DialogModel, useConnected } from "@tui/component/dialog-model"
 import { DialogMcp } from "@tui/component/dialog-mcp"
 import { DialogStatus } from "@tui/component/dialog-status"
+import { DialogEvolve } from "@tui/component/dialog-evolve"
 import { DialogWorktree } from "@tui/component/dialog-worktree"
 import { DialogThemeList } from "@tui/component/dialog-theme-list"
 import { DialogImageList } from "@tui/component/dialog-image-list"
@@ -54,6 +55,7 @@ import { FrecencyProvider } from "./component/prompt/frecency"
 import { PromptStashProvider } from "./component/prompt/stash"
 import { DialogAlert } from "./ui/dialog-alert"
 import { DialogConfirm } from "./ui/dialog-confirm"
+import { SessionRetry } from "@/session/retry"
 import { ToastProvider, useToast } from "./ui/toast"
 import { ExitProvider, useExit } from "./context/exit"
 import { Session as SessionApi } from "@/session"
@@ -922,6 +924,18 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       category: "system",
     },
     {
+      title: t("tui.command.evolve.dashboard.title"),
+      value: "evolve.dashboard",
+      slash: {
+        name: "evolve-status",
+        aliases: ["self-evolution"],
+      },
+      onSelect: () => {
+        dialog.replace(() => <DialogEvolve />)
+      },
+      category: "system",
+    },
+    {
       title: t("tui.command.worktree.list.title"),
       value: "worktree.list",
       slash: {
@@ -1219,11 +1233,46 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     const error = evt.properties.error
     if (error && typeof error === "object" && error.name === "MessageAbortedError") return
     const message = errorMessage(error)
+    const sessionID = evt.properties.sessionID
 
     toast.show({
       variant: "error",
-      message,
-      duration: 5000,
+      message: message.startsWith("メインが停止") ? message : `メインが停止しました: ${message}`,
+      duration: 8000,
+    })
+
+    // Offer a recoverable action when the main agent dies (rate-limit exhaustion,
+    // failover failure, etc.). Skip if another dialog is already open or this
+    // error belongs to a different session than the one on screen.
+    if (!sessionID) return
+    if (route.data.type !== "session" || route.data.sessionID !== sessionID) return
+    if (dialog.stack.length > 0) return
+
+    const rateLimited = SessionRetry.isRateLimitMessage(message) || message.includes("Rate limit")
+    const title = "メインが停止しました"
+    const body = rateLimited
+      ? `Rate limit / 一時障害でメイン処理が停止しました。\n${message}\n\n再試行して続行しますか？`
+      : `メイン処理がエラーで停止しました。\n${message}\n\n再試行して続行しますか？`
+
+    void DialogConfirm.show(dialog, title, body).then((ok) => {
+      if (!ok) return
+      void sdk.client.session
+        .promptAsync({
+          sessionID,
+          parts: [
+            {
+              type: "text",
+              synthetic: true,
+              text: "Previous turn stopped because the main agent hit a provider error (often rate limit). Continue from where we left off with the next concrete step.",
+            },
+          ],
+        })
+        .catch((err: unknown) =>
+          toast.show({
+            variant: "error",
+            message: err instanceof Error ? err.message : String(err),
+          }),
+        )
     })
   })
 

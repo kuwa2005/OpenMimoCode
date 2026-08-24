@@ -918,7 +918,7 @@ test("defaultAgent throws when all primary agents are disabled", async () => {
   })
 })
 
-test("bounded computation agents are exactly title, summary, compaction, checkpoint-writer, dream, distill", async () => {
+test("bounded computation agents are exactly title, summary, compaction, checkpoint-writer, dream, distill, evolve", async () => {
   await using tmp = await tmpdir()
   await Instance.provide({
     directory: tmp.path,
@@ -928,7 +928,15 @@ test("bounded computation agents are exactly title, summary, compaction, checkpo
         .filter((a) => a.native === true && a.hidden === true)
         .map((a) => a.name)
         .sort()
-      expect(boundedComputations).toEqual(["checkpoint-writer", "compaction", "distill", "dream", "summary", "title"])
+      expect(boundedComputations).toEqual([
+        "checkpoint-writer",
+        "compaction",
+        "distill",
+        "dream",
+        "evolve",
+        "summary",
+        "title",
+      ])
 
       // Spot-check a few durable agents are NOT classified as bounded.
       const build = agents.find((a) => a.name === "build")

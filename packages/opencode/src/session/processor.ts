@@ -811,7 +811,7 @@ export const layer: Layer.Layer<
           ctx.stepPartIds = []
         })
 
-        const drain = (model: Provider.Model, opts: { withSessionRetry: boolean; onCommit?: () => void; catchHalt: boolean }) => {
+        const drain = (model: Provider.Model, opts: { withSessionRetry: boolean; onCommit?: () => void; catchHalt: boolean; maxWaitMs?: number; capWaitMs?: number }) => {
           const body = Effect.gen(function* () {
             ctx.currentText = undefined
             ctx.reasoningMap = {}
@@ -820,7 +820,7 @@ export const layer: Layer.Layer<
             ctx.textNgramRepeat = false
             ctx.textNgramMonitor = createTextNgramMonitor()
             ctx.model = model
-            const stream = llm.stream({ ...streamInput, model })
+            const stream = llm.stream({ ...streamInput, model, skipPersistentRetry: opts.withSessionRetry })
 
             yield* stream.pipe(
               Stream.tap((event) =>
@@ -852,6 +852,8 @@ export const layer: Layer.Layer<
                 Effect.retry(
                   SessionRetry.policy({
                     parse,
+                    maxWaitMs: opts.maxWaitMs,
+                    capWaitMs: opts.capWaitMs,
                     set: (info) =>
                       isMain
                         ? status.set(ctx.sessionID, {
@@ -872,7 +874,7 @@ export const layer: Layer.Layer<
 
         return yield* Effect.gen(function* () {
           if (!isAutoFreeModel(streamInput.model)) {
-            yield* drain(streamInput.model, { withSessionRetry: true, catchHalt: true })
+            yield* drain(streamInput.model, { withSessionRetry: true, catchHalt: true, capWaitMs: SessionRetry.RETRY_MODEL_SWITCH_MS })
           } else {
             // Rank by local excellence stats; short cooldown after rate-limit only
             // (no sticky last-winner — big-pickle returns when cooldown ends).
@@ -921,8 +923,12 @@ export const layer: Layer.Layer<
 
               let committed = false
               const exit = yield* drain(candidate, {
-                withSessionRetry: false,
+                // Visible OpenCode-style backoff (1s, 2s, 4s, …). When a single
+                // wait would exceed 5 minutes, SessionRetry stops and we advance
+                // to the next free model instead of hanging the main agent.
+                withSessionRetry: true,
                 catchHalt: false,
+                maxWaitMs: SessionRetry.RETRY_MODEL_SWITCH_MS,
                 onCommit: () => {
                   committed = true
                 },
@@ -961,14 +967,29 @@ export const layer: Layer.Layer<
                 yield* status.set(ctx.sessionID, {
                   type: "retry",
                   attempt: index + 1,
-                  message: `Switching free model -> ${next.providerID}/${next.id}`,
+                  message: `Rate-limit backoff exceeded · switching free model -> ${next.providerID}/${next.id}`,
                   next: Date.now(),
                 })
               }
             }
 
             if (!succeeded && lastError !== undefined) {
-              yield* halt(lastError)
+              const detail =
+                lastError instanceof Error
+                  ? lastError.message
+                  : typeof lastError === "string"
+                    ? lastError
+                    : "unknown provider error"
+              const wrapped =
+                isMain && SessionRetry.isRetryableTransientError(lastError)
+                  ? new Error(
+                      `メインが停止しました: 無料モデルの Rate limit / 一時障害を使い切りました。再試行するか、モデルを切り替えてください。 (${detail})`,
+                      { cause: lastError },
+                    )
+                  : isMain
+                    ? new Error(`メインが停止しました: ${detail}`, { cause: lastError })
+                    : lastError
+              yield* halt(wrapped)
             }
           }
 

@@ -199,6 +199,10 @@ export const dict: Record<string, string> = {
     "manually consolidate project memory from memory files and raw trajectory",
   "tui.slash.distill.description":
     "find repeated workflows in recent work and package them into skills, subagents, or commands",
+  "tui.slash.evolve.description":
+    "Self Improvement Session: skills, backlog, friction/HAC, and AI-to-AI briefs to evolve oimo",
+  "tui.slash.self-improve.description":
+    "alias for /evolve — run a Self Improvement Session (observe → propose → briefs)",
   "tui.slash.goal.description":
     "set a stop-condition goal; runs until a judge says it's met. /goal clear to abort",
   "tui.slash.deep-research.description":
@@ -210,7 +214,8 @@ export const dict: Record<string, string> = {
   "tui.skill.pdf-official.description": "Create, edit, transform, and read PDF files",
   "tui.skill.pptx-official.description": "Create, edit, and read Microsoft PowerPoint (.pptx) decks",
   "tui.skill.oimo.description": "Self-documentation for Open Mimo Code features, config, and commands",
-  "tui.skill.evolve.description": "Rewrite any layer of yourself — tools, behavior hooks, knowledge, workflows, even the UI",
+  "tui.skill.evolve.description":
+    "Rewrite any layer of yourself — tools, behavior hooks, knowledge skills, workflows, UI — and emit product-improvement briefs for external agents",
   "tui.skill.frontend-design.description": "Guidance for distinctive, intentional visual UI design",
   "tui.skill.loop.description": "Schedule a prompt to run on a recurring interval",
   "tui.skill.html-to-video-pipeline.description": "Short-video magic — make short videos with HTML",
@@ -316,6 +321,7 @@ export const dict: Record<string, string> = {
   "tui.command.provider.logout.title": "Logout",
   "tui.command.console.org.switch.title": "Switch org",
   "tui.command.opencode.status.title": "View status",
+  "tui.command.evolve.dashboard.title": "Self Evolution",
   "tui.command.worktree.list.title": "Worktrees",
   "tui.command.theme.switch.title": "Switch theme",
   "tui.command.image.switch.title": "Switch background image",

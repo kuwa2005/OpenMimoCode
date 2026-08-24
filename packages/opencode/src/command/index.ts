@@ -9,6 +9,7 @@ import z from "zod"
 import { Config } from "../config"
 import { MCP } from "../mcp"
 import { Skill } from "../skill"
+import { evolveTaskForConfig } from "../session/auto-evolve"
 import PROMPT_INITIALIZE from "./template/initialize.txt"
 import PROMPT_LOOPS from "./template/loops.txt"
 import PROMPT_REVIEW from "./template/review.txt"
@@ -65,6 +66,8 @@ export const Default = {
   REVIEW: "review",
   DREAM: "dream",
   DISTILL: "distill",
+  EVOLVE: "evolve",
+  SELF_IMPROVE: "self-improve",
   GOAL: "goal",
   DEEP_RESEARCH: "deep-research",
   LOOPS: "loops",
@@ -166,6 +169,39 @@ export const layer = Layer.effect(
             "Use bash for read-only SQLite and filesystem inspection. Do not modify the database.",
             "Produce a compact shortlist, then create only the high-confidence missing assets.",
           ].join("\n")
+        },
+        hints: ["$ARGUMENTS"],
+      }
+      commands[Default.EVOLVE] = {
+        name: Default.EVOLVE,
+        description:
+          "Self Improvement Session: skills, backlog, friction/HAC, and AI-to-AI briefs to evolve oimo",
+        agent: "evolve",
+        source: "command",
+        subtask: false,
+        get template() {
+          return bridge.promise(
+            config
+              .get()
+              .pipe(Effect.map((c) => evolveTaskForConfig(c, { manual: true, arguments: "$ARGUMENTS" }))),
+          )
+        },
+        hints: ["$ARGUMENTS"],
+      }
+      // Alias for /evolve — same Self Improvement Session (see oimo進化指示書 §23).
+      commands[Default.SELF_IMPROVE] = {
+        name: Default.SELF_IMPROVE,
+        description:
+          "alias for /evolve — run a Self Improvement Session (observe → propose → briefs)",
+        agent: "evolve",
+        source: "command",
+        subtask: false,
+        get template() {
+          return bridge.promise(
+            config
+              .get()
+              .pipe(Effect.map((c) => evolveTaskForConfig(c, { manual: true, arguments: "$ARGUMENTS" }))),
+          )
         },
         hints: ["$ARGUMENTS"],
       }

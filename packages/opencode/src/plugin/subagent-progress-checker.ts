@@ -118,6 +118,7 @@ export async function SubagentProgressCheckerPlugin(pluginInput: PluginInput): P
             "summary",
             "dream",
             "distill",
+            "evolve",
             "compaction",
             "main",
           ],

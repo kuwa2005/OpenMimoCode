@@ -169,4 +169,4 @@ The `cron` tool has six verbs:
 
 ## Extending Open Mimo Code
 
-To add tools, hooks, or skills, use the `evolve` skill — it covers writing `.oimo/tools/*.ts`, `.oimo/hooks/*.ts`, and `.oimo/skills/*/SKILL.md`, all hot-reloaded on the next turn.
+To add tools, hooks, or skills, use the `evolve` skill — it covers writing `.oimo/tools/*.ts`, `.oimo/hooks/*.ts`, and `.oimo/skills/*/SKILL.md`, all hot-reloaded on the next turn. Run `/evolve` or `/self-improve` for a full Self Improvement Session that crystallizes a project knowledge base, maintains `.oimo/evolve/backlog/BACKLOG.md`, records friction / Human Attention Cost, writes session reviews, and (by default) emits AI-to-AI product briefs under `.oimo/evolve/briefs/` for an external coding agent to apply to oimo itself. Tracks are opt-out via `evolve.*.enabled: false` (planned to become opt-in later). Do not auto-apply product changes — Human-in-the-loop only.

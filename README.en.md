@@ -245,7 +245,7 @@ Open Mimo Code bundles the following builtin skills:
 | `design-blueprint` | Produce a design blueprint (DESIGN.md + Decision Trace) before mocking up visuals |
 | `docx-official` | Produce, read, and transform Word (.docx) files |
 | `drive-mimo` | Script, test, and automate another Open Mimo Code process in headless or interactive TUI mode |
-| `evolve` | Total self-modification — rewrite any layer of the agent: tools, behavior hooks, knowledge, workflows, even the UI |
+| `evolve` | Self Improvement Session — knowledge skills, backlog, friction/HAC, AI-to-AI briefs. `/evolve` or `/self-improve` |
 | `frontend-design` | Visual design guidance for UI work |
 | `html-to-video-pipeline` | HTML-to-MP4 rendering via headless browser + ffmpeg |
 | `learn-everything` | Turn documents, URLs, or topics into adaptive courses with exercises, feedback, and progress tracking |

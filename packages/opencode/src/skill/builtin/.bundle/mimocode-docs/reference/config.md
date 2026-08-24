@@ -135,6 +135,16 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 |-----|---------|
 | `dream.auto` / `dream.interval_days` | Auto memory consolidation on session start (default true / 7 days) |
 | `distill.auto` / `distill.interval_days` | Auto workflow packaging (default true / 30 days) |
+| `evolve.auto` / `evolve.interval_days` | Auto Self Improvement Session (default false / 14 days) |
+| `evolve.skills.enabled` | Crystallize knowledge into `.oimo/skills` (default true, opt-out) |
+| `evolve.briefs.enabled` | AI-to-AI product briefs under `.oimo/evolve/briefs/` (default true, opt-out → later opt-in) |
+| `evolve.friction.enabled` | Friction / Human Attention Cost analyses under `.oimo/evolve/friction/` (default true, opt-out) |
+| `evolve.backlog.enabled` | Self Improvement Backlog at `.oimo/evolve/backlog/BACKLOG.md` (default true, opt-out) |
+| `evolve.session_review.enabled` | Session self-evaluation under `.oimo/evolve/reviews/` (default true, opt-out) |
+| `evolve.condition_triggers` | Allow early auto-evolve on HAC/corrections/tool-churn (default true; still needs `evolve.auto`) |
+| `/evolve-status` | TUI Self Evolution dashboard (briefs, backlog, snapshots) |
+| `evolve_status` tool | metrics / dashboard / snapshot / rollback / evaluate |
+| `evolve-review` workflow | Multi-agent review of a product brief (Human-in-the-loop) |
 | `voice.asr_model` | ASR model (default `xiaomi/mimo-v2.5-asr`) |
 | `voice.control_model` | Voice control model (default `xiaomi/mimo-v2.5`) |
 | `compose` | Compose mode config (`docs` dir default `docs/compose`, `docs_absolute`) |
@@ -187,6 +197,15 @@ High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) stil
   "model": "anthropic/claude-opus-4-8",
   "model_groups": { "lite": "anthropic/claude-haiku" },
   "dream": { "auto": true, "interval_days": 3 },
+  "evolve": {
+    "auto": true,
+    "interval_days": 14,
+    "skills": { "enabled": true },
+    "briefs": { "enabled": true },
+    "friction": { "enabled": true },
+    "backlog": { "enabled": true },
+    "session_review": { "enabled": true }
+  },
   "compaction": { "tail_turns": 3 },
   "permission": { "external_directory": { "/tmp/**": "allow" } },
   "mcp": {

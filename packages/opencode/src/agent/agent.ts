@@ -16,6 +16,7 @@ import PROMPT_GENERAL from "./prompt/general.txt"
 import PROMPT_EXPLORE from "./prompt/explore.txt"
 import PROMPT_DREAM from "./prompt/dream.txt"
 import PROMPT_DISTILL from "./prompt/distill.txt"
+import PROMPT_EVOLVE from "./prompt/evolve.txt"
 import PROMPT_SUMMARY from "./prompt/summary.txt"
 import PROMPT_COMPACTION from "./prompt/compaction.txt"
 import PROMPT_TITLE from "./prompt/title.txt"
@@ -447,6 +448,47 @@ export const layer = Layer.effect(
               "memory",
               "bash",
               "exec",
+            ],
+          },
+          evolve: {
+            name: "evolve",
+            mode: "subagent" as const,
+            options: {},
+            native: true,
+            hidden: true,
+            prompt: PROMPT_EVOLVE,
+            permission: Permission.merge(
+              defaults,
+              Permission.fromConfig({
+                "*": "deny",
+                read: "allow",
+                write: "allow",
+                edit: "allow",
+                glob: "allow",
+                grep: "allow",
+                memory: "allow",
+                bash: "allow",
+                exec: "allow",
+                evolve_status: "allow",
+                external_directory: {
+                  [path.join(Global.Path.data, "memory")]: "allow",
+                  [path.join(Global.Path.data, "memory", "*")]: "allow",
+                },
+              }),
+              user,
+            ),
+            toolAllowlist: [
+              "read",
+              "write",
+              "edit",
+              "apply_patch",
+              "view_image",
+              "glob",
+              "grep",
+              "memory",
+              "bash",
+              "exec",
+              "evolve_status",
             ],
           },
         }

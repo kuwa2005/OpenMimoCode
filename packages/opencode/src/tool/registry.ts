@@ -8,6 +8,7 @@ import { GlobTool } from "./glob"
 import { GrepTool } from "./grep"
 import { HistoryTool } from "./history"
 import { MemoryTool } from "./memory"
+import { EvolveTool } from "./evolve"
 import { ReadTool } from "./read"
 import { ViewImageTool } from "./view-image"
 import { ActorTool } from "./actor"
@@ -161,6 +162,7 @@ export const layer = Layer.effect(
     const mcptoolsearch = yield* McpToolSearchTool
     const historytool = yield* HistoryTool
     const memorytool = yield* MemoryTool
+    const evolvetool = yield* EvolveTool
     const tasktool = yield* TaskTool
     const crontool = yield* CronTool
     const sessiontool = yield* SessionTool
@@ -260,6 +262,7 @@ export const layer = Layer.effect(
           planexit: Tool.init(planexit),
           memory: Tool.init(memorytool),
           history: Tool.init(historytool),
+          evolve: Tool.init(evolvetool),
           task: Tool.init(tasktool),
           cron: Tool.init(crontool),
           session: Tool.init(sessiontool),
@@ -293,6 +296,7 @@ export const layer = Layer.effect(
             tool.planexit,
             tool.memory,
             tool.history,
+            tool.evolve,
             tool.task,
             tool.toolscript,
             ...(Flag.MIMOCODE_EXPERIMENTAL_CRON ? [tool.cron] : []),

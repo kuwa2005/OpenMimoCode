@@ -4,6 +4,7 @@ import { Database, eq, desc, asc, isNull } from "@/storage"
 import { SessionTable } from "./session.sql"
 import { Log } from "@/util"
 import type { Config } from "@/config"
+import { AUTO_EVOLVE_TITLE } from "./auto-evolve"
 
 const log = Log.create({ service: "auto-dream" })
 
@@ -15,7 +16,11 @@ const MIN_SPAWN_GAP_MS = 10_000
 export const AUTO_DREAM_TITLE = "Auto Dream"
 export const AUTO_DISTILL_TITLE = "Auto Distill"
 
-const SYSTEM_SESSION_TITLES: ReadonlySet<string> = new Set([AUTO_DREAM_TITLE, AUTO_DISTILL_TITLE])
+const SYSTEM_SESSION_TITLES: ReadonlySet<string> = new Set([
+  AUTO_DREAM_TITLE,
+  AUTO_DISTILL_TITLE,
+  AUTO_EVOLVE_TITLE,
+])
 
 export function isSystemSession(session: { title: string }): boolean {
   return SYSTEM_SESSION_TITLES.has(session.title)

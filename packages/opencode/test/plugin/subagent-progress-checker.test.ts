@@ -262,7 +262,7 @@ describe("SubagentProgressCheckerPlugin matcher (C1 regression)", () => {
     const reg = hooks["actor.postStop"]
     if (!reg || typeof reg === "function") throw new Error("expected matcher form")
     const matcher = (reg as { matcher?: import("@mimo-ai/plugin").ActorMatcher }).matcher
-    for (const at of ["checkpoint-writer", "title", "summary", "dream", "distill", "compaction", "main"]) {
+    for (const at of ["checkpoint-writer", "title", "summary", "dream", "distill", "evolve", "compaction", "main"]) {
       expect(matchesActor(matcher, { mode: "subagent", agentType: at })).toBe(false)
     }
   })

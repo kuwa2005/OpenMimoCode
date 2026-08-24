@@ -190,6 +190,8 @@ export const dict = {
   "tui.slash.review.description": "審查變更 [commit|branch|pr]，預設未提交的變更",
   "tui.slash.dream.description": "從 memory 檔案與原始軌跡中手動整合專案記憶",
   "tui.slash.distill.description": "在最近工作中發現重複流程，打包為 skill、子智慧代理或命令",
+  "tui.slash.evolve.description": "Self Improvement Session：將知識結晶為 skill、維護 backlog、分析摩擦/HAC，並寫出改進 oimo 的指示書",
+  "tui.slash.self-improve.description": "/evolve 的別名 — 執行自我改進工作階段（觀察→提案→指示書）",
   "tui.slash.goal.description": "設定終止條件目標；執行直到判定達成。使用 /goal clear 中止",
   "tui.slash.deep-research.description": "深度多來源、事實核查的研究報告（執行 deep-research 工作流程）",
 
@@ -199,7 +201,7 @@ export const dict = {
   "tui.skill.pdf-official.description": "建立、編輯、轉換、讀取 PDF 檔案",
   "tui.skill.pptx-official.description": "建立、編輯、讀取 Microsoft PowerPoint (.pptx) 簡報",
   "tui.skill.oimo.description": "Open Mimo Code 功能、設定與命令的自文件參考",
-  "tui.skill.evolve.description": "改寫自身的一切——工具、行為掛鉤、知識、工作流，乃至介面本身",
+  "tui.skill.evolve.description": "改寫自身的一切——工具、行為掛鉤、知識技能、工作流、介面——並寫出供外部智慧代理改進 oimo 產品的指示書",
   "tui.skill.frontend-design.description": "具備鮮明主張的前端視覺設計指引",
   "tui.skill.loop.description": "依固定週期循環執行提示詞",
   "tui.skill.html-to-video-pipeline.description": "短影片神器 - 利用 HTML 製作短影片",

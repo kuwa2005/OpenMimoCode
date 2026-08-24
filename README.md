@@ -236,7 +236,7 @@ Open Mimo Code には次の組み込みスキルが同梱されています:
 | `design-blueprint` | ビジュアルのモックアップ前に設計ブループリント（DESIGN.md + Decision Trace）を作成 |
 | `docx-official` | Word（.docx）ファイルの作成、読み取り、変換 |
 | `drive-mimo` | 別の Open Mimo Code プロセスをヘッドレスまたは対話型 TUI モードでスクリプト化、テスト、自動化 |
-| `evolve` | 完全な自己改変 — エージェントのあらゆる層（ツール、動作フック、知識、ワークフロー、UI さえも）を書き換え |
+| `evolve` | Self Improvement Session — 知識スキル化・backlog・摩擦/HAC 分析・oimo 本体向け AI-to-AI 指示書。`/evolve` または `/self-improve` |
 | `frontend-design` | UI 作業のためのビジュアルデザインガイダンス |
 | `html-to-video-pipeline` | ヘッドレスブラウザ + ffmpeg による HTML-to-MP4 レンダリング |
 | `learn-everything` | ドキュメント、URL、トピックを、演習・フィードバック・進捗追跡付きの適応型コースに変換 |

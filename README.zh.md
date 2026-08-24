@@ -236,7 +236,7 @@ Open Mimo Code 打包了以下内置技能：
 | `design-blueprint` | 动手做视觉前先出设计蓝图（DESIGN.md + 决策轨迹）|
 | `docx-official` | 生成、读取和转换 Word (.docx) 文件 |
 | `drive-mimo` | 以无头或交互式 TUI 模式编排、测试和自动化另一个 Open Mimo Code 进程 |
-| `evolve` | 全面自我修改——改写 Agent 的任意层面：工具、行为钩子、知识、工作流，乃至界面本身 |
+| `evolve` | Self Improvement Session——知识技能化、backlog、摩擦/HAC 分析、面向改进 oimo 本体的 AI-to-AI 指示书。`/evolve` 或 `/self-improve` |
 | `frontend-design` | UI 开发的视觉设计指导 |
 | `html-to-video-pipeline` | 通过无头浏览器 + ffmpeg 将 HTML 渲染为 MP4 |
 | `learn-everything` | 将文档、URL 或主题转化为包含练习、反馈和进度追踪的自适应课程 |

@@ -213,6 +213,8 @@ export const dict = {
   "tui.slash.review.description": "変更をレビュー [commit|branch|pr]、デフォルトは未コミット",
   "tui.slash.dream.description": "memory ファイルと生の軌跡からプロジェクトメモリを手動で統合",
   "tui.slash.distill.description": "最近の作業から繰り返しワークフローを見つけ、skill・サブエージェント・コマンドにパッケージ化",
+  "tui.slash.evolve.description": "Self Improvement Session：skill・backlog・摩擦/HAC分析・oimo 本体向け AI-to-AI 指示書",
+  "tui.slash.self-improve.description": "/evolve のエイリアス — 自己改善セッション（観測→提案→指示書）",
   "tui.slash.goal.description": "停止条件付きゴールを設定；判定が達成と言うまで実行。/goal clear で中止",
   "tui.slash.deep-research.description": "深い多ソース・ファクトチェック済み調査レポート（deep-research ワークフローを実行）",
 
@@ -222,7 +224,8 @@ export const dict = {
   "tui.skill.pdf-official.description": "PDF ファイルの作成・編集・変換・読み取り",
   "tui.skill.pptx-official.description": "Microsoft PowerPoint (.pptx) スライドの作成・編集・読み取り",
   "tui.skill.oimo.description": "Open Mimo Code の機能・設定・コマンドに関するセルフドキュメント",
-  "tui.skill.evolve.description": "自身のあらゆる層を書き換える——ツール、フック、知識、ワークフロー、UIまで",
+  "tui.skill.evolve.description":
+    "自身のあらゆる層を書き換える——ツール、フック、知識スキル、ワークフロー、UI——および外部エージェント向けの製品改良指示書を書き出す",
   "tui.skill.frontend-design.description": "個性的で意図的な UI ビジュアルデザインのガイド",
   "tui.skill.loop.description": "プロンプトを一定間隔で繰り返し実行するようスケジュール",
   "tui.skill.html-to-video-pipeline.description": "ショート動画の神ツール - HTML でショート動画を制作",
@@ -303,6 +306,7 @@ export const dict = {
   "tui.command.provider.logout.title": "ログアウト",
   "tui.command.console.org.switch.title": "組織を切り替え",
   "tui.command.opencode.status.title": "ステータスを表示",
+  "tui.command.evolve.dashboard.title": "自己進化",
   "tui.command.theme.switch.title": "テーマを切り替え",
   "tui.command.logo.switch.title": "ロゴデザインを切り替え",
   "tui.command.visual_mode.title_on": "リッチ表示中 - ミニマル表示に切り替え",

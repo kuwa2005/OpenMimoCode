@@ -112,6 +112,16 @@ These commands submit a predefined prompt to the agent and may accept trailing a
 | `/goal <condition>` | Set a judge-verified stop condition; `/goal clear` aborts it |
 | `/dream [focus]` | Consolidate durable knowledge from recent work into project memory |
 | `/distill [focus]` | Package repeated workflows into skills, subagents, or commands |
+| `/evolve [focus]` | Self Improvement Session: skills, backlog, friction/HAC, AI-to-AI briefs under `.oimo/evolve/` |
+| `/self-improve [focus]` | Alias for `/evolve` |
+| `/evolve-status` | TUI dashboard for briefs, backlog, snapshots |
+
+Workflows (via `workflow` tool when enabled):
+
+| Name | Purpose |
+|------|---------|
+| `evolve-review` | Multi-agent review of a brief (no apply) |
+| `evolve-apply` | Semi-automatic apply **only if** `args.approved=true` → worktree → verify → draft PR |
 | `/rebuild` | Rebuild conversation context from the latest checkpoint while keeping recent messages verbatim |
 | `/context-limit` | Pick where the current model compacts (`200K`/`300K`/`500K`/`1M`/custom, or the model default); persists per model as `compaction.max_context`. Refuses while a session is running, because the config write reloads the instance |
 | `/deep-research <question>` | Run deep multi-source research; the prompt-command implementation requires the workflow experiment |

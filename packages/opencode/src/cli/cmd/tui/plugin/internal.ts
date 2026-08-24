@@ -6,6 +6,7 @@ import SidebarInstructions from "../feature-plugins/sidebar/instructions"
 import SidebarMcp from "../feature-plugins/sidebar/mcp"
 import SidebarLsp from "../feature-plugins/sidebar/lsp"
 import SidebarGoal from "../feature-plugins/sidebar/goal"
+import SidebarEvolve from "../feature-plugins/sidebar/evolve"
 import SidebarTask from "../feature-plugins/sidebar/task"
 import SidebarTodo from "../feature-plugins/sidebar/todo"
 import SidebarFiles from "../feature-plugins/sidebar/files"
@@ -27,6 +28,7 @@ export const INTERNAL_TUI_PLUGINS: InternalTuiPlugin[] = [
   SidebarMcp,
   SidebarLsp,
   SidebarGoal,
+  SidebarEvolve,
   SidebarTask,
   SidebarTodo,
   SidebarFiles,

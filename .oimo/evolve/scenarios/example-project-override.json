@@ -1,0 +1,12 @@
+{
+  "id": "example-project-override",
+  "title": "Example project-local scenario",
+  "pattern": "excess_clarification",
+  "description": "Copy/adapt this file under .oimo/evolve/scenarios/ to add project-specific regressions.",
+  "turns": ["このリポジトリの慣習に従って小さな typo を直して。確認は最小限で。"],
+  "budget": {
+    "maxUserClarifications": 1,
+    "maxToolCalls": 30
+  },
+  "expect": "Fix without a long interview."
+}

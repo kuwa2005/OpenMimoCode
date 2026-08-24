@@ -130,6 +130,24 @@ export function Prompt(props: PromptProps) {
   const dialog = useDialog()
   const toast = useToast()
   const status = createMemo(() => sync.data.session_status?.[props.sessionID ?? ""] ?? { type: "idle" })
+  // Sidebar Tasks can stay in_progress while the main session briefly goes idle
+  // between LLM turns / child agents. Keep the bottom-left activity spinner
+  // moving so hiding the sidebar (CTRL+X B) does not look like a hang.
+  const showActivity = createMemo(() => {
+    const sid = props.sessionID
+    if (!sid) return false
+    if (status().type !== "idle") return true
+    const tasks = sync.data.task[sid] ?? []
+    if (tasks.some((t) => t.status === "in_progress")) return true
+    const actors = sync.data.actor[sid] ?? []
+    if (actors.some((a) => a.status === "pending" || a.status === "running")) return true
+    for (const child of sync.data.session) {
+      if (child.parentID !== sid) continue
+      const childStatus = sync.data.session_status[child.id]
+      if (childStatus && childStatus.type !== "idle") return true
+    }
+    return false
+  })
   const history = usePromptHistory()
   const stash = usePromptStash()
   const command = useCommandDialog()
@@ -1909,7 +1927,7 @@ export function Prompt(props: PromptProps) {
           />
         </box>
         <box width="100%" flexDirection="row" justifyContent="space-between">
-          <Show when={status().type !== "idle"} fallback={props.hint ?? <text />}>
+          <Show when={showActivity()} fallback={props.hint ?? <text />}>
             <box
               flexDirection="row"
               gap={1}
@@ -1925,7 +1943,9 @@ export function Prompt(props: PromptProps) {
                 {(() => {
                   const busyMessage = createMemo(() => {
                     const s = status()
-                    return s.type === "busy" ? clampStatusMessage(s.message) : undefined
+                    if (s.type === "busy") return clampStatusMessage(s.message)
+                    if (s.type === "idle" && showActivity()) return "Working…"
+                    return undefined
                   })
                   return (
                     <Show when={busyMessage()}>
@@ -2007,12 +2027,14 @@ export function Prompt(props: PromptProps) {
                   })()}
                 </box>
               </box>
-              <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
-                esc{" "}
-                <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
-                  {store.interrupt > 0 ? "again to interrupt" : "interrupt"}
-                </span>
-              </text>
+              <Show when={status().type !== "idle"}>
+                <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
+                  esc{" "}
+                  <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
+                    {store.interrupt > 0 ? "again to interrupt" : "interrupt"}
+                  </span>
+                </text>
+              </Show>
             </box>
           </Show>
           <Show when={status().type !== "retry"}>

@@ -27,10 +27,16 @@ function wrap(message: unknown): ReturnType<NamedError["toObject"]> {
 }
 
 describe("session.retry.delay", () => {
-  test("caps delay at 30 seconds when headers missing", () => {
+  test("uses OpenCode exponential backoff 1s, 2s, 4s, … without a 30s soft-cap", () => {
     const error = apiError()
     const delays = Array.from({ length: 10 }, (_, index) => SessionRetry.delay(index + 1, error))
-    expect(delays).toStrictEqual([2000, 4000, 8000, 16000, 30000, 30000, 30000, 30000, 30000, 30000])
+    expect(delays).toStrictEqual([1000, 2000, 4000, 8000, 16000, 32000, 64000, 128000, 256000, 512000])
+  })
+
+  test("policy stops when a single wait would exceed RETRY_MODEL_SWITCH_MS", async () => {
+    // attempt whose exponential delay is 512s (> 5 min) must not schedule another wait
+    const wait = SessionRetry.delay(10, apiError())
+    expect(wait).toBeGreaterThan(SessionRetry.RETRY_MODEL_SWITCH_MS)
   })
 
   test("prefers retry-after-ms when shorter than exponential", () => {
@@ -53,18 +59,18 @@ describe("session.retry.delay", () => {
 
   test("ignores invalid retry hints", () => {
     const error = apiError({ "retry-after": "not-a-number" })
-    expect(SessionRetry.delay(1, error)).toBe(2000)
+    expect(SessionRetry.delay(1, error)).toBe(1000)
   })
 
   test("ignores malformed date retry hints", () => {
     const error = apiError({ "retry-after": "Invalid Date String" })
-    expect(SessionRetry.delay(1, error)).toBe(2000)
+    expect(SessionRetry.delay(1, error)).toBe(1000)
   })
 
   test("ignores past date retry hints", () => {
     const pastDate = new Date(Date.now() - 5000).toUTCString()
     const error = apiError({ "retry-after": pastDate })
-    expect(SessionRetry.delay(1, error)).toBe(2000)
+    expect(SessionRetry.delay(1, error)).toBe(1000)
   })
 
   test("uses retry-after values even when exceeding 10 minutes with headers", () => {
