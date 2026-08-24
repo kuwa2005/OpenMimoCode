@@ -54,6 +54,7 @@ export namespace ProviderTest {
       getModel,
       resolveModelRef,
       getLanguage,
+      getSpeech,
       closest,
       getSmallModel,
       getVisionModel,
@@ -96,6 +97,11 @@ export namespace ProviderTest {
             getLanguage ??
             Effect.fn("TestProvider.getLanguage")(() =>
               Effect.die(new Error("ProviderTest.getLanguage not configured")),
+            ),
+          getSpeech:
+            getSpeech ??
+            Effect.fn("TestProvider.getSpeech")(() =>
+              Effect.die(new Error("ProviderTest.getSpeech not configured")),
             ),
           closest:
             closest ??

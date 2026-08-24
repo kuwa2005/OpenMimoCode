@@ -16,6 +16,7 @@ Invoked from the shell. `oimo` with no command opens the TUI.
 | `oimo upgrade` | Update to the latest version |
 | `oimo uninstall` | Uninstall Open Mimo Code |
 | `oimo serve` | Run the server |
+| `oimo llm-server issue`/`list`/`revoke` | Mint and manage tokens that let a task reach this instance's models over `/v1`; it starts nothing — see @capability-api.md |
 | `oimo stats` | Usage statistics |
 | `oimo export` / `oimo import` | Export / import sessions |
 | `oimo session` | Manage sessions |
