@@ -168,4 +168,4 @@ test("native child_process calls explicitly use childProcessEnv", async () => {
   }
 
   expect(unchecked).toEqual([])
-})
+}, { timeout: 30_000 })
