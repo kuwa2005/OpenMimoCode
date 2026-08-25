@@ -7,7 +7,22 @@ const id = "internal:sidebar-evolve"
 function View(props: { api: TuiPluginApi }) {
   const theme = () => props.api.theme.current
   const worktree = () => props.api.state.path.worktree || props.api.state.path.directory
-  const [dash] = createResource(worktree, (wt) => (wt ? loadDashboard(wt) : undefined))
+  const [projectID] = createResource(
+    () => props.api.state.path.directory,
+    async () => {
+      const res = await props.api.client.project.current()
+      return res.data?.id as string | undefined
+    },
+  )
+  const [dash] = createResource(
+    () => {
+      const pid = projectID()
+      const wt = worktree()
+      if (!pid || !wt) return undefined
+      return { projectID: pid, worktree: wt }
+    },
+    (key) => (key ? loadDashboard(key) : undefined),
+  )
   const show = createMemo(() => {
     const d = dash()
     if (!d) return false

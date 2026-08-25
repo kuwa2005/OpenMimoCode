@@ -2,9 +2,9 @@ Query self-evolution state: friction metrics, dashboard, snapshots, rollback, sc
 
 Operations:
 - metrics: quantify tool churn / re-reads / corrections / Human Attention Cost
-- dashboard: summarize .oimo/evolve INDEX, backlog, briefs, friction, history
-- snapshot / list_snapshots / rollback: .oimo asset checkpoints
-- scenarios: list built-in + project fixtures under .oimo/evolve/scenarios/*.json
+- dashboard: summarize ~/.oimo/evolve/<projectID> INDEX, backlog, briefs, friction, history
+- snapshot / list_snapshots / rollback: checkpoint project `.oimo/{skills,tools,...}` under ~/.oimo/evolve/<projectID>/snapshots/
+- scenarios: list built-in + project fixtures under ~/.oimo/evolve/<projectID>/scenarios/*.json
 - scenario_prompt: return the runnable prompt for scenario_id
 - scenario_score: score an observation JSON against scenario budgets
 - evaluate: coarse friction window compare

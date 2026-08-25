@@ -29,6 +29,7 @@ import { ConfigAgent } from "./agent"
 import { ConfigCommand } from "./command"
 import { ConfigCompose } from "./compose"
 import * as ConfigAutonomy from "./autonomy"
+import * as ConfigReliability from "./reliability"
 import { ConfigFormatter } from "./formatter"
 import { MIMOCODE_GITIGNORE_ENTRIES } from "./gitignore"
 import { ConfigHistory } from "./history"
@@ -117,6 +118,10 @@ const InfoSchema = Schema.Struct({
   autonomy: Schema.optional(ConfigAutonomy.Info).annotate({
     description:
       "AI-driven autonomous execution: auto-resolve decisions, auto-approve safe permissions, and continue until task completion or budget limits.",
+  }),
+  reliability: Schema.optional(ConfigReliability.Info).annotate({
+    description:
+      "Reliability harness: evidence freshness before goal stop, existence/claim checks on bash, loop convergence, and edit-scope boundaries. On by default; set enabled:false or MIMOCODE_DISABLE_RELIABILITY=1 to opt out.",
   }),
   watcher: Schema.optional(
     Schema.Struct({
@@ -417,7 +422,7 @@ const InfoSchema = Schema.Struct({
         Schema.Struct({
           enabled: Schema.optional(Schema.Boolean).annotate({
             description:
-              "Write AI-to-AI product-modification briefs under .oimo/evolve/briefs/ for an external coding agent. Default: true (opt-out). Planned to become opt-in later.",
+              "Write AI-to-AI product-modification briefs under ~/.oimo/evolve/<projectID>/briefs/ for an external coding agent. Default: true (opt-out). Planned to become opt-in later.",
           }),
         }),
       ),
@@ -425,7 +430,7 @@ const InfoSchema = Schema.Struct({
         Schema.Struct({
           enabled: Schema.optional(Schema.Boolean).annotate({
             description:
-              "Analyze friction / Human Attention Cost and write docs under .oimo/evolve/friction/. Default: true (opt-out). Planned to become opt-in later.",
+              "Analyze friction / Human Attention Cost and write docs under ~/.oimo/evolve/<projectID>/friction/. Default: true (opt-out). Planned to become opt-in later.",
           }),
         }),
       ),
@@ -433,7 +438,7 @@ const InfoSchema = Schema.Struct({
         Schema.Struct({
           enabled: Schema.optional(Schema.Boolean).annotate({
             description:
-              "Maintain prioritized Self Improvement Backlog at .oimo/evolve/backlog/BACKLOG.md. Default: true (opt-out). Planned to become opt-in later.",
+              "Maintain prioritized Self Improvement Backlog at ~/.oimo/evolve/<projectID>/backlog/BACKLOG.md. Default: true (opt-out). Planned to become opt-in later.",
           }),
         }),
       ),
@@ -441,7 +446,7 @@ const InfoSchema = Schema.Struct({
         Schema.Struct({
           enabled: Schema.optional(Schema.Boolean).annotate({
             description:
-              "Write session self-evaluation reviews under .oimo/evolve/reviews/. Default: true (opt-out). Planned to become opt-in later.",
+              "Write session self-evaluation reviews under ~/.oimo/evolve/<projectID>/reviews/. Default: true (opt-out). Planned to become opt-in later.",
           }),
         }),
       ),

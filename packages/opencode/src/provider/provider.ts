@@ -312,10 +312,14 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
         Boolean((yield* dep.config()).provider?.["opencode"]?.options?.apiKey)
 
       // OpenCode Zen free/public tier (cost.input === 0) stays available
-      // unauthenticated. Without a subscription/key, hide the paid models —
-      // they can't be used unauthenticated.
+      // unauthenticated. Without a subscription/key, hide paid models and the
+      // Big Pickle(API) lane — they can't be used without OPENCODE_API_KEY.
       if (!ok) {
         for (const [key, value] of Object.entries(input.models)) {
+          if (key === "big-pickle-api") {
+            delete input.models[key]
+            continue
+          }
           if (value.cost.input === 0) continue
           delete input.models[key]
         }
@@ -948,8 +952,12 @@ function custom(dep: CustomDep): Record<string, CustomLoader> {
           // The passthrough wrappers inject a CF_TEMP_TOKEN sentinel that the gateway strips before
           // dispatch, so upstream billing stays on the gateway (Unified Billing / stored BYOK).
           if (modelID.startsWith("openai/")) return aigateway(createOpenAI()(modelID.slice("openai/".length)))
+          // models.dev lists Anthropic ids with dotted versions (claude-haiku-4.5); Anthropic's
+          // Messages API expects dashed native slugs (claude-haiku-4-5), so translate before passing.
+          // No native Anthropic slug contains a dot, so the blanket replacement is lossless here -
+          // unlike OpenAI above, whose native ids (e.g. gpt-4.1) keep their dots and must not be touched.
           if (modelID.startsWith("anthropic/"))
-            return aigateway(createAnthropic()(modelID.slice("anthropic/".length)))
+            return aigateway(createAnthropic()(modelID.slice("anthropic/".length).replaceAll(".", "-")))
           // Workers AI is the only first-party provider whose upstream is Cloudflare itself, so it is
           // the only one that should receive the Cloudflare token as its upstream Authorization header.
           // The Unified API addresses Workers AI both with the explicit "workers-ai/" prefix and as
@@ -1255,6 +1263,27 @@ export function fromModelsDevProvider(provider: ModelsDev.Provider): Info {
       }
     }
   }
+
+  // OpenCode Zen exposes Big Pickle as two selectable lanes:
+  // - Free: zero-config public pool (apiKey "public"), no OPENCODE_API_KEY required
+  // - API: authenticated Zen key pool — only listed when a key is configured
+  if (provider.id === "opencode" && models["big-pickle"]) {
+    const base = models["big-pickle"]
+    models["big-pickle"] = {
+      ...base,
+      name: "Big Pickle(Free)",
+      options: { ...base.options, apiKey: "public" },
+    }
+    models["big-pickle-api"] = {
+      ...base,
+      id: ModelID.make("big-pickle-api"),
+      name: "Big Pickle(API)",
+      // Wire protocol still uses upstream id `big-pickle`.
+      api: { ...base.api, id: "big-pickle" },
+      options: { ...base.options },
+    }
+  }
+
   return {
     id: ProviderID.make(provider.id),
     source: "custom",
@@ -1657,7 +1686,7 @@ const layer: Layer.Layer<
           providerID: model.providerID,
         })
         const provider = s.providers[model.providerID]
-        const options = { ...provider.options }
+        const options = { ...provider.options, ...model.options }
 
         if (model.providerID === "google-vertex" && !model.api.npm.includes("@ai-sdk/openai-compatible")) {
           delete options.fetch

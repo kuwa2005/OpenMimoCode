@@ -16,8 +16,8 @@ function isFixture(value: unknown): value is ScenarioFixture {
   return typeof v.id === "string" && typeof v.title === "string" && Array.isArray(v.turns) && !!v.budget
 }
 
-export async function loadProjectScenarios(worktree: string): Promise<ScenarioFixture[]> {
-  const dir = path.join(evolveRoot(worktree), "scenarios")
+export async function loadProjectScenarios(projectID: string): Promise<ScenarioFixture[]> {
+  const dir = path.join(evolveRoot(projectID), "scenarios")
   try {
     const entries = await fs.readdir(dir)
     const out: ScenarioFixture[] = []
@@ -32,8 +32,8 @@ export async function loadProjectScenarios(worktree: string): Promise<ScenarioFi
   }
 }
 
-export async function listScenarios(worktree: string): Promise<ScenarioFixture[]> {
-  const project = await loadProjectScenarios(worktree)
+export async function listScenarios(projectID: string): Promise<ScenarioFixture[]> {
+  const project = await loadProjectScenarios(projectID)
   const overridden = new Set(project.map((s) => s.id))
   return [...project, ...BUILTIN_SCENARIOS.filter((s) => !overridden.has(s.id))]
 }

@@ -74,7 +74,12 @@ export function DialogModel(props: { providerID?: string }) {
             description: item.modelID === "mimo-auto" ? undefined : provider.name,
             category,
             disabled: provider.id === "opencode" && model.id.includes("-nano"),
-            footer: model.cost?.input === 0 && provider.id === "opencode" ? "Free" : undefined,
+            footer:
+              provider.id === "opencode" && model.id === "big-pickle-api"
+                ? "API"
+                : model.cost?.input === 0 && provider.id === "opencode"
+                  ? "Free"
+                  : undefined,
             onSelect: () => {
               onSelect(provider.id, model.id)
             },
@@ -109,7 +114,7 @@ export function DialogModel(props: { providerID?: string }) {
               description: "無料モデルを自動切替（自律モード /auto とは別）",
               category: "Auto Model",
               disabled: false,
-              footer: "Free" as "Free" | undefined,
+              footer: "Free" as "Free" | "API" | undefined,
               onSelect() {
                 onSelect("auto", "free")
               },
@@ -120,7 +125,7 @@ export function DialogModel(props: { providerID?: string }) {
               description: t("tui.dialog.model.auto_free_setup_desc"),
               category: "Auto",
               disabled: false,
-              footer: undefined as "Free" | undefined,
+              footer: undefined as "Free" | "API" | undefined,
               onSelect() {
                 dialog.replace(() => <DialogAutoFreeSetup />)
               },
@@ -140,7 +145,7 @@ export function DialogModel(props: { providerID?: string }) {
                   description: undefined as string | undefined,
                   category: pinnedCategory,
                   disabled: false,
-                  footer: undefined as "Free" | undefined,
+                  footer: undefined as "Free" | "API" | undefined,
                   onSelect() {
                     onSelect("mimo", "mimo-auto")
                   },
@@ -160,7 +165,7 @@ export function DialogModel(props: { providerID?: string }) {
                     description: undefined as string | undefined,
                     category: pinnedCategory,
                     disabled: false,
-                    footer: undefined as "Free" | undefined,
+                    footer: undefined as "Free" | "API" | undefined,
                     onSelect() {
                       onSelect(xiaomiProvider.id, model)
                     },
@@ -176,7 +181,7 @@ export function DialogModel(props: { providerID?: string }) {
                         description: undefined,
                         category: pinnedCategory,
                         disabled: false,
-                        footer: undefined as "Free" | undefined,
+                        footer: undefined as "Free" | "API" | undefined,
                         onSelect() {
                           void runAddModelWizard({ dialog, sdk, sync, toast, providerID: xiaomiProvider.id })
                         },
@@ -217,7 +222,12 @@ export function DialogModel(props: { providerID?: string }) {
             description: undefined as string | undefined,
             category: connected() ? provider.name : undefined,
             disabled: provider.id === "opencode" && model.includes("-nano"),
-            footer: info.cost?.input === 0 && provider.id === "opencode" ? "Free" : undefined,
+            footer:
+              provider.id === "opencode" && model === "big-pickle-api"
+                ? "API"
+                : info.cost?.input === 0 && provider.id === "opencode"
+                  ? "Free"
+                  : undefined,
             onSelect() {
               onSelect(provider.id, model)
             },
@@ -242,7 +252,7 @@ export function DialogModel(props: { providerID?: string }) {
             description: undefined,
             category: connected() ? provider.name : undefined,
             disabled: false,
-            footer: undefined as "Free" | undefined,
+            footer: undefined as "Free" | "API" | undefined,
             onSelect() {
               void runAddModelWizard({ dialog, sdk, sync, toast, providerID: provider.id })
             },

@@ -10,6 +10,8 @@ import { Instance } from "../project/instance"
 import { ProjectID } from "../project/schema"
 import { assertMemoryWriteAllowed, assertAgentWriteSandbox } from "./memory-path-guard"
 import { AppFileSystem } from "@mimo-ai/shared/filesystem"
+import * as ConfigReliability from "@/config/reliability"
+import * as Scope from "@/reliability/scope"
 
 type Kind = "file" | "directory"
 
@@ -37,6 +39,10 @@ export const assertExternalDirectoryEffect = Effect.fn("Tool.assertExternalDirec
   // never-resolved Deferred. memory-path-guard allows a task-bound subagent its own
   // tasks/<taskId>/*.md and rejects cross-task / wrong-agent writes.
   if (AppFileSystem.contains(path.join(Global.Path.data, "memory"), full)) return
+
+  // Self-evolution logs live under ~/.oimo/evolve/<projectID>/ (outside the
+  // worktree). Same deferral as memory: finer write sandbox owns the gate.
+  if (AppFileSystem.contains(path.join(Global.Path.home, ".oimo", "evolve"), full)) return
 
   // Orchestrator-created worktrees live under <data>/worktree/<projectID>/<name>.
   // They are TRUSTED, app-managed workspaces — a child session isolated into one is
@@ -91,6 +97,12 @@ const memoryWriteEnabled = Effect.gen(function* () {
   return isMemoryWriteEnabled(yield* svc.value.get())
 })
 
+const reliabilityConfig = Effect.gen(function* () {
+  const svc = yield* Effect.serviceOption(Config.Service)
+  if (Option.isNone(svc)) return {} as { reliability?: ConfigReliability.Info }
+  return yield* svc.value.get()
+})
+
 /**
  * The single write-permission gate for file-mutating tools (edit, write,
  * apply_patch). Runs the two checks every write must pass, in order:
@@ -127,13 +139,17 @@ export const assertWriteAllowed = Effect.fn("Tool.assertWriteAllowed")(function*
     }
   })()
 
+  const worktree = (yield* InstanceState.context).worktree
+
   // System-agent write sandbox: checkpoint-writer is memory-only, while
-  // dream/distill/evolve may also write <worktree>/.oimo.
+  // dream/distill/evolve may also write <worktree>/.oimo and evolve may write
+  // ~/.oimo/evolve/<projectID>/.
   assertAgentWriteSandbox({
     target,
     agentName: ctx.agent,
     memoryRoot: path.join(Global.Path.data, "memory"),
-    worktree: (yield* InstanceState.context).worktree,
+    worktree,
+    evolveHome: path.join(Global.Path.home, ".oimo", "evolve"),
   })
 
   assertMemoryWriteAllowed({
@@ -144,6 +160,13 @@ export const assertWriteAllowed = Effect.fn("Tool.assertWriteAllowed")(function*
     sessionID: ctx.sessionID,
     taskId: ctx.taskId,
     writeEnabled: yield* memoryWriteEnabled,
+  })
+
+  // Fail-open when Config is absent (unit tests / detached fibers).
+  Scope.assertWrite(target, {
+    sessionID: ctx.sessionID,
+    worktree,
+    cfg: yield* reliabilityConfig,
   })
 })
 

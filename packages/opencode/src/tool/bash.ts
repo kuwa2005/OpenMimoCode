@@ -19,15 +19,19 @@ import { Shell } from "@/shell/shell"
 import { SessionCwd } from "./session-cwd"
 import * as IsolatedGit from "./isolated-git-guard"
 import * as MergeConflict from "./merge-conflict-notice"
+import { RecoverableError } from "./recoverable"
+import * as ConfigReliability from "@/config/reliability"
+import * as Existence from "@/reliability/existence"
 import { BashArity } from "@/permission/arity"
 import * as Truncate from "./truncate"
 import { Plugin } from "@/plugin"
 import { Git } from "@/git"
-import { Effect, Stream } from "effect"
+import { Effect, Option, Stream } from "effect"
 import { ChildProcess } from "effect/unstable/process"
 import { ChildProcessSpawner } from "effect/unstable/process/ChildProcessSpawner"
 import * as BashInteractive from "./bash-interactive"
 import * as BashTokenEfficient from "./bash_token_efficient_pipeline"
+import { Config } from "@/config"
 import * as BashTokenEfficientHeuristic from "./bash_token_efficient_heuristic"
 
 const MAX_METADATA_LENGTH = 30_000
@@ -869,6 +873,15 @@ export const BashTool = Tool.define(
               const timeout = params.timeout ?? DEFAULT_TIMEOUT
               const ps = PS.has(name)
               const root = yield* parse(params.command, ps)
+
+              // Fail-open when Config is absent (unit tests / detached fibers).
+              const cfgSvc = yield* Effect.serviceOption(Config.Service)
+              const cfg = Option.isSome(cfgSvc) ? yield* cfgSvc.value.get() : {}
+              if (ConfigReliability.feature(cfg, "existence")) {
+                const findings = Existence.checkCommand(params.command, { cwd })
+                if (findings.length > 0) throw new RecoverableError(Existence.formatFindings(findings))
+              }
+
               // Cross-branch git guard for isolated children. Sits on the SAME
               // parsed AST the permission scan uses, so every command node in a
               // pipeline / `&&` chain / subshell is checked, and it runs BEFORE

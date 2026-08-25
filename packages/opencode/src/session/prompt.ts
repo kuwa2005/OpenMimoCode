@@ -33,6 +33,8 @@ import { computeLastMessageInfo } from "./last-message-info"
 import { contextPressureLevel, usable, isOverflow as overflowCheck } from "./overflow"
 import { Config } from "@/config"
 import * as ConfigAutonomy from "@/config/autonomy"
+import * as ConfigReliability from "@/config/reliability"
+import * as Evidence from "@/reliability/evidence"
 import { isMemoryWriteEnabled } from "@/memory/write-gate"
 import { Global } from "@/global"
 import { NotFoundError } from "@/storage"
@@ -50,11 +52,18 @@ import PROMPT_AUTONOMY_SP from "../session/prompt/autonomy-sp.txt"
 import {
   RECOVERY_PROMPT_MILD,
   RECOVERY_PROMPT_STRONG,
+  RECOVERY_PROMPT_DOCS_FORCE,
   TEXT_LOOP_BUFFER_SIZE,
   TEXT_LOOP_TRIGGER_COUNT,
   TEXT_LOOP_MAX_RECOVERY,
+  GOAL_REENTRY_STREAK_SOFT,
+  GOAL_REENTRY_STREAK_HARD,
+  NO_TOOL_STREAK_SOFT,
+  NO_TOOL_STREAK_HARD,
+  DOCS_INTENT_STREAK_SOFT,
   normalizeForLoopDetection,
   detectTextLoop,
+  stepLoopFingerprint,
 } from "../session/prompt/text-loop-recovery"
 import {
   TEXT_NGRAM_MAX_RECOVERY,
@@ -319,6 +328,19 @@ export const layer = Layer.effect(
     const instruction = yield* Instruction.Service
     const state = yield* SessionRunState.Service
     const goal = yield* Goal.Service
+    const tasks = yield* TaskRegistry.Service
+
+    const closeGoalBoard = Effect.fn("SessionPrompt.closeGoalBoard")(function* (
+      sessionID: SessionID,
+      reason: string,
+    ) {
+      yield* tasks
+        .abandonNonTerminal({
+          session_id: sessionID,
+          event_summary: `goal stopped (${reason})`,
+        })
+        .pipe(Effect.orElseSucceed(() => 0))
+    })
 
     const revert = yield* SessionRevert.Service
     const summary = yield* SessionSummary.Service
@@ -2940,6 +2962,10 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         const textLoopBuffer: string[] = []
         let textLoopRecoveryAttempts = 0
         let textNgramRecoveryAttempts = 0
+        let lastGoalReentryKey = ""
+        let goalReentryStreak = 0
+        let noToolStreak = 0
+        let docsIntentStreak = 0
 
         // Contract (T05): on finish="length", inject a continuation nudge ONLY for
         // plain text. If any non-providerExecuted client tool part exists we bail
@@ -3033,6 +3059,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 messageID: judgedMessageID,
               },
             })
+            yield* closeGoalBoard(sessionID, budget.reason)
             return false
           }
 
@@ -3063,9 +3090,38 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   messageID: judgedMessageID,
                 },
               })
+              yield* closeGoalBoard(sessionID, "budget_turns")
               return false
             }
-            yield* slog.info("goal not satisfied; re-entering", { sessionID, attempt: count })
+
+            const reasonKey = normalizeForLoopDetection(reason).slice(0, 160)
+            if (reasonKey && reasonKey === lastGoalReentryKey) goalReentryStreak++
+            else {
+              lastGoalReentryKey = reasonKey
+              goalReentryStreak = 1
+            }
+
+            if (goalReentryStreak >= GOAL_REENTRY_STREAK_HARD) {
+              yield* slog.warn("goal re-entry loop; stopping for human review", {
+                sessionID,
+                streak: goalReentryStreak,
+              })
+              yield* goal.stopWithReason({
+                sessionID,
+                reason: "impossible",
+                lastVerdict: {
+                  ok: false,
+                  impossible: true,
+                  reason: `Repeated the same missing-evidence gap ${goalReentryStreak} times without tool progress. ${reason}`,
+                  attempt: count,
+                  messageID: judgedMessageID,
+                },
+              })
+              yield* closeGoalBoard(sessionID, "impossible")
+              return false
+            }
+
+            yield* slog.info("goal not satisfied; re-entering", { sessionID, attempt: count, streak: goalReentryStreak })
             yield* bus.publish(Goal.Event.Updated, {
               sessionID,
               goal: {
@@ -3091,6 +3147,15 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               format: lastUser.format,
               time: { created: Date.now() },
             })
+            const streakNudge =
+              goalReentryStreak >= GOAL_REENTRY_STREAK_SOFT
+                ? [
+                    "",
+                    `CRITICAL: The same gap was reported ${goalReentryStreak} times.`,
+                    "Do NOT announce another plan. Your FIRST action must be a write/edit/bash tool call that creates the missing evidence.",
+                    "Announcing without tools is a loop and will stop the session.",
+                  ]
+                : []
             yield* sessions.updatePart({
               id: PartID.ascending(),
               messageID: reentry.id,
@@ -3103,6 +3168,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 reason,
                 "Keep working toward the goal. Call a concrete tool now — do not stop after announcing the next step.",
                 "Do not stop until it is genuinely met or impossible.",
+                ...streakNudge,
                 "</system-reminder>",
               ].join("\n"),
             } satisfies MessageV2.TextPart)
@@ -3153,6 +3219,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           }
 
           if (verdict.ok || verdict.impossible) {
+            if (verdict.ok && !verdict.impossible && ConfigReliability.feature(cfg, "evidence")) {
+              const evidence = Evidence.evaluate(transcriptMsgs)
+              if (!evidence.fresh) {
+                return yield* injectReentry(Evidence.describeMissing(evidence))
+              }
+            }
             yield* slog.info("goal satisfied; allowing stop", {
               sessionID,
               impossible: verdict.impossible === true,
@@ -3167,6 +3239,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                 error: "judgeFailed" in verdict ? true : undefined,
               },
             })
+            yield* closeGoalBoard(sessionID, verdict.impossible ? "impossible" : "completed")
             return false
           }
 
@@ -3209,6 +3282,10 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             agentName: input.lastUser.agent,
             agentID: input.lastUser.agentID,
           })
+          const cfg = yield* config.get()
+          const activeGoal = yield* goal.get(sessionID)
+          const forceDocsTools =
+            ConfigAutonomy.enabled(cfg) || Boolean(activeGoal?.autonomous) || ConfigAutonomy.docsEvidence(cfg.autonomy)
           const reminder =
             policy === "checkpoint"
               ? [
@@ -3222,11 +3299,18 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                     "Provide a final result to the parent agent now, or call a valid tool to complete the delegated task.",
                     "Do not respond with only reasoning/thinking.",
                   ]
-                : [
-                    "Your previous response contained no usable answer (it had only reasoning, or was empty).",
-                    "Provide a final answer to the user now, or call a valid tool to make progress on the task.",
-                    "Do not respond with only reasoning/thinking.",
-                  ]
+                : forceDocsTools
+                  ? [
+                      "Your previous response was only reasoning/thinking with NO tool calls.",
+                      "Documentary evidence is still missing. Do NOT announce another plan.",
+                      "Call write/edit NOW to create files under specs/ plans/ reports/, then bash to run tests.",
+                      "A turn with only Thought: / reasoning will be treated as a loop.",
+                    ]
+                  : [
+                      "Your previous response contained no usable answer (it had only reasoning, or was empty).",
+                      "Provide a final answer to the user now, or call a valid tool to make progress on the task.",
+                      "Do not respond with only reasoning/thinking.",
+                    ]
           const msg = yield* sessions.updateMessage({
             id: MessageID.ascending(),
             role: "user" as const,
@@ -4457,64 +4541,109 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             return "continue" as const
           }).pipe(Effect.ensuring(instruction.clear(handle.message.id)))
 
-          // --- Text Loop Detection (cross-step) ---
+          // --- Text Loop / no-tool streak Detection (cross-step) ---
+          // Includes reasoning-only "Thought:" steps (Cursor etc.) so announcement
+          // loops are caught even when assistant text is empty.
           const completedParts = MessageV2.parts(handle.message.id)
-          const stepText = completedParts
-            .filter((p): p is MessageV2.TextPart => p.type === "text" && !p.synthetic)
-            .map((p) => p.text)
-            .join(" ")
-          if (stepText.trim()) {
-            // Include tool call signatures in the key so same text + different tools ≠ loop
-            const toolSig = completedParts
-              .filter((p): p is MessageV2.ToolPart => p.type === "tool")
-              .map((p) => `${p.tool}:${JSON.stringify(p.state && "input" in p.state ? p.state.input : "")}`)
-              .join("|")
-            const normalized = normalizeForLoopDetection(stepText) + (toolSig ? `\0${toolSig}` : "")
+          const hasTool = completedParts.some((p) => p.type === "tool")
+          if (hasTool) {
+            noToolStreak = 0
+            docsIntentStreak = 0
+            goalReentryStreak = 0
+            lastGoalReentryKey = ""
+            textLoopRecoveryAttempts = 0
+          } else {
+            noToolStreak++
+          }
+
+          const normalized = stepLoopFingerprint(completedParts)
+          if (normalized.includes("intent:docs-evidence-fill") && !hasTool) docsIntentStreak++
+          else if (hasTool) docsIntentStreak = 0
+
+          if (normalized) {
             textLoopBuffer.push(normalized)
             if (textLoopBuffer.length > TEXT_LOOP_BUFFER_SIZE) textLoopBuffer.shift()
+          }
 
-            if (textLoopBuffer.length >= TEXT_LOOP_TRIGGER_COUNT) {
-              const isTextLoop = detectTextLoop(textLoopBuffer, TEXT_LOOP_TRIGGER_COUNT)
+          const activeForLoop = yield* goal.get(sessionID)
+          const cfgForLoop = yield* config.get()
+          const strictNoToolLoop =
+            ConfigAutonomy.enabled(cfgForLoop) || Boolean(activeForLoop?.autonomous) || Boolean(activeForLoop)
 
-              if (isTextLoop) {
-                if (textLoopRecoveryAttempts >= TEXT_LOOP_MAX_RECOVERY) {
-                  yield* slog.info("text loop: max recovery exceeded, terminating")
-                  yield* bus.publish(Session.Event.Error, {
-                    sessionID,
-                    error: new NamedError.Unknown({
-                      message: `Text loop detected: model repeated the same output ${TEXT_LOOP_TRIGGER_COUNT} times after ${TEXT_LOOP_MAX_RECOVERY} recovery attempts. Session terminated.`,
-                    }).toObject(),
-                  })
-                  break
-                }
-                const recoveryText =
-                  textLoopRecoveryAttempts === 0 ? RECOVERY_PROMPT_MILD : RECOVERY_PROMPT_STRONG
-                // Create a NEW user message at the end of conversation (not append to original)
-                const reentry = yield* sessions.updateMessage({
-                  id: MessageID.ascending(),
-                  role: "user" as const,
+          const isTextLoop =
+            textLoopBuffer.length >= TEXT_LOOP_TRIGGER_COUNT &&
+            detectTextLoop(textLoopBuffer, TEXT_LOOP_TRIGGER_COUNT)
+          const isDocsIntentLoop = docsIntentStreak >= DOCS_INTENT_STREAK_SOFT
+          const isNoToolLoop = strictNoToolLoop && noToolStreak >= NO_TOOL_STREAK_SOFT
+
+          if (isTextLoop || isDocsIntentLoop || isNoToolLoop) {
+            if (
+              (strictNoToolLoop && noToolStreak >= NO_TOOL_STREAK_HARD) ||
+              textLoopRecoveryAttempts >= TEXT_LOOP_MAX_RECOVERY
+            ) {
+              yield* slog.info("no-tool/text loop: max recovery exceeded, terminating", {
+                noToolStreak,
+                docsIntentStreak,
+                textLoopRecoveryAttempts,
+              })
+              yield* bus.publish(Session.Event.Error, {
+                sessionID,
+                error: new NamedError.Unknown({
+                  message: `Announcement loop detected: ${noToolStreak} consecutive steps with no tool calls after recovery attempts. Session terminated — switch model or create the missing docs manually.`,
+                }).toObject(),
+              })
+              if (activeForLoop) {
+                yield* goal.stopWithReason({
                   sessionID,
-                  agentID: lastUser.agentID,
-                  agent: lastUser.agent,
-                  model: lastUser.model,
-                  tools: lastUser.tools,
-                  format: lastUser.format,
-                  time: { created: Date.now() },
+                  reason: "impossible",
+                  lastVerdict: {
+                    ok: false,
+                    impossible: true,
+                    reason: "Model kept announcing documentary work without calling tools.",
+                    attempt: activeForLoop.react,
+                  },
                 })
-                yield* sessions.updatePart({
-                  id: PartID.ascending(),
-                  messageID: reentry.id,
-                  sessionID,
-                  type: "text",
-                  synthetic: true,
-                  text: recoveryText,
-                } satisfies MessageV2.TextPart)
-                textLoopRecoveryAttempts++
-                textLoopBuffer.length = 0
-                yield* slog.info("text loop: recovery injected", { attempt: textLoopRecoveryAttempts })
-                continue
+                yield* closeGoalBoard(sessionID, "impossible")
               }
+              break
             }
+
+            const recoveryText =
+              isDocsIntentLoop || isNoToolLoop
+                ? textLoopRecoveryAttempts === 0
+                  ? RECOVERY_PROMPT_DOCS_FORCE
+                  : RECOVERY_PROMPT_STRONG
+                : textLoopRecoveryAttempts === 0
+                  ? RECOVERY_PROMPT_MILD
+                  : RECOVERY_PROMPT_STRONG
+            const reentry = yield* sessions.updateMessage({
+              id: MessageID.ascending(),
+              role: "user" as const,
+              sessionID,
+              agentID: lastUser.agentID,
+              agent: lastUser.agent,
+              model: lastUser.model,
+              tools: lastUser.tools,
+              format: lastUser.format,
+              time: { created: Date.now() },
+            })
+            yield* sessions.updatePart({
+              id: PartID.ascending(),
+              messageID: reentry.id,
+              sessionID,
+              type: "text",
+              synthetic: true,
+              text: recoveryText,
+            } satisfies MessageV2.TextPart)
+            textLoopRecoveryAttempts++
+            textLoopBuffer.length = 0
+            yield* slog.info("text/no-tool loop: recovery injected", {
+              attempt: textLoopRecoveryAttempts,
+              noToolStreak,
+              docsIntentStreak,
+              isTextLoop,
+            })
+            continue
           }
 
           if (outcome === "break") {
@@ -4633,6 +4762,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         const condition = input.arguments.trim()
         if (condition === "" || condition === "clear" || condition === "reset") {
           yield* goal.clear(input.sessionID, "cancelled")
+          yield* closeGoalBoard(input.sessionID, "cancelled")
           return yield* prompt({
             sessionID: input.sessionID,
             messageID: input.messageID,

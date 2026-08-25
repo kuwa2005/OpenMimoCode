@@ -19,7 +19,7 @@ import { useKeybind } from "@tui/context/keybind"
 import { usePromptHistory, type PromptInfo } from "./history"
 import { assign, expandPlaceholders } from "./part"
 import { usePromptStash } from "./stash"
-import { clampStatusMessage } from "./footer"
+import { clampStatusMessage, shouldShowSessionActivity } from "./footer"
 import { DialogStash } from "../dialog-stash"
 import { type AutocompleteRef, Autocomplete } from "./autocomplete"
 import { useCommandDialog } from "../dialog-command"
@@ -132,21 +132,30 @@ export function Prompt(props: PromptProps) {
   const status = createMemo(() => sync.data.session_status?.[props.sessionID ?? ""] ?? { type: "idle" })
   // Sidebar Tasks can stay in_progress while the main session briefly goes idle
   // between LLM turns / child agents. Keep the bottom-left activity spinner
-  // moving so hiding the sidebar (CTRL+X B) does not look like a hang.
+  // moving so hiding the sidebar (CTRL+X B) does not look like a hang — unless
+  // the goal already stopped (stopReason), in which case leftover board rows
+  // must not keep the footer animating.
   const showActivity = createMemo(() => {
     const sid = props.sessionID
     if (!sid) return false
-    if (status().type !== "idle") return true
     const tasks = sync.data.task[sid] ?? []
-    if (tasks.some((t) => t.status === "in_progress")) return true
     const actors = sync.data.actor[sid] ?? []
-    if (actors.some((a) => a.status === "pending" || a.status === "running")) return true
+    let hasActiveChild = false
     for (const child of sync.data.session) {
       if (child.parentID !== sid) continue
       const childStatus = sync.data.session_status[child.id]
-      if (childStatus && childStatus.type !== "idle") return true
+      if (childStatus && childStatus.type !== "idle") {
+        hasActiveChild = true
+        break
+      }
     }
-    return false
+    return shouldShowSessionActivity({
+      statusType: status().type,
+      stopReason: sync.data.session_goal[sid]?.stopReason,
+      hasInProgressTask: tasks.some((t) => t.status === "in_progress"),
+      hasActiveActor: actors.some((a) => a.status === "pending" || a.status === "running"),
+      hasActiveChild,
+    })
   })
   const history = usePromptHistory()
   const stash = usePromptStash()

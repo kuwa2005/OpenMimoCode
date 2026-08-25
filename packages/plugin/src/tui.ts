@@ -327,6 +327,7 @@ export type TuiSidebarGoalVerdict = {
 export type TuiSidebarGoal = {
   condition?: string
   phase?: "hearing" | "execute"
+  stopReason?: string
   verdicts: { [messageID: string]: TuiSidebarGoalVerdict }
   lastMessageID?: string
 }

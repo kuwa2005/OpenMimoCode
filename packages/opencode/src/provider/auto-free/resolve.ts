@@ -78,7 +78,7 @@ function appendZenFreePool(
   const zen = providers["opencode"]
   if (!zen) return
   const free = Object.values(zen.models)
-    .filter((m) => m.cost.input === 0 && m.status !== "deprecated")
+    .filter((m) => m.cost.input === 0 && m.status !== "deprecated" && m.id !== "big-pickle-api")
     .sort((a, b) => {
       const ra = zenFreeRank(a.id)
       const rb = zenFreeRank(b.id)

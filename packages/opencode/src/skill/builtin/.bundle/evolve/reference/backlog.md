@@ -1,6 +1,6 @@
 # Self Improvement Backlog
 
-Maintain `.oimo/evolve/backlog/BACKLOG.md` as the durable improvement queue.
+Maintain `~/.oimo/evolve/<projectID>/backlog/BACKLOG.md` as the durable improvement queue.
 Do not implement every item — accumulate, prioritize, promote to briefs.
 
 ## Item schema

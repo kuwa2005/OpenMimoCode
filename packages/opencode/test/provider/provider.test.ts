@@ -2345,6 +2345,43 @@ test("mode cost preserves over-200k pricing from base model", () => {
   })
 })
 
+test("OpenCode Zen splits Big Pickle into Free and API lanes", () => {
+  const provider = {
+    id: "opencode",
+    name: "OpenCode Zen",
+    env: ["OPENCODE_API_KEY"],
+    api: "https://opencode.ai/zen/v1",
+    npm: "@ai-sdk/openai-compatible",
+    models: {
+      "big-pickle": {
+        id: "big-pickle",
+        name: "Big Pickle",
+        family: "big-pickle",
+        cost: { input: 0, output: 0, cache_read: 0, cache_write: 0 },
+        limit: { context: 200000, input: 160000, output: 32000 },
+        tool_call: true,
+        reasoning: true,
+      },
+      "glm-5": {
+        id: "glm-5",
+        name: "GLM-5",
+        family: "glm",
+        cost: { input: 1, output: 3.2, cache_read: 0.2 },
+        limit: { context: 200000, output: 128000 },
+      },
+    },
+  } as unknown as ModelsDev.Provider
+
+  const models = Provider.fromModelsDevProvider(provider).models
+  expect(models["big-pickle"]?.name).toBe("Big Pickle(Free)")
+  expect(models["big-pickle"]?.options.apiKey).toBe("public")
+  expect(models["big-pickle"]?.api.id).toBe("big-pickle")
+  expect(models["big-pickle-api"]?.name).toBe("Big Pickle(API)")
+  expect(models["big-pickle-api"]?.api.id).toBe("big-pickle")
+  expect(models["big-pickle-api"]?.options.apiKey).toBeUndefined()
+  expect(models["glm-5"]?.name).toBe("GLM-5")
+})
+
 test("models.dev normalization fills required response fields", () => {
   const provider = {
     id: "gateway",

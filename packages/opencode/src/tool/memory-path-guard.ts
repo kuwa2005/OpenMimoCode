@@ -4,13 +4,14 @@ import type { SessionID } from "../session/schema"
 
 const VALID_SCOPES = ["global", "projects", "sessions"] as const
 
-/** Agents that may write memory or the project's `.oimo/` directory. The
+/** Agents that may write memory, project `.oimo/`, or `~/.oimo/evolve`. The
  *  checkpoint writer has a stricter memory-only policy below. */
 const WRITE_SANDBOXED_AGENTS: ReadonlySet<string> = new Set(["dream", "distill", "evolve"])
 
 /**
  * Hard write-boundary for sandboxed system agents. checkpoint-writer is
- * memory-only; dream/distill/evolve may also write under `<worktree>/.oimo/`.
+ * memory-only; dream/distill/evolve may also write under `<worktree>/.oimo/`
+ * and evolve may write self-evolution logs under `~/.oimo/evolve/`.
  * Pure — does not touch the filesystem.
  *
  * This is enforced in the single write gate (assertWriteAllowed), so it cannot
@@ -25,6 +26,8 @@ export function assertAgentWriteSandbox(input: {
   agentName: string
   memoryRoot: string
   worktree: string
+  /** Parent of per-project evolve logs (`~/.oimo/evolve`). */
+  evolveHome?: string
 }): void {
   // Resolve here rather than trusting the caller: write.ts/edit.ts pass an
   // absolute file_path THROUGH unnormalized, so a target like
@@ -46,12 +49,21 @@ export function assertAgentWriteSandbox(input: {
   if (!WRITE_SANDBOXED_AGENTS.has(input.agentName)) return
 
   const dotDir = path.resolve(input.worktree, ".oimo")
-  if (pathContains(memoryRoot, target) || pathContains(dotDir, target)) return
+  const evolveHome = input.evolveHome ? path.resolve(input.evolveHome) : undefined
+  if (
+    pathContains(memoryRoot, target) ||
+    pathContains(dotDir, target) ||
+    (evolveHome && pathContains(evolveHome, target))
+  )
+    return
 
   throw new Error(
-    `Agent '${input.agentName}' may only write under the memory tree or ${dotDir}.\n` +
+    `Agent '${input.agentName}' may only write under the memory tree, ${dotDir}` +
+      (evolveHome ? `, or ${evolveHome}` : "") +
+      `.\n` +
       `  memory: ${memoryRoot}\n` +
       `  config: ${dotDir}\n` +
+      (evolveHome ? `  evolve: ${evolveHome}\n` : "") +
       `You attempted: ${input.target}.`,
   )
 }

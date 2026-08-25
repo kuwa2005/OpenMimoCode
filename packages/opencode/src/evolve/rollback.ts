@@ -31,11 +31,14 @@ async function copyTree(from: string, to: string) {
   return true
 }
 
-export async function createSnapshot(worktree: string, label?: string): Promise<SnapshotInfo> {
+export async function createSnapshot(
+  input: { projectID: string; worktree: string },
+  label?: string,
+): Promise<SnapshotInfo> {
   const id = `${new Date().toISOString().replace(/[:.]/g, "-")}${label ? `-${label}` : ""}`
-  const snapRoot = path.join(evolveRoot(worktree), "snapshots", id)
+  const snapRoot = path.join(evolveRoot(input.projectID), "snapshots", id)
   await fs.mkdir(snapRoot, { recursive: true })
-  const oimo = path.join(worktree, ".oimo")
+  const oimo = path.join(input.worktree, ".oimo")
   const targets: string[] = []
   for (const name of SNAPSHOT_TARGETS) {
     if (await copyTree(path.join(oimo, name), path.join(snapRoot, name))) targets.push(name)
@@ -49,8 +52,8 @@ export async function createSnapshot(worktree: string, label?: string): Promise<
   return { id, path: snapRoot, createdAt: meta.createdAt, targets }
 }
 
-export async function listSnapshots(worktree: string): Promise<SnapshotInfo[]> {
-  const dir = path.join(evolveRoot(worktree), "snapshots")
+export async function listSnapshots(projectID: string): Promise<SnapshotInfo[]> {
+  const dir = path.join(evolveRoot(projectID), "snapshots")
   try {
     const entries = await fs.readdir(dir, { withFileTypes: true })
     const out: SnapshotInfo[] = []
@@ -71,8 +74,11 @@ export async function listSnapshots(worktree: string): Promise<SnapshotInfo[]> {
   }
 }
 
-export async function rollbackSnapshot(worktree: string, snapshotID: string): Promise<SnapshotInfo> {
-  const snapRoot = path.join(evolveRoot(worktree), "snapshots", snapshotID)
+export async function rollbackSnapshot(
+  input: { projectID: string; worktree: string },
+  snapshotID: string,
+): Promise<SnapshotInfo> {
+  const snapRoot = path.join(evolveRoot(input.projectID), "snapshots", snapshotID)
   const metaPath = path.join(snapRoot, "meta.json")
   if (!(await Bun.file(metaPath).exists())) throw new Error(`Snapshot not found: ${snapshotID}`)
   const meta = (await Bun.file(metaPath).json()) as {
@@ -80,8 +86,8 @@ export async function rollbackSnapshot(worktree: string, snapshotID: string): Pr
     createdAt: string
     targets: string[]
   }
-  await createSnapshot(worktree, "pre-rollback")
-  const oimo = path.join(worktree, ".oimo")
+  await createSnapshot(input, "pre-rollback")
+  const oimo = path.join(input.worktree, ".oimo")
   for (const name of meta.targets) {
     const dst = path.join(oimo, name)
     await fs.rm(dst, { recursive: true, force: true })

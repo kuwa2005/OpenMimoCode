@@ -71,7 +71,7 @@ export const EvolveTool = Tool.define(
         }
 
         if (args.operation === "dashboard") {
-          const d = yield* Effect.promise(() => loadDashboard(worktree))
+          const d = yield* Effect.promise(() => loadDashboard({ projectID, worktree }))
           return {
             title: "Evolve dashboard",
             output: formatDashboard(d),
@@ -80,7 +80,7 @@ export const EvolveTool = Tool.define(
         }
 
         if (args.operation === "snapshot") {
-          const snap = yield* Effect.promise(() => createSnapshot(worktree, args.label))
+          const snap = yield* Effect.promise(() => createSnapshot({ projectID, worktree }, args.label))
           return {
             title: `Snapshot ${snap.id}`,
             output: [
@@ -93,7 +93,7 @@ export const EvolveTool = Tool.define(
         }
 
         if (args.operation === "list_snapshots") {
-          const list = yield* Effect.promise(() => listSnapshots(worktree))
+          const list = yield* Effect.promise(() => listSnapshots(projectID))
           return {
             title: `Snapshots: ${list.length}`,
             output:
@@ -112,7 +112,9 @@ export const EvolveTool = Tool.define(
               metadata: { operation: "rollback" },
             }
           }
-          const restored = yield* Effect.promise(() => rollbackSnapshot(worktree, args.snapshot_id!))
+          const restored = yield* Effect.promise(() =>
+            rollbackSnapshot({ projectID, worktree }, args.snapshot_id!),
+          )
           return {
             title: `Rolled back to ${restored.id}`,
             output: [
@@ -125,7 +127,7 @@ export const EvolveTool = Tool.define(
         }
 
         if (args.operation === "scenarios") {
-          const fixtures = yield* Effect.promise(() => listScenarios(worktree))
+          const fixtures = yield* Effect.promise(() => listScenarios(projectID))
           return {
             title: `Scenarios: ${fixtures.length}`,
             output: formatScenarioList(fixtures),
@@ -141,7 +143,7 @@ export const EvolveTool = Tool.define(
               metadata: { operation: "scenario_prompt" },
             }
           }
-          const fixtures = yield* Effect.promise(() => listScenarios(worktree))
+          const fixtures = yield* Effect.promise(() => listScenarios(projectID))
           const fixture = getScenario(fixtures, args.scenario_id)
           if (!fixture) {
             return {
@@ -165,7 +167,7 @@ export const EvolveTool = Tool.define(
               metadata: { operation: "scenario_score" },
             }
           }
-          const fixtures = yield* Effect.promise(() => listScenarios(worktree))
+          const fixtures = yield* Effect.promise(() => listScenarios(projectID))
           const fixture = getScenario(fixtures, args.scenario_id)
           if (!fixture) {
             return {
@@ -196,7 +198,7 @@ export const EvolveTool = Tool.define(
           const baseline = collectFrictionMetrics({ projectID, windowDays: beforeDays + afterDays })
           const friction = compareFriction(baseline, after)
 
-          const fixtures = yield* Effect.promise(() => listScenarios(worktree))
+          const fixtures = yield* Effect.promise(() => listScenarios(projectID))
           const scenarioScores =
             args.scenario_id && args.observation
               ? (() => {

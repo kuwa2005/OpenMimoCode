@@ -78,6 +78,11 @@ export interface Interface {
   readonly unblock: (input: { session_id: SessionID; id: string; event_summary?: string }) => Effect.Effect<Task>
   readonly done: (input: { session_id: SessionID; id: string; event_summary?: string }) => Effect.Effect<Task>
   readonly abandon: (input: { session_id: SessionID; id: string; event_summary?: string }) => Effect.Effect<Task>
+  /** Close leftover open/in_progress/blocked rows when a session goal stops. */
+  readonly abandonNonTerminal: (input: {
+    session_id: SessionID
+    event_summary?: string
+  }) => Effect.Effect<number>
   readonly rename: (input: { session_id: SessionID; id: string; summary: string }) => Effect.Effect<Task>
 
   readonly start: (input: { session_id: SessionID; id: string; owner?: string; event_summary?: string }) => Effect.Effect<Task>
@@ -354,6 +359,21 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Config.Service> = 
       return updated
     })
 
+    const abandonNonTerminal = Effect.fn("TaskRegistry.abandonNonTerminal")(function* (input: {
+      session_id: SessionID
+      event_summary?: string
+    }) {
+      const tasks = yield* list({ session_id: input.session_id, include_terminal: false })
+      for (const t of tasks) {
+        yield* abandon({
+          session_id: input.session_id,
+          id: t.id,
+          event_summary: input.event_summary,
+        })
+      }
+      return tasks.length
+    })
+
     const rename = Effect.fn("TaskRegistry.rename")(function* (input: {
       session_id: SessionID
       id: string
@@ -383,6 +403,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Config.Service> = 
       unblock,
       done,
       abandon,
+      abandonNonTerminal,
       rename,
       start,
     })

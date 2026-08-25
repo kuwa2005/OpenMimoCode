@@ -41,6 +41,7 @@ import { LspTool } from "./lsp"
 import * as Truncate from "./truncate"
 import { ApplyPatchTool } from "./apply_patch"
 import { ChangeDirectoryTool } from "./change-directory"
+import { EditScopeTool } from "./edit-scope"
 import { Glob } from "@mimo-ai/shared/util/glob"
 import path from "path"
 import { pathToFileURL } from "url"
@@ -157,6 +158,7 @@ export const layer = Layer.effect(
     const greptool = yield* GrepTool
     const patchtool = yield* ApplyPatchTool
     const changedirtool = yield* ChangeDirectoryTool
+    const editscopetool = yield* EditScopeTool
     const skilltool = yield* SkillTool
     const skillsearch = yield* SkillSearchTool
     const mcptoolsearch = yield* McpToolSearchTool
@@ -257,6 +259,7 @@ export const layer = Layer.effect(
           mcptoolsearch: Tool.init(mcptoolsearch),
           patch: Tool.init(patchtool),
           changedir: Tool.init(changedirtool),
+          editscope: Tool.init(editscopetool),
           question: Tool.init(question),
           lsp: Tool.init(lsptool),
           planexit: Tool.init(planexit),
@@ -292,6 +295,7 @@ export const layer = Layer.effect(
             tool.skill,
             tool.patch,
             tool.changedir,
+            tool.editscope,
             ...(Flag.MIMOCODE_EXPERIMENTAL_LSP_TOOL ? [tool.lsp] : []),
             tool.planexit,
             tool.memory,

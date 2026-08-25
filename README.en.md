@@ -16,9 +16,36 @@
 
 ---
 
-Open Mimo Code is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while continuously improving itself.
+Open Mimo Code is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while **continuously evolving itself**.
 
 OpenCode Zen is built in as a free default channel, so you can start with zero configuration. Open Mimo Code also supports connecting to any mainstream LLM provider API.
+
+---
+
+## Self Evolution — the flagship capability
+
+Most coding agents just write code in the moment. oimo **observes how it works, quantifies friction (Human Attention Cost), and crystallizes improvements** — as skills, hooks, backlog items, and AI-to-AI product briefs. No model-weight training: durable knowledge lives in files you can review.
+
+```text
+Use oimo on real work
+  → /evolve (Self Improvement Session)
+  → quantify friction / Human Attention Cost
+  → project knowledge → .oimo/skills/
+  → product fixes → ~/.oimo/evolve/<projectID>/briefs/ (for an external agent)
+  → evolve-review → human approve → evolve-apply (draft PR)
+  → gate → merge → next cycle
+```
+
+| Command / tool | Role |
+|----------------|------|
+| `/evolve` · `/self-improve` | Full observe → analyze → propose pass |
+| `/evolve-status` | TUI dashboard (briefs / backlog / snapshots) |
+| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
+| `evolve-review` / `evolve-apply` | Multi-agent review / **approval-gated** worktree → verify → draft PR |
+
+Self-evolution logs live under **`~/.oimo/evolve/<projectID>/`** (not in the project tree). Hot-reloaded extensions stay in `<worktree>/.oimo/`. Product source is never auto-patched — Human-in-the-loop is required.
+
+**This is what “Where Models and Agents Co-Evolve” means in practice.**
 
 ---
 
@@ -132,7 +159,7 @@ Beyond Open Mimo Code, Xiaomi MiMo models also work in other agents and coding t
 | **plan** | Read-only analysis mode for code exploration and solution design |
 | **compose** | Orchestration mode for specs-driven development and skill-driven workflows |
 
-Press `Tab` to switch between primary agents. Subagents are created by the system as needed. After the first message the mode locks: Build and Plan can still switch between each other, but Compose is isolated once entered — keeping the skill/tool set fixed from session start significantly improves tool-call reliability.
+Press `Tab` to switch between primary agents. Subagents are created by the system as needed. After the first message the mode locks: Build, Plan, and Compose can still switch between each other. Agents outside that group (e.g. Orchestrator) cannot be entered via Tab mid-session (`agent_force` bypasses the lock).
 
 For frontier models (Fable/Sol-class), the recommended way to run compose-style work is the **build** agent with the `/compose-next` skill — see [Compose Mode](#compose-mode).
 
@@ -245,7 +272,7 @@ Open Mimo Code bundles the following builtin skills:
 | `design-blueprint` | Produce a design blueprint (DESIGN.md + Decision Trace) before mocking up visuals |
 | `docx-official` | Produce, read, and transform Word (.docx) files |
 | `drive-mimo` | Script, test, and automate another Open Mimo Code process in headless or interactive TUI mode |
-| `evolve` | Self Improvement Session — knowledge skills, backlog, friction/HAC, AI-to-AI briefs. `/evolve` or `/self-improve` |
+| `evolve` | Self Improvement Session — knowledge skills, backlog, friction/HAC, AI-to-AI briefs (logs under `~/.oimo/evolve/<projectID>/`). `/evolve` or `/self-improve` |
 | `frontend-design` | Visual design guidance for UI work |
 | `html-to-video-pipeline` | HTML-to-MP4 rendering via headless browser + ffmpeg |
 | `learn-everything` | Turn documents, URLs, or topics into adaptive courses with exercises, feedback, and progress tracking |

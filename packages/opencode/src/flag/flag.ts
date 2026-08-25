@@ -286,6 +286,10 @@ export const Flag = {
   // enable try-best loop detection, automatic turn pausing, and handoff UI.
   MIMOCODE_ENABLE_TRY_BEST_HANDOFF: truthy("MIMOCODE_ENABLE_TRY_BEST_HANDOFF"),
 
+  // Defaults to false. Set MIMOCODE_DISABLE_RELIABILITY=true (or 1) to opt out of
+  // the reliability harness (evidence freshness, existence checks, loop, edit scope).
+  MIMOCODE_DISABLE_RELIABILITY: truthy("MIMOCODE_DISABLE_RELIABILITY"),
+
   // Defaults to false. The edit tool does pure exact-string matching with
   // explicit error signals. Set MIMOCODE_ENABLE_FUZZY_EDIT=true to opt into the
   // legacy multi-stage fuzzy fallback chain (line-trimmed / block-anchor /

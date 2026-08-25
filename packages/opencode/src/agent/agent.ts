@@ -473,6 +473,8 @@ export const layer = Layer.effect(
                 external_directory: {
                   [path.join(Global.Path.data, "memory")]: "allow",
                   [path.join(Global.Path.data, "memory", "*")]: "allow",
+                  [path.join(Global.Path.home, ".oimo", "evolve")]: "allow",
+                  [path.join(Global.Path.home, ".oimo", "evolve", "*")]: "allow",
                 },
               }),
               user,

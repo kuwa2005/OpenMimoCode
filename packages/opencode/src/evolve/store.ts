@@ -1,5 +1,6 @@
 import path from "path"
 import fs from "fs/promises"
+import { Global } from "@/global"
 
 export type EvolveDashboard = {
   root: string
@@ -12,8 +13,14 @@ export type EvolveDashboard = {
   skillsCount: number
 }
 
-export function evolveRoot(worktree: string) {
-  return path.join(worktree, ".oimo", "evolve")
+/** Parent dir for all projects' self-evolution logs: `~/.oimo/evolve`. */
+export function evolveHome() {
+  return path.join(Global.Path.home, ".oimo", "evolve")
+}
+
+/** Per-project self-evolution log root: `~/.oimo/evolve/<projectID>`. */
+export function evolveRoot(projectID: string) {
+  return path.join(evolveHome(), projectID)
 }
 
 async function readIfExists(file: string) {
@@ -35,8 +42,8 @@ async function listMarkdown(dir: string) {
   }
 }
 
-export async function loadDashboard(worktree: string): Promise<EvolveDashboard> {
-  const root = evolveRoot(worktree)
+export async function loadDashboard(input: { projectID: string; worktree: string }): Promise<EvolveDashboard> {
+  const root = evolveRoot(input.projectID)
   const index = await readIfExists(path.join(root, "INDEX.md"))
   const backlog = await readIfExists(path.join(root, "backlog", "BACKLOG.md"))
   const history = await readIfExists(path.join(root, "history", "HISTORY.md"))
@@ -46,7 +53,7 @@ export async function loadDashboard(worktree: string): Promise<EvolveDashboard> 
 
   let skillsCount = 0
   try {
-    const entries = await fs.readdir(path.join(worktree, ".oimo", "skills"), { withFileTypes: true })
+    const entries = await fs.readdir(path.join(input.worktree, ".oimo", "skills"), { withFileTypes: true })
     skillsCount = entries.filter((e) => e.isDirectory()).length
   } catch {
     skillsCount = 0
@@ -79,6 +86,8 @@ export async function loadDashboard(worktree: string): Promise<EvolveDashboard> 
 export function formatDashboard(d: EvolveDashboard): string {
   return [
     `# Self Evolution`,
+    ``,
+    `Root: \`${d.root}\``,
     ``,
     `| Metric | Value |`,
     `|--------|-------|`,

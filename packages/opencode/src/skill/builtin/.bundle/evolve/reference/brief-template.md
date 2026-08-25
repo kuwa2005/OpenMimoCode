@@ -1,6 +1,6 @@
 # AI-to-AI Product Brief Template
 
-Copy this structure when writing `.oimo/evolve/briefs/<YYYY-MM-DD>-<slug>.md`.
+Copy this structure when writing `~/.oimo/evolve/<projectID>/briefs/<YYYY-MM-DD>-<slug>.md`.
 An external coding agent should be able to implement from this file alone.
 
 ```markdown

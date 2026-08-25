@@ -113,7 +113,7 @@ These commands submit a predefined prompt to the agent and may accept trailing a
 | `/goal <condition>` | Set a judge-verified stop condition; `/goal clear` aborts it |
 | `/dream [focus]` | Consolidate durable knowledge from recent work into project memory |
 | `/distill [focus]` | Package repeated workflows into skills, subagents, or commands |
-| `/evolve [focus]` | Self Improvement Session: skills, backlog, friction/HAC, AI-to-AI briefs under `.oimo/evolve/` |
+| `/evolve [focus]` | Self Improvement Session: skills, backlog, friction/HAC, AI-to-AI briefs under `~/.oimo/evolve/<projectID>/` |
 | `/self-improve [focus]` | Alias for `/evolve` |
 | `/evolve-status` | TUI dashboard for briefs, backlog, snapshots |
 
@@ -140,7 +140,7 @@ The slash menu also includes commands discovered at runtime:
 
 ## Keybindings
 
-- `Tab` — cycle primary agents (build → plan → compose). After the first message the mode locks: Build and Plan can still switch between each other, but Compose is isolated — it can't be entered mid-session, and a session started in Compose stays there. (Many models ignore tools injected mid-conversation; a fixed skill/tool set from session start improves tool-call reliability.)
+- `Tab` — cycle primary agents (build → plan → compose). After the first message the mode locks to the free-switch group: Build, Plan, and Compose can still switch between each other. Agents outside that group (e.g. Orchestrator) cannot be entered via Tab mid-session (`agent_force` bypasses the lock).
 - Entering plan mode is a user gesture: `Tab` (or the agent dialog) — there is no `plan_enter` tool, so the agent cannot put you in plan mode and will not offer to unless you raise it. Leaving works either way: `Tab` back, or the agent calls `plan_exit` to ask you to approve the finished plan and return to build.
 - Other keybinds are configurable; the keybinds config module governs them.
 

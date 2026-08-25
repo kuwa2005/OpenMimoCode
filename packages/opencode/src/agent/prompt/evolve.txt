@@ -32,12 +32,12 @@ You integrate existing layers — you do not replace them:
 | Track | Artifact |
 |-------|----------|
 | A Skills | `.oimo/skills/<name>/SKILL.md` — living knowledge base |
-| B Briefs | `.oimo/evolve/briefs/<YYYY-MM-DD>-<slug>.md` — AI-to-AI product change requests (opt-out) |
-| C Friction | `.oimo/evolve/friction/<YYYY-MM-DD>-analysis.md` — time / Human Attention Cost (opt-out) |
-| D Backlog | `.oimo/evolve/backlog/BACKLOG.md` — prioritized Self Improvement Backlog (opt-out) |
-| E Review | `.oimo/evolve/reviews/<YYYY-MM-DD>-session-review.md` — self-evaluation notes (opt-out) |
+| B Briefs | `~/.oimo/evolve/<projectID>/briefs/<YYYY-MM-DD>-<slug>.md` — AI-to-AI product change requests (opt-out) |
+| C Friction | `~/.oimo/evolve/<projectID>/friction/<YYYY-MM-DD>-analysis.md` — time / Human Attention Cost (opt-out) |
+| D Backlog | `~/.oimo/evolve/<projectID>/backlog/BACKLOG.md` — prioritized Self Improvement Backlog (opt-out) |
+| E Review | `~/.oimo/evolve/<projectID>/reviews/<YYYY-MM-DD>-session-review.md` — self-evaluation notes (opt-out) |
 
-Always keep `.oimo/evolve/INDEX.md` and append to `.oimo/evolve/history/HISTORY.md`.
+Always keep `~/.oimo/evolve/<projectID>/INDEX.md` and append to `~/.oimo/evolve/<projectID>/history/HISTORY.md`.
 
 ## Data Sources
 
@@ -167,7 +167,7 @@ Do not treat “wrote a file” as evolution without the verify step.
 Emit executable instruction docs for an **external** coding agent (Cursor, etc.)
 to modify **oimo the product**.
 
-Path: `.oimo/evolve/briefs/<YYYY-MM-DD>-<slug>.md`
+Path: `~/.oimo/evolve/<projectID>/briefs/<YYYY-MM-DD>-<slug>.md`
 
 **Required sections (do not omit):**
 
@@ -227,7 +227,7 @@ Cap briefs per run (quality over quantity). One concern per brief.
 
 # Track C — Friction & Human Attention Cost (when enabled)
 
-Write `.oimo/evolve/friction/<YYYY-MM-DD>-analysis.md`:
+Write `~/.oimo/evolve/<projectID>/friction/<YYYY-MM-DD>-analysis.md`:
 
 ```markdown
 # Friction Analysis: <YYYY-MM-DD>
@@ -277,7 +277,7 @@ Detect at least these patterns when present:
 
 # Track D — Self Improvement Backlog (when enabled)
 
-Maintain `.oimo/evolve/backlog/BACKLOG.md` as the durable queue.
+Maintain `~/.oimo/evolve/<projectID>/backlog/BACKLOG.md` as the durable queue.
 Do **not** implement everything. Accumulate, prioritize, and promote.
 
 Each item:
@@ -311,7 +311,7 @@ Status rules for this pass:
 
 Write a compact review (can cover the window, not only one session):
 
-`.oimo/evolve/reviews/<YYYY-MM-DD>-session-review.md`
+`~/.oimo/evolve/<projectID>/reviews/<YYYY-MM-DD>-session-review.md`
 
 Sections:
 
@@ -351,7 +351,7 @@ append an evaluation note to history comparing before/after metrics if possible.
 
 # Dashboard + history (always)
 
-## `.oimo/evolve/INDEX.md`
+## `~/.oimo/evolve/<projectID>/INDEX.md`
 
 ```markdown
 # Evolve Index — Self Evolution
@@ -387,7 +387,7 @@ Last run: <ISO-8601>
 - ...
 ```
 
-## `.oimo/evolve/history/HISTORY.md`
+## `~/.oimo/evolve/<projectID>/history/HISTORY.md`
 
 Append one block per run (newest at top):
 

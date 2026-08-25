@@ -33,8 +33,8 @@ import { getToolResultAttachments, getToolResultMetadata } from "@/tool/result-e
 import { Log } from "@/util"
 import { isRecord } from "@/util/record"
 import { createTextNgramMonitor, type TextNgramMonitor } from "./prompt/text-ngram-detection"
-import { Flag } from "@/flag/flag"
 import { monitor as tryBestMonitor, type TryBestIncident } from "./try-best-detector"
+import * as Loop from "@/reliability/loop"
 
 const DOOM_LOOP_THRESHOLD = 3
 const log = Log.create({ service: "session.processor" })
@@ -264,8 +264,9 @@ export const layer: Layer.Layer<
         })
 
       const tryBestConfig = (yield* config.get()).experimental?.try_best
-      const tryBest = Flag.MIMOCODE_ENABLE_TRY_BEST_HANDOFF
-        ? tryBestMonitor(input.sessionID, input.assistantMessage.agentID, tryBestConfig)
+      const cfg = yield* config.get()
+      const tryBest = Loop.enabled(cfg)
+        ? tryBestMonitor(input.sessionID, input.assistantMessage.agentID, Loop.options(cfg))
         : undefined
 
       const detectTryBest = Effect.fn("SessionProcessor.detectTryBest")(function* (part: MessageV2.ToolPart) {

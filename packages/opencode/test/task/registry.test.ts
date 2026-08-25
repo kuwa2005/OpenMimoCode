@@ -169,3 +169,34 @@ describe("TaskRegistry.list", () => {
     ),
   )
 })
+
+describe("TaskRegistry.abandonNonTerminal", () => {
+  it.live("abandons leftover open/in_progress rows when a goal stops", () =>
+    provideTmpdirInstance(() =>
+      Effect.gen(function* () {
+        const reg = yield* TaskRegistry.Service
+        const sess = yield* seedSession()
+        const open = yield* reg.create({ session_id: sess.id, summary: "open" })
+        const running = yield* reg.create({ session_id: sess.id, summary: "running" })
+        yield* reg.start({ session_id: sess.id, id: running.id })
+        const finished = yield* reg.create({ session_id: sess.id, summary: "done" })
+        yield* reg.done({ session_id: sess.id, id: finished.id })
+
+        const n = yield* reg.abandonNonTerminal({
+          session_id: sess.id,
+          event_summary: "goal stopped (completed)",
+        })
+        expect(n).toBe(2)
+
+        const active = yield* reg.list({ session_id: sess.id })
+        expect(active.length).toBe(0)
+
+        const all = yield* reg.list({ session_id: sess.id, include_terminal: true })
+        const byId = Object.fromEntries(all.map((t) => [t.id, t.status]))
+        expect(byId[open.id]).toBe("abandoned")
+        expect(byId[running.id]).toBe("abandoned")
+        expect(byId[finished.id]).toBe("done")
+      }),
+    ),
+  )
+})

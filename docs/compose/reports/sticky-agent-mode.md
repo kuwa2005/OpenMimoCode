@@ -10,7 +10,9 @@ branch: feat/sticky-agent-mode
 
 ## What Was Built
 
-An experimental mode-locking system where agent selection is permanent for the duration of a session. Once a session has content (any user message), the user cannot switch to a different mode group. Build and Plan form a single free-switch group; all other agents (Compose, etc.) are isolated — once you're in Compose, you stay in Compose until `/new`.
+An experimental mode-locking system where agent selection is permanent for the duration of a session. Once a session has content (any user message), the user cannot switch to a different mode group. Build, Plan, and Compose form a single free-switch group; other agents (Orchestrator, Max, custom primaries, etc.) are isolated — once you're in one of those, you stay until `/new` (or `agent_force`).
+
+> **Update:** Compose was originally isolated from Build/Plan. That trapping users in Compose mid-session was not the intended product behavior; Compose is now in `FREE_SWITCH_GROUP` with Build and Plan.
 
 Three supporting changes enable a clean per-mode experience:
 
@@ -25,12 +27,12 @@ Three supporting changes enable a clean per-mode experience:
 **File:** `packages/opencode/src/cli/cmd/tui/context/local.tsx`
 
 - `agentStore.sessionHasMessages` — reactive boolean derived from `!!lastUserMessage()`
-- `FREE_SWITCH_GROUP = ["build", "plan"]` — agents that can freely switch between each other
+- `FREE_SWITCH_GROUP = ["build", "plan", "compose"]` — agents that can freely switch between each other
 - `canSwitchTo(target)` — returns true if: no messages yet, OR target is self, OR both current and target are in the same group
 - `set(name)` — unguarded, for system/programmatic use (session restore, plan tools, CLI)
 - `userSwitch(name)` — guarded, for user actions (dialog, voice). Shows contextual toast when blocked
 - `move(direction)` — cycles through agents, skipping blocked ones. Toast only when no valid target exists
-- `switchBlockedToast()` — shows subset message (build/plan group) or locked message (compose isolated)
+- `switchBlockedToast()` — shows subset message (build/plan/compose group) or locked message (isolated agent)
 
 **File:** `packages/opencode/src/cli/cmd/tui/component/prompt/index.tsx`
 
@@ -82,11 +84,11 @@ Single reactive effect — no manual lock/unlock. Naturally handles `/new` (empt
 
 **Reactive `sessionHasMessages` from `lastUserMessage()`:** No manual lock/unlock state. The signal is derived from actual session content, so `/new`, `/session`, and submits all work correctly without explicit handling.
 
-**`move()` skips blocked agents:** Tab cycles within the allowed group instead of stopping at the first blocked agent. Toast only shows when the entire group has been exhausted (e.g., compose mode with no other compose-group agents).
+**`move()` skips blocked agents:** Tab cycles within the allowed group instead of stopping at the first blocked agent. Toast only shows when the entire group has been exhausted (e.g., orchestrator mode with no other agents in that group).
 
 **Self-switch always allowed:** `canSwitchTo` returns true when `current === target`. Prevents false toast on no-op switches (e.g., compose user selecting compose in `/agents` dialog).
 
-**Contextual toast messages:** Two variants — "只能在 build, plan 之间切换" when in the group but target is outside, "进入 compose 模式后无法切换" when isolated with no valid targets.
+**Contextual toast messages:** Two variants — "只能在 build, plan, compose 之间切换" when in the group but target is outside, "进入 {{mode}} 模式后无法切换" when isolated with no valid targets.
 
 **Plan tools: symmetric allow in build/plan, deny in defaults:** Future agents automatically inherit the deny. Build and plan both see both tools (no list mutation within the group). This is NOT a revert of #1207 — #1207 made plan tools visible to ALL agents; this scopes them to the build/plan group only, possible because sticky mode prevents cross-group switching.
 
@@ -96,8 +98,8 @@ Single reactive effect — no manual lock/unlock. Naturally handles `/new` (empt
 
 - **New session:** Mode selector works normally (Tab cycles all agents)
 - **After first message:** Mode is locked to the current group
-  - Build/Plan: Tab cycles between them. Toast when trying to reach Compose
-  - Compose: Tab shows toast — cannot switch mid-session
+  - Build/Plan/Compose: Tab cycles among them. Toast when trying to reach Orchestrator (or other out-of-group agents)
+  - Orchestrator (etc.): Tab shows toast — cannot switch mid-session
 - **`/new`:** Creates empty session → mode unlocked again
 - **`/session`:** Enters existing session → mode locked to that session's agent
 - **Self-switch:** Always allowed (no-op, no toast)

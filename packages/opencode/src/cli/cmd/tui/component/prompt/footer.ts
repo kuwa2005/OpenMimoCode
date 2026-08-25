@@ -20,3 +20,30 @@ export function clampStatusMessage(message: string | undefined) {
   if (!flat) return undefined
   return Locale.truncate(flat, STATUS_MESSAGE_MAX)
 }
+
+/**
+ * Bottom-left activity spinner. Session busy/retry always shows it. While idle,
+ * leftover `in_progress` tasks normally keep it moving across brief between-turn
+ * gaps — but once a goal has a `stopReason` the run is over, so stuck board
+ * rows must not look like live work.
+ */
+export function shouldShowSessionActivity(input: {
+  statusType: string
+  stopReason?: string
+  hasInProgressTask: boolean
+  hasActiveActor: boolean
+  hasActiveChild: boolean
+}) {
+  if (input.statusType !== "idle") return true
+  if (!input.stopReason && input.hasInProgressTask) return true
+  if (input.hasActiveActor) return true
+  if (input.hasActiveChild) return true
+  return false
+}
+
+/** Sidebar task-row spinner: same stopReason rule as the footer activity bar. */
+export function shouldSpinInProgressTask(input: { sessionIdle: boolean; stopReason?: string }) {
+  if (!input.sessionIdle) return true
+  if (input.stopReason) return false
+  return true
+}

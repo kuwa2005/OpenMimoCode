@@ -663,6 +663,18 @@ describe("assertAgentWriteSandbox", () => {
       ).not.toThrow()
     })
 
+    test(`${agent} may write under ~/.oimo/evolve when evolveHome is set`, () => {
+      expect(() =>
+        assertAgentWriteSandbox({
+          target: path.join("/home/u", ".oimo", "evolve", "proj", "briefs", "x.md"),
+          agentName: agent,
+          memoryRoot: MEMORY_ROOT,
+          worktree: WORKTREE,
+          evolveHome: path.join("/home/u", ".oimo", "evolve"),
+        }),
+      ).not.toThrow()
+    })
+
     test(`${agent} may NOT write a source file in the worktree`, () => {
       expect(() =>
         assertAgentWriteSandbox({

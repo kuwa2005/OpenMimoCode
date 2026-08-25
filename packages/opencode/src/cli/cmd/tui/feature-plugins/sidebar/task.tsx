@@ -1,6 +1,7 @@
 import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@mimo-ai/plugin/tui"
 import { createMemo, Index, Show, createSignal } from "solid-js"
 import { TaskItem } from "../../component/task-item"
+import { shouldSpinInProgressTask } from "../../component/prompt/footer"
 
 const id = "internal:sidebar-task"
 
@@ -20,6 +21,12 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
   const [doneExpanded, setDoneExpanded] = createSignal(false)
   const theme = () => props.api.theme.current
   const all = createMemo(() => props.api.state.session.task(props.session_id))
+  const spinRunning = createMemo(() =>
+    shouldSpinInProgressTask({
+      sessionIdle: (props.api.state.session.status(props.session_id)?.type ?? "idle") === "idle",
+      stopReason: props.api.state.session.goal(props.session_id)?.stopReason,
+    }),
+  )
   // Active work, ordered in_progress → open(todo) → blocked; ties broken by id
   // so same-status rows keep a stable order across polls (no visual jitter).
   const active = createMemo(() =>
@@ -60,6 +67,7 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
                 summary={item().summary}
                 owner={item().owner ?? undefined}
                 depth={depthOf(item().id)}
+                spin={spinRunning()}
               />
             )}
           </Index>

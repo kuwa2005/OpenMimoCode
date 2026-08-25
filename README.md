@@ -16,9 +16,36 @@
 
 ---
 
-Open Mimo Code は、ターミナルネイティブの AI コーディングアシスタントです。コードの読み書き、コマンド実行、Git 操作に加えて、持続的なメモリシステムによってセッションをまたいでプロジェクトへの深い理解を維持し、自己進化を続けます。
+Open Mimo Code は、ターミナルネイティブの AI コーディングアシスタントです。コードの読み書き、コマンド実行、Git 操作に加えて、持続的なメモリシステムによってセッションをまたいでプロジェクトへの深い理解を維持し、**自分自身を進化させ続けます**。
 
 OpenCode Zen が無料のデフォルトチャネルとして組み込まれており、ゼロ設定ですぐに始められます。また、主要な LLM プロバイダーの API にも接続できます。
+
+---
+
+## 自己進化（Self Evolution）— oimo の最大のウリ
+
+他のコーディングエージェントが「その場で書く」のに対し、oimo は **運用中に自分のやり方を観測し、摩擦を数値化し、改善案を結晶化**します。モデルの重みを触るのではなく、スキル・フック・バックログ・AI-to-AI 指示書として知識を残します。
+
+```text
+案件で使う
+  → /evolve（Self Improvement Session）
+  → 摩擦 / Human Attention Cost を定量化
+  → プロジェクト知識 → .oimo/skills/
+  → 製品改善 → ~/.oimo/evolve/<projectID>/briefs/（外部 Agent 向け）
+  → evolve-review → 人間承認 → evolve-apply（draft PR）
+  → ゲート通過後にマージ → 次サイクル
+```
+
+| コマンド / 道具 | 役割 |
+|----------------|------|
+| `/evolve` · `/self-improve` | 観測→分析→提案のフルパス |
+| `/evolve-status` | TUI ダッシュボード（briefs / backlog / snapshots） |
+| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
+| `evolve-review` / `evolve-apply` | 多視点レビュー / **承認付き** worktree→verify→draft PR |
+
+自己進化ログはプロジェクトを汚さず **`~/.oimo/evolve/<projectID>/`** に集約されます（skills などホットリロード拡張だけが `<worktree>/.oimo/`）。製品ソースの自動パッチはしません — Human-in-the-loop が前提です。
+
+**これが Co-Evolve の実体です。** モデルとエージェントが一緒に良くなる、という README の標語を、閉じたループとして実装しています。
 
 ---
 
@@ -127,7 +154,7 @@ Open Mimo Code 以外でも、Xiaomi MiMo モデルは Cursor、Cline、Zed な�
 | **plan** | コード調査と設計のための読み取り専用の分析モード |
 | **compose** | 仕様駆動開発とスキル駆動ワークフローのためのオーケストレーションモード |
 
-`Tab` キーでプライマリエージェントを切り替えます。サブエージェントは必要に応じてシステムが作成します。最初のメッセージ以降はモードが固定されます: Build と Plan は相互に切り替えられますが、Compose は一度入ると分離されます — セッション開始時からスキル/ツールセットを固定することで、ツール呼び出しの信頼性が大幅に向上します。
+`Tab` キーでプライマリエージェントを切り替えます。サブエージェントは必要に応じてシステムが作成します。最初のメッセージ以降はモードが固定されます: Build / Plan / Compose は相互に切り替えられます。Orchestrator などグループ外のエージェントへは、メッセージ開始後は Tab では入れません（`agent_force` で強制切替可）。
 
 最先端モデル（Fable/Sol クラス）では、compose スタイルの作業を実行する推奨方法は **build** エージェントと `/compose-next` スキルです — [Compose モード](#compose-モード) を参照してください。
 
@@ -236,7 +263,7 @@ Open Mimo Code には次の組み込みスキルが同梱されています:
 | `design-blueprint` | ビジュアルのモックアップ前に設計ブループリント（DESIGN.md + Decision Trace）を作成 |
 | `docx-official` | Word（.docx）ファイルの作成、読み取り、変換 |
 | `drive-mimo` | 別の Open Mimo Code プロセスをヘッドレスまたは対話型 TUI モードでスクリプト化、テスト、自動化 |
-| `evolve` | Self Improvement Session — 知識スキル化・backlog・摩擦/HAC 分析・oimo 本体向け AI-to-AI 指示書。`/evolve` または `/self-improve` |
+| `evolve` | Self Improvement Session — 知識スキル化・backlog・摩擦/HAC 分析・oimo 本体向け AI-to-AI 指示書（ログは `~/.oimo/evolve/<projectID>/`）。`/evolve` または `/self-improve` |
 | `frontend-design` | UI 作業のためのビジュアルデザインガイダンス |
 | `html-to-video-pipeline` | ヘッドレスブラウザ + ffmpeg による HTML-to-MP4 レンダリング |
 | `learn-everything` | ドキュメント、URL、トピックを、演習・フィードバック・進捗追跡付きの適応型コースに変換 |

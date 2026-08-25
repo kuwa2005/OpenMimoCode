@@ -381,6 +381,21 @@ describe("ProviderTransform.options - gpt-5 textVerbosity", () => {
     const result = ProviderTransform.options({ model, sessionID, providerOptions: {} })
     expect(result.include).toBeUndefined()
   })
+
+  test("openai-compatible gpt-5 models omit textVerbosity", () => {
+    const model = {
+      ...createGpt5Model("gpt-5.4"),
+      id: "cortecs/gpt-5.4",
+      providerID: "cortecs",
+      api: {
+        id: "gpt-5.4",
+        url: "https://api.cortecs.ai/v1",
+        npm: "@ai-sdk/openai-compatible",
+      },
+    }
+    const result = ProviderTransform.options({ model, sessionID, providerOptions: {} })
+    expect(result.textVerbosity).toBeUndefined()
+  })
 })
 
 describe("ProviderTransform.smallOptions - gpt-5 encrypted reasoning", () => {

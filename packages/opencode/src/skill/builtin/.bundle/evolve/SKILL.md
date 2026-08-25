@@ -1,6 +1,6 @@
 ---
 name: evolve
-description: Use when you want to modify ANY aspect of yourself — tools, hooks, knowledge skills (living knowledge base), workflows, UI — or when durable learnings should become skills, when oimo-the-product needs an AI-to-AI improvement brief under .oimo/evolve/briefs/, when friction/Human Attention Cost warrants analysis, or when the Self Improvement Backlog should be updated. Use proactively on repeated sequences, user corrections, "I wish I could…", or time-sink patterns. For a full Self Improvement Session run /evolve or /self-improve.
+description: Use when you want to modify ANY aspect of yourself — tools, hooks, knowledge skills (living knowledge base), workflows, UI — or when durable learnings should become skills, when oimo-the-product needs an AI-to-AI improvement brief under ~/.oimo/evolve/<projectID>/briefs/, when friction/Human Attention Cost warrants analysis, or when the Self Improvement Backlog should be updated. Use proactively on repeated sequences, user corrections, "I wish I could…", or time-sink patterns. For a full Self Improvement Session run /evolve or /self-improve.
 ---
 
 # Evolve — Continuous Self-Evolution
@@ -21,7 +21,7 @@ WHAT you can do                      → tool
 HOW you behave                       → hook
 Multi-agent pipeline                 → workflow
 UI                                   → TUI plugin
-oimo PRODUCT behavior                → brief (.oimo/evolve/briefs) for external agent
+oimo PRODUCT behavior                → brief (~/.oimo/evolve/<projectID>/briefs) for external agent
 Time / HAC waste                     → friction report + backlog item
 ```
 
@@ -50,7 +50,7 @@ See @reference/skill-api.md.
 
 When the fix belongs in oimo itself, write:
 
-`.oimo/evolve/briefs/<YYYY-MM-DD>-<slug>.md`
+`~/.oimo/evolve/<projectID>/briefs/<YYYY-MM-DD>-<slug>.md`
 
 Use the **9 required sections** in @reference/brief-template.md
 (現状 / 問題点 / 具体例 / 原因 / 方針 / 実装案 / 期待動作 / 受け入れ条件 / 副作用).
@@ -65,7 +65,7 @@ Disable: `evolve.friction.enabled: false`.
 
 ## Backlog
 
-Maintain `.oimo/evolve/backlog/BACKLOG.md` — see @reference/backlog.md.
+Maintain `~/.oimo/evolve/<projectID>/backlog/BACKLOG.md` — see @reference/backlog.md.
 Disable: `evolve.backlog.enabled: false`.
 
 ## Closed loop
@@ -75,7 +75,7 @@ Create → Verify → Tell user → Iterate or delete
 ```
 
 Broken extensions are worse than none. Briefs need complete sections, not essays.
-Keep `.oimo/evolve/INDEX.md` and append `.oimo/evolve/history/HISTORY.md` when you
+Keep `~/.oimo/evolve/<projectID>/INDEX.md` and append `~/.oimo/evolve/<projectID>/history/HISTORY.md` when you
 write evolve artifacts.
 
 ## Creating tools / hooks

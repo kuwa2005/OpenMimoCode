@@ -14,12 +14,15 @@ export interface TaskItemProps {
   summary: string
   owner?: string
   depth: number
+  /** When false, in_progress rows show a static bullet instead of spinning. */
+  spin?: boolean
 }
 
 export function TaskItem(props: TaskItemProps) {
   const { theme } = useTheme()
   const visual = useVisualMode()
   const running = () => props.status === "in_progress"
+  const spinning = () => running() && props.spin !== false
   const glyph =
     props.status === "done"
       ? "✓"
@@ -27,7 +30,9 @@ export function TaskItem(props: TaskItemProps) {
         ? "⏸"
         : props.status === "abandoned"
           ? "✗"
-          : " "
+          : running()
+            ? "•"
+            : " "
   const fg = () => (running() ? theme.warning : theme.textMuted)
   const indent = "  ".repeat(props.depth)
 
@@ -37,7 +42,7 @@ export function TaskItem(props: TaskItemProps) {
         {indent}
       </text>
       <Show
-        when={running()}
+        when={spinning()}
         fallback={
           <text flexShrink={0} style={{ fg: fg() }}>
             [{glyph}]{" "}

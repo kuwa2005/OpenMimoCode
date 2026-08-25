@@ -17,6 +17,7 @@ Base directories resolve from `MIMOCODE_HOME` if set (must be absolute → `<hom
 | Kind | Default location | Holds |
 |------|------------------|-------|
 | data | `~/.local/share/oimo/` | memory, logs, `builtin_skills/<version>/`, bin |
+| home install | `~/.oimo/` | local binary (`bin/`), **self-evolution logs** (`evolve/<projectID>/`) |
 | config | `~/.config/oimo/` | global `oimo.jsonc` / `oimo.json` |
 | cache | `~/.cache/oimo/` | caches, downloaded bins |
 | state | `~/.local/state/oimo/` | runtime state, including TUI recent/favorite models in `model.json` |
@@ -137,10 +138,10 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 | `distill.auto` / `distill.interval_days` | Auto workflow packaging (default true / 30 days) |
 | `evolve.auto` / `evolve.interval_days` | Auto Self Improvement Session (default false / 14 days) |
 | `evolve.skills.enabled` | Crystallize knowledge into `.oimo/skills` (default true, opt-out) |
-| `evolve.briefs.enabled` | AI-to-AI product briefs under `.oimo/evolve/briefs/` (default true, opt-out → later opt-in) |
-| `evolve.friction.enabled` | Friction / Human Attention Cost analyses under `.oimo/evolve/friction/` (default true, opt-out) |
-| `evolve.backlog.enabled` | Self Improvement Backlog at `.oimo/evolve/backlog/BACKLOG.md` (default true, opt-out) |
-| `evolve.session_review.enabled` | Session self-evaluation under `.oimo/evolve/reviews/` (default true, opt-out) |
+| `evolve.briefs.enabled` | AI-to-AI product briefs under `~/.oimo/evolve/<projectID>/briefs/` (default true, opt-out → later opt-in) |
+| `evolve.friction.enabled` | Friction / Human Attention Cost analyses under `~/.oimo/evolve/<projectID>/friction/` (default true, opt-out) |
+| `evolve.backlog.enabled` | Self Improvement Backlog at `~/.oimo/evolve/<projectID>/backlog/BACKLOG.md` (default true, opt-out) |
+| `evolve.session_review.enabled` | Session self-evaluation under `~/.oimo/evolve/<projectID>/reviews/` (default true, opt-out) |
 | `evolve.condition_triggers` | Allow early auto-evolve on HAC/corrections/tool-churn (default true; still needs `evolve.auto`) |
 | `/evolve-status` | TUI Self Evolution dashboard (briefs, backlog, snapshots) |
 | `evolve_status` tool | metrics / dashboard / snapshot / rollback / evaluate |

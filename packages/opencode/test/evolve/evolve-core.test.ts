@@ -4,12 +4,13 @@ import fs from "fs/promises"
 import os from "os"
 import { compareFriction, combineGate, formatEval } from "../../src/evolve/evaluate"
 import { createSnapshot, listSnapshots, rollbackSnapshot } from "../../src/evolve/rollback"
-import { loadDashboard, formatDashboard } from "../../src/evolve/store"
+import { evolveRoot, loadDashboard, formatDashboard } from "../../src/evolve/store"
 import type { FrictionMetrics } from "../../src/evolve/metrics"
 import { scoreScenario } from "../../src/evolve/scenario"
 import { BUILTIN_SCENARIOS } from "../../src/evolve/scenarios/builtin"
 import { formatScenarioList, listScenarios, scoreObservation } from "../../src/evolve/scenarios"
 import { buildEvolveTask } from "../../src/session/auto-evolve"
+import { Global } from "../../src/global"
 
 function metrics(partial: Partial<FrictionMetrics>): FrictionMetrics {
   return {
@@ -65,8 +66,8 @@ describe("evolve evaluate", () => {
 
 describe("evolve scenarios", () => {
   test("builtin fixtures are loadable and scoreable", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "evolve-sc-"))
-    const list = await listScenarios(root)
+    const projectID = `sc-builtin-${Date.now()}`
+    const list = await listScenarios(projectID)
     expect(list.length).toBeGreaterThanOrEqual(5)
     expect(formatScenarioList(list)).toContain("excess-clarification-basic")
 
@@ -93,8 +94,8 @@ describe("evolve scenarios", () => {
   })
 
   test("project scenario overrides builtin id", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "evolve-ov-"))
-    const dir = path.join(root, ".oimo", "evolve", "scenarios")
+    const projectID = `sc-ov-${Date.now()}`
+    const dir = path.join(evolveRoot(projectID), "scenarios")
     await fs.mkdir(dir, { recursive: true })
     await Bun.write(
       path.join(dir, "excess-clarification-basic.json"),
@@ -108,32 +109,39 @@ describe("evolve scenarios", () => {
         expect: "no questions",
       }),
     )
-    const list = await listScenarios(root)
+    const list = await listScenarios(projectID)
     const hit = list.find((s) => s.id === "excess-clarification-basic")!
     expect(hit.title).toBe("override")
+    await fs.rm(evolveRoot(projectID), { recursive: true, force: true })
   })
 })
 
 describe("evolve rollback", () => {
   test("snapshot and rollback restores skill file", async () => {
-    const root = await fs.mkdtemp(path.join(os.tmpdir(), "evolve-rb-"))
-    const skillDir = path.join(root, ".oimo", "skills", "demo")
+    const worktree = await fs.mkdtemp(path.join(os.tmpdir(), "evolve-rb-"))
+    const projectID = `rb-${Date.now()}`
+    const skillDir = path.join(worktree, ".oimo", "skills", "demo")
     await fs.mkdir(skillDir, { recursive: true })
     await Bun.write(path.join(skillDir, "SKILL.md"), "v1")
 
-    const snap = await createSnapshot(root, "test")
+    const snap = await createSnapshot({ projectID, worktree }, "test")
     expect(snap.targets).toContain("skills")
+    expect(snap.path.startsWith(path.join(Global.Path.home, ".oimo", "evolve", projectID))).toBe(true)
 
     await Bun.write(path.join(skillDir, "SKILL.md"), "v2-broken")
-    const list = await listSnapshots(root)
+    const list = await listSnapshots(projectID)
     expect(list.some((s) => s.id === snap.id)).toBe(true)
 
-    await rollbackSnapshot(root, snap.id)
+    await rollbackSnapshot({ projectID, worktree }, snap.id)
     expect(await Bun.file(path.join(skillDir, "SKILL.md")).text()).toBe("v1")
 
-    const dash = await loadDashboard(root)
+    const dash = await loadDashboard({ projectID, worktree })
     expect(dash.skillsCount).toBe(1)
+    expect(dash.root).toBe(evolveRoot(projectID))
     expect(formatDashboard(dash)).toContain("Self Evolution")
+
+    await fs.rm(evolveRoot(projectID), { recursive: true, force: true })
+    await fs.rm(worktree, { recursive: true, force: true })
   })
 })
 
@@ -149,5 +157,12 @@ describe("buildEvolveTask mentions evolve_status", () => {
     })
     expect(text).toContain("evolve_status")
     expect(text).toContain("hac_high")
+    expect(text).toContain("~/.oimo/evolve/<projectID>/")
+  })
+})
+
+describe("evolveRoot location", () => {
+  test("lives under ~/.oimo/evolve/<projectID>", () => {
+    expect(evolveRoot("proj_x")).toBe(path.join(Global.Path.home, ".oimo", "evolve", "proj_x"))
   })
 })
