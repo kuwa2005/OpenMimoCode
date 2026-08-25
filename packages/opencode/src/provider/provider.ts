@@ -1860,7 +1860,7 @@ const layer: Layer.Layer<
       // Stream path already resolves candidates in SessionProcessor; this is the backstop
       // for side channels (goal judge, title, predict) that still carry the virtual ref.
       if (isAutoFreeModel(model)) {
-        const candidates = yield* resolveAutoFree()
+        const candidates = reorderAutoFreeCandidates(yield* resolveAutoFree())
         const upstream = candidates[0]
         if (!upstream) {
           throw new Error(
@@ -1974,12 +1974,12 @@ const layer: Layer.Layer<
     const resolveAutoFree = Effect.fn("Provider.resolveAutoFree")(function* () {
       const cfg = yield* config.get()
       const s = yield* InstanceState.get(state)
-      return reorderAutoFreeCandidates(
-        resolveAutoFreeCandidates({
-          fallbacks: cfg.auto_free?.fallbacks,
-          providers: s.providers,
-        }),
-      )
+      // Unordered catalog resolution — callers apply reorderAutoFreeCandidates
+      // (SessionProcessor consumes the once-per-process Big Pickle startup probe).
+      return resolveAutoFreeCandidates({
+        fallbacks: cfg.auto_free?.fallbacks,
+        providers: s.providers,
+      })
     })
 
     const resolveModelRef = Effect.fn("Provider.resolveModelRef")(function* (

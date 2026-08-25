@@ -6,6 +6,8 @@
  * - Rate-limit only applies a short cooldown (not a sticky "winner").
  *   After cooldown, high-scoring models return to the front.
  * - Persisted under Global.Path.data so rankings survive restarts.
+ * - Once per process, the first Auto Free stream may force Big Pickle first
+ *   (ignoring cooldown) as a connectivity / rate-limit probe.
  */
 
 import fs from "fs"
@@ -13,6 +15,7 @@ import path from "path"
 import { Global } from "@/global"
 
 export const AUTO_FREE_COOLDOWN_MS = 15 * 60 * 1000
+export const BIG_PICKLE_REF = "opencode/big-pickle"
 
 export type AutoFreeRefStats = {
   /** Pre-commit stream finished without error */
@@ -39,6 +42,8 @@ let loaded = false
 let writeTimer: ReturnType<typeof setTimeout> | undefined
 let persistPath: string | undefined
 let persistEnabled = true
+/** First Auto Free stream after process start may probe Big Pickle ignoring cooldown. */
+let startupProbePending = true
 
 export function autoFreeRef(model: { providerID: string; id: string }) {
   return `${model.providerID}/${model.id}`
@@ -154,15 +159,50 @@ export function rememberAutoFreeBad(ref: string, now = Date.now()) {
 }
 
 /**
+ * Consume the once-per-process startup probe flag.
+ * Returns true only on the first call after process start / reset.
+ */
+export function consumeAutoFreeStartupProbe() {
+  if (!startupProbePending) return false
+  startupProbePending = false
+  return true
+}
+
+export function autoFreeStartupProbePending() {
+  return startupProbePending
+}
+
+/**
  * Order free candidates: not-cooled first, then excellence desc, catalog index asc.
  * Cooldown is short; sticky last-winner is intentionally absent.
+ *
+ * When `preferBigPickle` is true (startup probe), `opencode/big-pickle` is forced
+ * first even if it is still in rate-limit cooldown — so the first Auto Free turn
+ * after launch can verify whether Big Pickle is actually limited.
  */
 export function reorderAutoFreeCandidates<T extends { providerID: string; id: string }>(
   candidates: T[],
   now = Date.now(),
+  opts?: { preferBigPickle?: boolean },
 ): T[] {
   ensureLoaded()
 
+  if (opts?.preferBigPickle) {
+    const pickleIdx = candidates.findIndex((c) => autoFreeRef(c) === BIG_PICKLE_REF)
+    if (pickleIdx >= 0) {
+      const pickle = candidates[pickleIdx]!
+      const rest = candidates.filter((_, i) => i !== pickleIdx)
+      return [pickle, ...rankAutoFreeCandidates(rest, now)]
+    }
+  }
+
+  return rankAutoFreeCandidates(candidates, now)
+}
+
+function rankAutoFreeCandidates<T extends { providerID: string; id: string }>(
+  candidates: T[],
+  now: number,
+): T[] {
   const ranked = candidates.map((candidate, catalogIndex) => {
     const ref = autoFreeRef(candidate)
     const stats = memory.refs[ref]
@@ -191,6 +231,7 @@ export function resetAutoFreeSticky(opts?: { persist?: boolean; path?: string })
   loaded = true
   persistEnabled = opts?.persist === true
   persistPath = opts?.path
+  startupProbePending = true
   if (writeTimer) {
     clearTimeout(writeTimer)
     writeTimer = undefined

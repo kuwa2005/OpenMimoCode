@@ -22,6 +22,7 @@ import { Provider as ProviderNS } from "@/provider"
 import {
   isAutoFreeModel,
   isCommitStreamEvent,
+  consumeAutoFreeStartupProbe,
   rememberAutoFreeFailure,
   rememberAutoFreeSuccess,
   reorderAutoFreeCandidates,
@@ -879,7 +880,12 @@ export const layer: Layer.Layer<
           } else {
             // Rank by local excellence stats; short cooldown after rate-limit only
             // (no sticky last-winner — big-pickle returns when cooldown ends).
-            const candidates = reorderAutoFreeCandidates(yield* provider.resolveAutoFree())
+            // Once per process: first Auto Free stream probes Big Pickle first,
+            // ignoring cooldown, to verify whether the public pool is rate-limited.
+            const startupProbe = consumeAutoFreeStartupProbe()
+            const candidates = reorderAutoFreeCandidates(yield* provider.resolveAutoFree(), Date.now(), {
+              preferBigPickle: startupProbe,
+            })
             if (candidates.length === 0) {
               throw new Error(
                 "Auto Model (無料): 利用可能な無料モデルがありません。OpenCode Zen または無料 API キーを設定してください。",
@@ -888,7 +894,7 @@ export const layer: Layer.Layer<
             slog.info("auto-free candidates", {
               count: candidates.length,
               refs: candidates.map((m) => `${m.providerID}/${m.id}`),
-              ranking: "excellence+cooldown",
+              ranking: startupProbe ? "startup-probe-big-pickle" : "excellence+cooldown",
             })
 
             let lastError: unknown

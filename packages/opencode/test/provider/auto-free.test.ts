@@ -14,6 +14,8 @@ import {
   rememberAutoFreeGood,
   rememberAutoFreeBad,
   reorderAutoFreeCandidates,
+  consumeAutoFreeStartupProbe,
+  autoFreeStartupProbePending,
   resetAutoFreeSticky,
   excellenceScore,
   snapshotAutoFreeStats,
@@ -199,6 +201,10 @@ describe("auto-free.stats", () => {
 
   test("rate-limit cooldown defers a model briefly, then catalog leader returns", () => {
     resetAutoFreeSticky()
+    // Consume startup probe so this test exercises normal cooldown ranking.
+    expect(consumeAutoFreeStartupProbe()).toBe(true)
+    expect(autoFreeStartupProbePending()).toBe(false)
+
     const a = model("opencode", "big-pickle")
     const b = model("nvidia", "nvidia/nemotron-3-super-120b-a12b")
     rememberAutoFreeFailure("opencode/big-pickle", 1_000)
@@ -213,6 +219,29 @@ describe("auto-free.stats", () => {
     expect(
       reorderAutoFreeCandidates([a, b], 1_000 + AUTO_FREE_COOLDOWN_MS + 1).map((m) => `${m.providerID}/${m.id}`),
     ).toEqual(["opencode/big-pickle", "nvidia/nvidia/nemotron-3-super-120b-a12b"])
+  })
+
+  test("startup probe forces Big Pickle first even while cooled", () => {
+    resetAutoFreeSticky()
+    const a = model("opencode", "big-pickle")
+    const b = model("nvidia", "nvidia/nemotron-3-super-120b-a12b")
+    rememberAutoFreeFailure("opencode/big-pickle", 1_000)
+    rememberAutoFreeSuccess("nvidia/nvidia/nemotron-3-super-120b-a12b", 1_000)
+    for (let i = 0; i < 3; i++) rememberAutoFreeGood("nvidia/nvidia/nemotron-3-super-120b-a12b", 1_000)
+
+    expect(autoFreeStartupProbePending()).toBe(true)
+    expect(consumeAutoFreeStartupProbe()).toBe(true)
+    expect(
+      reorderAutoFreeCandidates([a, b], 1_000 + 60_000, { preferBigPickle: true }).map(
+        (m) => `${m.providerID}/${m.id}`,
+      ),
+    ).toEqual(["opencode/big-pickle", "nvidia/nvidia/nemotron-3-super-120b-a12b"])
+
+    // Second turn: no probe — cooldown applies again.
+    expect(consumeAutoFreeStartupProbe()).toBe(false)
+    expect(
+      reorderAutoFreeCandidates([a, b], 1_000 + 60_000).map((m) => `${m.providerID}/${m.id}`),
+    ).toEqual(["nvidia/nvidia/nemotron-3-super-120b-a12b", "opencode/big-pickle"])
   })
 
   test("sustained poor quality demotes a model behind healthier ones", () => {

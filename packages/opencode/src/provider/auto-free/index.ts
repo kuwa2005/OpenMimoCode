@@ -18,6 +18,7 @@ export {
 } from "./failover"
 export {
   AUTO_FREE_COOLDOWN_MS,
+  BIG_PICKLE_REF,
   autoFreeRef,
   catalogPrior,
   excellenceScore,
@@ -26,6 +27,8 @@ export {
   rememberAutoFreeFailure,
   rememberAutoFreeGood,
   rememberAutoFreeBad,
+  consumeAutoFreeStartupProbe,
+  autoFreeStartupProbePending,
   reorderAutoFreeCandidates,
   snapshotAutoFreeStats,
   resetAutoFreeSticky,
