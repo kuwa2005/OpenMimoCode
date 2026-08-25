@@ -1244,6 +1244,8 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     // Offer a recoverable action when the main agent dies (rate-limit exhaustion,
     // failover failure, etc.). Skip if another dialog is already open or this
     // error belongs to a different session than the one on screen.
+    // Subagent failures no longer publish session.error (processor halt), so this
+    // should only fire for real main-turn stops after SessionRetry gives up.
     if (!sessionID) return
     if (route.data.type !== "session" || route.data.sessionID !== sessionID) return
     if (dialog.stack.length > 0) return

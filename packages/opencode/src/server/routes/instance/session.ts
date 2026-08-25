@@ -1231,9 +1231,13 @@ export const SessionRoutes = lazy(() =>
           SessionPrompt.Service.use((svc) => svc.prompt({ ...body, sessionID })),
         ).catch((err) => {
           log.error("prompt_async failed", { sessionID, error: err })
+          // Prefer fromError so AI_RetryError unwraps to the underlying rate-limit
+          // (matches processor halt). Raw err.message was "Failed after 3 attempts…".
           void Bus.publish(Session.Event.Error, {
             sessionID,
-            error: new NamedError.Unknown({ message: err instanceof Error ? err.message : String(err) }).toObject(),
+            error: MessageV2.fromError(err, {
+              providerID: body.model?.providerID ?? ProviderID.make("opencode"),
+            }),
           })
         })
 

@@ -115,7 +115,8 @@ export function delay(attempt: number, error?: MessageV2.APIError) {
   }
 
   // OpenCode-style exponential: 1s, 2s, 4s, 8s, 16s, ... (no 30s soft-cap).
-  // SessionRetry.policy stops when a single wait would exceed RETRY_MODEL_SWITCH_MS.
+  // SessionRetry.policy stops when a single wait would exceed RETRY_MODEL_SWITCH_MS
+  // (5 minutes) so the TUI can show the recover dialog instead of hanging forever.
   return cap(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1))
 }
 

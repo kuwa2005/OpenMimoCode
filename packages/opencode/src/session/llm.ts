@@ -770,14 +770,10 @@ const live: Layer.Layer<
         }),
         // AI SDK's internal retry loop is SILENT — it emits no events and does
         // not update session status, so the TUI shows only a dead spinner while
-        // it runs. Its backoff is also UNCAPPED (delay *= 2 each attempt, capped
-        // only by a retry-after header), so the prior default of 10 meant up to
-        // ~34 min (2+4+…+1024s) of invisible retrying before the error surfaced.
-        // We keep this layer short (absorb a couple of quick blips) and let the
-        // VISIBLE processor-level SessionRetry.policy own long-haul resilience —
-        // it publishes `type: "retry"` so the `[retrying attempt #N]` banner
-        // shows, and its per-attempt delay is capped at 30s.
-        maxRetries: input.retries ?? 2,
+        // it runs. When SessionRetry owns the turn (skipPersistentRetry), keep
+        // maxRetries at 0 so backoff is the visible 1s/2s/4s/… schedule only.
+        // Otherwise absorb a couple of quick blips (default 2 → 3 attempts).
+        maxRetries: input.skipPersistentRetry ? 0 : (input.retries ?? 2),
         messages,
         model: wrapLanguageModel({
           model: language,
@@ -881,17 +877,13 @@ const live: Layer.Layer<
           ),
         )
 
-      // Promote a prefill-rejection 400 — which arrives as an in-band
-      // `{ type: "error", error }` event, not a stream fault — into a stream
-      // FAILURE so the reactive retry can catch it. `Stream.flatMap` short-circuits
-      // every non-matching event straight through with a pure `Stream.succeed` (no
-      // per-event Effect fiber, unlike `Stream.mapEffect`), and the failing branch
-      // is only ever constructed for the specific error event. On a clean stream
-      // this is a transparent passthrough.
-      const promotePrefillRejection = (stream: Stream.Stream<Event, Error, never>) =>
+      // Promote in-band `{ type: "error", error }` events into stream Failures so
+      // SessionRetry / Effect.catch see Fail (not a Die from handleEvent throw).
+      // Prefill-rejection still gets a one-shot pruned resend below.
+      const promoteStreamErrors = (stream: Stream.Stream<Event, Error, never>) =>
         stream.pipe(
           Stream.flatMap((event) =>
-            event.type === "error" && ProviderTransform.isAssistantPrefillRejection(event.error)
+            event.type === "error"
               ? Stream.fail(event.error instanceof Error ? event.error : new Error(String(event.error)))
               : Stream.succeed(event),
           ),
@@ -907,7 +899,7 @@ const live: Layer.Layer<
       // hard-pruned. Guarded to a single reprune so a persistent failure surfaces
       // the retry's OWN error, falling back to the original prefill cause only when
       // the resend is again prefill-rejected.
-      return promotePrefillRejection(attempt(false)).pipe(
+      return promoteStreamErrors(attempt(false)).pipe(
         Stream.catchCause((primaryCause) => {
           if (!ProviderTransform.isAssistantPrefillRejection(Cause.squash(primaryCause)))
             return Stream.failCause(primaryCause)

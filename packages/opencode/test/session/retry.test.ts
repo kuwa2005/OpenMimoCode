@@ -39,6 +39,30 @@ describe("session.retry.delay", () => {
     expect(wait).toBeGreaterThan(SessionRetry.RETRY_MODEL_SWITCH_MS)
   })
 
+  test("Effect.retry with maxWaitMs stops before scheduling a >threshold wait", async () => {
+    let attempts = 0
+    const error = new Error("Error from provider (Console): Rate limit exceeded. Please try again later.")
+    const parse = (e: unknown) => MessageV2.fromError(e, { providerID })
+    const program = Effect.gen(function* () {
+      attempts++
+      return yield* Effect.fail(error)
+    }).pipe(
+      Effect.retry(
+        SessionRetry.policy({
+          parse,
+          // 3s threshold: attempt delays 1s, 2s ok; next would be 4s → stop
+          maxWaitMs: 3_000,
+          set: () => Effect.void,
+        }),
+      ),
+      Effect.catch(() => Effect.succeed("stopped")),
+    )
+    const result = await Effect.runPromise(program)
+    expect(result).toBe("stopped")
+    // First try + retries after 1s and 2s waits = 3 attempts, then 4s wait exceeds max
+    expect(attempts).toBe(3)
+  })
+
   test("prefers retry-after-ms when shorter than exponential", () => {
     const error = apiError({ "retry-after-ms": "1500" })
     expect(SessionRetry.delay(4, error)).toBe(1500)
@@ -536,6 +560,20 @@ describe("isRetryableTransientError", () => {
       ],
     })
     expect(isRetryableTransientError(wrapped)).toBe(true)
+  })
+
+  test("Console provider rate-limit RetryError is retryable after fromError", () => {
+    const wrapped = new RetryError({
+      message:
+        "Failed after 3 attempts. Last error: Error from provider (Console): Rate limit exceeded. Please try again later.",
+      reason: "maxRetriesExceeded",
+      errors: [new Error("Error from provider (Console): Rate limit exceeded. Please try again later.")],
+    })
+    const out = MessageV2.fromError(wrapped, { providerID: ProviderID.make("opencode") })
+    expect(SessionRetry.retryable(out as ReturnType<NamedError["toObject"]>)).toBeTruthy()
+    expect(SessionRetry.isRateLimitMessage(SessionRetry.retryable(out as ReturnType<NamedError["toObject"]>)!)).toBe(
+      true,
+    )
   })
 })
 

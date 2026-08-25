@@ -565,7 +565,13 @@ export const layer: Layer.Layer<
           }
 
           case "error":
-            throw value.error
+            // Must be Effect.fail (not throw). A bare throw becomes a Die/defect;
+            // SessionRetry + Effect.catch(halt) only see Fail, so rate-limits that
+            // arrive as in-band `{ type: "error" }` events used to bypass visible
+            // backoff and surface immediately as prompt_async "Failed after 3…".
+            return yield* Effect.fail(
+              value.error instanceof Error ? value.error : new Error(String(value.error)),
+            )
 
           case "start-step":
             ctx.stepStartedAt = Date.now()
@@ -790,11 +796,18 @@ export const layer: Layer.Layer<
           return
         }
         ctx.assistantMessage.error = error
-        yield* bus.publish(Session.Event.Error, {
-          sessionID: ctx.assistantMessage.sessionID,
-          error: ctx.assistantMessage.error,
-        })
-        if (isMain) yield* status.set(ctx.sessionID, { type: "idle" })
+        ctx.assistantMessage.time.completed = Date.now()
+        yield* session.updateMessage(ctx.assistantMessage)
+        // Subagents share the parent sessionID; publishing session.error for them
+        // pops the main-agent recover dialog over an already-finished reply.
+        // Persist the error on the assistant message; only main triggers the bus.
+        if (isMain) {
+          yield* bus.publish(Session.Event.Error, {
+            sessionID: ctx.assistantMessage.sessionID,
+            error: ctx.assistantMessage.error,
+          })
+          yield* status.set(ctx.sessionID, { type: "idle" })
+        }
       })
 
       const process = Effect.fn("SessionProcessor.process")(function* (streamInput: LLM.StreamInput) {
@@ -822,7 +835,14 @@ export const layer: Layer.Layer<
             ctx.textNgramRepeat = false
             ctx.textNgramMonitor = createTextNgramMonitor()
             ctx.model = model
-            const stream = llm.stream({ ...streamInput, model, skipPersistentRetry: opts.withSessionRetry })
+            // When SessionRetry owns visible backoff, disable AI SDK silent
+            // maxRetries so each attempt is one wire call + 1s/2s/4s/… waits.
+            const stream = llm.stream({
+              ...streamInput,
+              model,
+              skipPersistentRetry: opts.withSessionRetry,
+              retries: opts.withSessionRetry ? 0 : streamInput.retries,
+            })
 
             yield* stream.pipe(
               Stream.tap((event) =>
@@ -871,12 +891,26 @@ export const layer: Layer.Layer<
             : body
 
           const finished = retried.pipe(Effect.ensuring(cleanup()))
-          return opts.catchHalt ? finished.pipe(Effect.catch(halt)) : finished
+          // catchCause so Die/defect still becomes a recoverable main stop.
+          return opts.catchHalt
+            ? finished.pipe(
+                Effect.catchCause((cause) => {
+                  if (Cause.hasInterruptsOnly(cause)) return Effect.failCause(cause)
+                  return halt(Cause.squash(cause))
+                }),
+              )
+            : finished
         }
 
         return yield* Effect.gen(function* () {
           if (!isAutoFreeModel(streamInput.model)) {
-            yield* drain(streamInput.model, { withSessionRetry: true, catchHalt: true, capWaitMs: SessionRetry.RETRY_MODEL_SWITCH_MS })
+            // OpenCode-style backoff 1s,2s,4s,… ; when the next wait would exceed
+            // 5 minutes, stop and let halt surface the recover dialog.
+            yield* drain(streamInput.model, {
+              withSessionRetry: true,
+              catchHalt: true,
+              maxWaitMs: SessionRetry.RETRY_MODEL_SWITCH_MS,
+            })
           } else {
             // Rank by local excellence stats; short cooldown after rate-limit only
             // (no sticky last-winner — big-pickle returns when cooldown ends).
