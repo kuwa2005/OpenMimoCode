@@ -1,0 +1,27 @@
+---
+description: oimo 機能追加時に本隊 / ビルトイン / agent-skills へ自動振り分けする
+alwaysApply: true
+---
+
+# Feature placement (core vs skills)
+
+When adding or changing oimo product capability, **choose the layer before implementing**, per `docs/architecture/core-vs-skills.ja.md`.
+
+## Route (do this first)
+
+1. **Core** (`packages/opencode/src/**` outside skill bundles) — only for runtime invariants: session/LLM/retry, TUI, permissions, providers, security, new tool/stream primitives.
+2. **Builtin skill** (`packages/opencode/src/skill/builtin/.bundle/**`) — capability every oimo install should ship with.
+3. **If that builtin is useful outside oimo** (Cursor / OpenCode / portable scripts) — **also add or update it in** [`kuwa2005/agent-skills`](https://github.com/kuwa2005/agent-skills) (do not leave a useful builtin oimo-only when a portable copy is reasonable).
+4. **agent-skills only** — cross-host or optional installs that need not be in the binary.
+5. **Project** (`.oimo/skills/`) — repo-specific only; promote later if generalized.
+
+Compose-internal skills (`skill/compose/.bundle`) are not user-facing builtins; touch only for Compose orchestration.
+
+## Behavior
+
+- Default to **skills**, not core. Touch core only when a skill cannot express the change without a new primitive or unbroken guarantee.
+- State the chosen layer and one-line reason in the first implementation reply.
+- Builtin PR without agent-skills: either ship the agent-skills mirror in the same effort, open a follow-up, or explicitly note "oimo-only, no portable value".
+- Prefer not to grow the same skill in only one of builtin vs agent-skills when both already exist — keep them in sync.
+
+Full criteria and examples: `docs/architecture/core-vs-skills.ja.md`.
