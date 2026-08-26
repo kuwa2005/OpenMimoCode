@@ -101,8 +101,17 @@ describe("session-log summary mode", () => {
       cwd: tmp.path,
       now: new Date("2026-08-06T12:34:56"),
     })
-    expect(auto).toBe(path.join(tmp.path, "oimo-session-20260806-123456.md"))
+    expect(auto).toBe(path.join(tmp.path, ".oimo", "oimo-session-20260806-123456.md"))
     expect(await resolveSessionLogFile({ explicit: "/abs/path.md", auto: false, cwd: tmp.path })).toBe("/abs/path.md")
+    // Explicit path wins over auto
+    expect(
+      await resolveSessionLogFile({
+        explicit: "/abs/path.md",
+        auto: true,
+        cwd: tmp.path,
+        now: new Date("2026-08-06T12:34:56"),
+      }),
+    ).toBe("/abs/path.md")
   })
 
   test("buffers the assistant result and flushes it on the next user input", async () => {

@@ -107,21 +107,21 @@ export const Flag = {
   },
 
   // Path to a markdown file the TUI appends each completed user→assistant turn
-  // (question + summary) to, set by the `--log` CLI flag. Getter so the CLI
-  // middleware can set MIMOCODE_LOG at parse time before the TUI reads it.
+  // (question + summary) to, set by the `--log <file>` CLI flag. Getter so the
+  // CLI middleware can set MIMOCODE_LOG at parse time before the TUI reads it.
   get MIMOCODE_LOG() {
     return process.env["MIMOCODE_LOG"]
   },
 
-  // Set by `oimo --log` without a filename: the TUI generates an
-  // oimo-session-<timestamp>.md file in the project directory.
+  // Session logging is on by default: the TUI writes
+  // .oimo/oimo-session-<timestamp>.md under the project directory. Cleared by
+  // `--no-log`; also set when the user passes bare `--log`.
   get MIMOCODE_LOG_AUTO() {
     return truthy("MIMOCODE_LOG_AUTO")
   },
 
-  // Set by `oimo --log-mode`: "full" (default) logs every completed turn;
-  // "summary" logs only user inputs, question/answer pairs and the final
-  // result of each request.
+  // Set by `oimo --log-mode`: "full" logs every completed turn; unset/"summary"
+  // logs only user inputs, question/answer pairs and the final result.
   get MIMOCODE_LOG_MODE() {
     return process.env["MIMOCODE_LOG_MODE"]
   },

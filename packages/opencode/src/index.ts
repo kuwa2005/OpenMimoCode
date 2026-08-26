@@ -104,8 +104,12 @@ const cli = yargs(args)
   })
   .option("log", {
     describe:
-      "TUI セッションの質問と要約をマークダウン ファイルに追記する (ファイル名省略時は oimo-session-<タイムスタンプ>.md を自動生成)",
+      "TUI セッションログをマークダウンに追記 (既定: ON。.oimo/oimo-session-<タイムスタンプ>.md。パス指定で上書き)",
     type: "string",
+  })
+  .option("no-log", {
+    describe: "セッションログを無効にする (既定の --log をオフ)",
+    type: "boolean",
   })
   .option("log-mode", {
     describe: "--log ファイルの内容 (既定: summary)",
@@ -125,11 +129,14 @@ const cli = yargs(args)
       process.env.MIMOCODE_RANDOM_UUID = "1"
     }
 
-    if (opts.log) {
+    if (opts.noLog) {
+      delete process.env.MIMOCODE_LOG
+      delete process.env.MIMOCODE_LOG_AUTO
+    } else if (typeof opts.log === "string" && opts.log.length > 0) {
       process.env.MIMOCODE_LOG = path.resolve(opts.log)
-    } else if (opts.log === "") {
-      // Bare `--log` with no filename: the TUI auto-generates
-      // oimo-session-<timestamp>.md instead of silently doing nothing.
+      delete process.env.MIMOCODE_LOG_AUTO
+    } else if (!process.env.MIMOCODE_LOG) {
+      // Default ON (also covers bare `--log` / `--log=`): auto file under ./.oimo/
       process.env.MIMOCODE_LOG_AUTO = "1"
     }
 

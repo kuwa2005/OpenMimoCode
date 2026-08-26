@@ -9,7 +9,8 @@ export type SessionLogMode = "full" | "summary"
 
 // What the --log file contains. "summary" (default) logs only user inputs,
 // system questions with the user's answers, and the final result of each
-// request; "full" logs every completed turn.
+// request; "full" logs every completed turn. Logging itself is on by default
+// (auto file under ./.oimo/); use `--no-log` to disable.
 export function sessionLogMode(): SessionLogMode {
   return Flag.MIMOCODE_LOG_MODE === "full" ? "full" : "summary"
 }
@@ -123,8 +124,9 @@ export async function resolveSessionLogFile(input: {
   cwd: string
   now?: Date
 }): Promise<string | undefined> {
-  if (input.auto) return generateSessionLogFileName(input.cwd, input.now)
+  // Explicit path always wins over auto (env MIMOCODE_LOG or `--log path`).
   if (input.explicit) return input.explicit
+  if (input.auto) return generateSessionLogFileName(path.join(input.cwd, ".oimo"), input.now)
   return undefined
 }
 
