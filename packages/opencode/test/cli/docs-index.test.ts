@@ -1,6 +1,13 @@
 import { describe, expect, test } from "bun:test"
 import { resolve } from "node:path"
-import { collectDocs, escapeForScript, groupOf, renderDocsIndex, titleOf } from "../../../../script/build-docs-index.ts"
+import {
+  collectDocs,
+  escapeForScript,
+  groupOf,
+  isPagesDoc,
+  renderDocsIndex,
+  titleOf,
+} from "../../../../script/build-docs-index.ts"
 
 const ROOT = resolve(import.meta.dir, "../../../..")
 const DOCS_DIR = resolve(ROOT, "docs")
@@ -98,8 +105,46 @@ describe("docs-index (docs ビューア生成)", () => {
   test("T8: pages.yml に再生成ステップ、AGENTS.md に参照が記録されている", async () => {
     const pages = await Bun.file(resolve(ROOT, ".github/workflows/pages.yml")).text()
     expect(pages).toContain("build-docs-index.ts")
+    expect(pages).toContain("--pages")
     expect(pages).toContain("setup-bun")
     const agents = await Bun.file(resolve(ROOT, "AGENTS.md")).text()
     expect(agents).toContain("build-docs-index.ts")
+  })
+
+  test("T9: isPagesDoc は fr/ru と compose 計画成果物を除外する", () => {
+    expect(isPagesDoc("RELEASING.md")).toBe(true)
+    expect(isPagesDoc("architecture/x.md")).toBe(true)
+    expect(isPagesDoc("compose/specs/x.md")).toBe(true)
+    expect(isPagesDoc("harness/MiMo Orchestrator Mode.ja.md")).toBe(true)
+    expect(isPagesDoc("harness/MiMo Orchestrator Mode.fr.md")).toBe(false)
+    expect(isPagesDoc("harness/MiMo Orchestrator Mode.ru.md")).toBe(false)
+    expect(isPagesDoc("compose/plans/x.md")).toBe(false)
+    expect(isPagesDoc("compose/reports/x.md")).toBe(false)
+  })
+
+  test("T10: Pages ビルドは lazy manifest と md/ を出力する", async () => {
+    const out = resolve(ROOT, ".artifacts/pages-site-test")
+    await Bun.$`rm -rf ${out}`.quiet()
+    const proc = Bun.spawn([process.execPath, "script/build-docs-index.ts", "--pages", "--out", out], {
+      cwd: ROOT,
+      env: process.env,
+      stdout: "pipe",
+      stderr: "pipe",
+    })
+    const [stdout, stderr] = await Promise.all([new Response(proc.stdout).text(), new Response(proc.stderr).text()])
+    expect(await proc.exited).toBe(0)
+    expect(stderr).toBe("")
+    expect(stdout).toContain("lazy")
+    const html = await Bun.file(resolve(out, "index.html")).text()
+    expect(html.length).toBeLessThan(200_000)
+    const m = /id="docs-manifest">([\s\S]*?)<\/script>/.exec(html)
+    expect(m).not.toBeNull()
+    if (m === null) return
+    const parsed = JSON.parse(m[1]) as Array<{ path: string; content?: string; contentUrl?: string }>
+    expect(parsed.length).toBeGreaterThan(20)
+    expect(parsed.every((d) => !d.content && typeof d.contentUrl === "string")).toBe(true)
+    expect(parsed.every((d) => isPagesDoc(d.path))).toBe(true)
+    const sample = parsed[0]
+    expect(await Bun.file(resolve(out, sample.contentUrl!)).exists()).toBe(true)
   })
 })

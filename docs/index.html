@@ -149,7 +149,7 @@ main { flex: 1; overflow-y: auto; padding: 24px 32px; max-width: 960px; }
     noResultsEl.hidden = visible.length !== 0;
   }
 
-  function openDoc(doc) {
+  function showMarkdown(doc, markdown) {
     var links = groupsEl.querySelectorAll("a[data-path]");
     for (var i = 0; i < links.length; i++) links[i].classList.toggle("active", links[i].dataset.path === doc.path);
     metaEl.innerHTML = "";
@@ -159,13 +159,32 @@ main { flex: 1; overflow-y: auto; padding: 24px 32px; max-width: 960px; }
     p.textContent = doc.path;
     metaEl.appendChild(h);
     metaEl.appendChild(p);
-    var html = marked.parse(doc.content);
+    var html = marked.parse(markdown);
     var parsed = new DOMParser().parseFromString(html, "text/html");
     var unsafe = parsed.querySelectorAll("script, iframe, object, embed");
     for (var j = 0; j < unsafe.length; j++) unsafe[j].remove();
     contentEl.innerHTML = parsed.body.innerHTML;
     contentEl.scrollTop = 0;
     history.replaceState(null, "", "#" + encodeURIComponent(doc.path));
+  }
+
+  function openDoc(doc) {
+    if (typeof doc.content === "string") {
+      showMarkdown(doc, doc.content);
+      return;
+    }
+    if (!doc.contentUrl) {
+      contentEl.textContent = "文書本文がありません";
+      return;
+    }
+    contentEl.textContent = "読み込み中…";
+    fetch(doc.contentUrl)
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then(function (text) { showMarkdown(doc, text); })
+      .catch(function () { contentEl.textContent = "読み込みに失敗しました"; });
   }
 
   function openFromHash() {

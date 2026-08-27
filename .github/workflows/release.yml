@@ -120,10 +120,15 @@ jobs:
           if [ -z "$NPM_TOKEN" ]; then
             echo "NPM_TOKEN not set; skipping npm publish (GitHub Release assets are already uploaded)."
             echo "To publish @mimo-ai/* packages, set repository secret NPM_TOKEN (Automation token with publish access to the @mimo-ai scope)."
-          else
-            bun script/publish.ts
+            exit 0
           fi
+          bun script/publish.ts
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
           MIMOCODE_VERSION: ${{ env.MIMOCODE_VERSION }}
+          # Quiet npm noise (funding, deprecations) so release logs stay clean.
+          NPM_CONFIG_FUND: "false"
+          NPM_CONFIG_AUDIT: "false"
+          NPM_CONFIG_UPDATE_NOTIFIER: "false"
+          NPM_CONFIG_LOGLEVEL: "error"

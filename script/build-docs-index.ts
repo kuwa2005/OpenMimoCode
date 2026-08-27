@@ -1,13 +1,31 @@
 #!/usr/bin/env bun
 // Generates docs/index.html — a self-contained two-pane viewer for docs/**/*.md
-import { resolve } from "node:path"
+import { mkdir } from "node:fs/promises"
+import { dirname, resolve } from "node:path"
 
 const docsDir = resolve(import.meta.dir, "../docs")
 const markedPath = resolve(import.meta.dir, "vendor/marked.min.js")
 
+export type DocEntry = {
+  path: string
+  title: string
+  group: string
+  /** Embedded markdown body (local offline viewer). */
+  content?: string
+  /** Relative URL for on-demand fetch (GitHub Pages). */
+  contentUrl?: string
+}
+
 export function collectDocs(dir: string): string[] {
   const glob = new Bun.Glob("**/*.md")
   return [...glob.scanSync({ cwd: dir, onlyFiles: true })].filter((p) => !p.includes("index.html")).sort()
+}
+
+/** Public Pages set: drop fr/ru locales and compose planning artifacts. */
+export function isPagesDoc(relPath: string): boolean {
+  if (/\.(fr|ru)\.md$/i.test(relPath)) return false
+  if (relPath.startsWith("compose/plans/") || relPath.startsWith("compose/reports/")) return false
+  return true
 }
 
 export function titleOf(content: string, relPath: string): string {
@@ -32,10 +50,7 @@ export function escapeForScript(s: string): string {
   return JSON.stringify(s).replace(/</g, "\\u003c")
 }
 
-export function renderDocsIndex(
-  docs: { path: string; title: string; group: string; content: string }[],
-  markedSrc: string,
-): string {
+export function renderDocsIndex(docs: DocEntry[], markedSrc: string): string {
   const manifest = JSON.stringify(docs).replace(/</g, "\\u003c")
   return `<!doctype html>
 <html lang="ja" data-theme="light">
@@ -182,7 +197,7 @@ main { flex: 1; overflow-y: auto; padding: 24px 32px; max-width: 960px; }
     noResultsEl.hidden = visible.length !== 0;
   }
 
-  function openDoc(doc) {
+  function showMarkdown(doc, markdown) {
     var links = groupsEl.querySelectorAll("a[data-path]");
     for (var i = 0; i < links.length; i++) links[i].classList.toggle("active", links[i].dataset.path === doc.path);
     metaEl.innerHTML = "";
@@ -192,13 +207,32 @@ main { flex: 1; overflow-y: auto; padding: 24px 32px; max-width: 960px; }
     p.textContent = doc.path;
     metaEl.appendChild(h);
     metaEl.appendChild(p);
-    var html = marked.parse(doc.content);
+    var html = marked.parse(markdown);
     var parsed = new DOMParser().parseFromString(html, "text/html");
     var unsafe = parsed.querySelectorAll("script, iframe, object, embed");
     for (var j = 0; j < unsafe.length; j++) unsafe[j].remove();
     contentEl.innerHTML = parsed.body.innerHTML;
     contentEl.scrollTop = 0;
     history.replaceState(null, "", "#" + encodeURIComponent(doc.path));
+  }
+
+  function openDoc(doc) {
+    if (typeof doc.content === "string") {
+      showMarkdown(doc, doc.content);
+      return;
+    }
+    if (!doc.contentUrl) {
+      contentEl.textContent = "文書本文がありません";
+      return;
+    }
+    contentEl.textContent = "読み込み中…";
+    fetch(doc.contentUrl)
+      .then(function (r) {
+        if (!r.ok) throw new Error(String(r.status));
+        return r.text();
+      })
+      .then(function (text) { showMarkdown(doc, text); })
+      .catch(function () { contentEl.textContent = "読み込みに失敗しました"; });
   }
 
   function openFromHash() {
@@ -234,14 +268,35 @@ main { flex: 1; overflow-y: auto; padding: 24px 32px; max-width: 960px; }
 }
 
 if (import.meta.main) {
-  const files = collectDocs(docsDir)
-  const docs = await Promise.all(
-    files.map(async (path) => {
-      const content = await Bun.file(resolve(docsDir, path)).text()
-      return { path, title: titleOf(content, path), group: groupOf(path), content }
-    }),
-  )
+  const args = process.argv.slice(2)
+  const pages = args.includes("--pages")
+  const outIdx = args.indexOf("--out")
+  const outDir = outIdx >= 0 ? resolve(args[outIdx + 1] ?? "_site") : resolve(docsDir)
+
+  const files = collectDocs(docsDir).filter((p) => (pages ? isPagesDoc(p) : true))
   const markedSrc = await Bun.file(markedPath).text()
-  await Bun.write(resolve(docsDir, "index.html"), renderDocsIndex(docs, markedSrc))
-  console.log(`docs/index.html generated (${docs.length} docs)`)
+
+  if (pages) {
+    const docs: DocEntry[] = []
+    for (const path of files) {
+      const content = await Bun.file(resolve(docsDir, path)).text()
+      const contentUrl = `md/${path}`
+      const dest = resolve(outDir, contentUrl)
+      await mkdir(dirname(dest), { recursive: true })
+      await Bun.write(dest, content)
+      docs.push({ path, title: titleOf(content, path), group: groupOf(path), contentUrl })
+    }
+    await mkdir(outDir, { recursive: true })
+    await Bun.write(resolve(outDir, "index.html"), renderDocsIndex(docs, markedSrc))
+    console.log(`pages site generated at ${outDir} (${docs.length} docs, lazy)`)
+  } else {
+    const docs = await Promise.all(
+      files.map(async (path) => {
+        const content = await Bun.file(resolve(docsDir, path)).text()
+        return { path, title: titleOf(content, path), group: groupOf(path), content }
+      }),
+    )
+    await Bun.write(resolve(outDir, "index.html"), renderDocsIndex(docs, markedSrc))
+    console.log(`docs/index.html generated (${docs.length} docs)`)
+  }
 }

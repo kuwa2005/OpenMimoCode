@@ -25,12 +25,10 @@ jobs:
         uses: actions/checkout@v4
       - name: Setup Bun
         uses: ./.github/actions/setup-bun
-      - name: Regenerate docs index
-        run: bun script/build-docs-index.ts
-      - name: Stage Pages site (generated viewer only)
+      - name: Build slim Pages site (lazy docs, public filter)
         run: |
-          mkdir -p _site
-          cp docs/index.html _site/index.html
+          rm -rf _site
+          bun script/build-docs-index.ts --pages --out _site
       - name: Setup Pages
         uses: actions/configure-pages@v6
       - name: Upload artifact

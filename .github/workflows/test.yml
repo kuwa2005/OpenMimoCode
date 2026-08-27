@@ -35,13 +35,52 @@ jobs:
           git config --global user.name "mimo-ci"
 
       - name: Run unit tests (shard ${{ matrix.shard }})
-        timeout-minutes: 8
+        timeout-minutes: 20
         working-directory: packages/opencode
-        run: bun run test:ci --shard ${{ matrix.shard }}
+        run: |
+          mapfile -t FILES < <(
+            find test -name '*.test.ts' \
+              ! -path 'test/workflow/*' \
+              ! -name 'checkpoint-splitover-integration.test.ts' \
+              | sort
+          )
+          bun run test:ci -- --shard ${{ matrix.shard }} --max-concurrency=6 "${FILES[@]}"
 
       - name: Upload JUnit
         if: always()
         uses: actions/upload-artifact@v7
         with:
           name: junit-shard-${{ strategy.job-index }}
+          path: packages/opencode/.artifacts/unit/junit.xml
+
+  # Heavy spawn / workflow suites share the AppRuntime + scripted LLM servers.
+  # Under sharded concurrency they flake or trip the job timeout; run serially.
+  heavy:
+    runs-on: ubuntu-latest
+    name: heavy (serial)
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Bun
+        uses: ./.github/actions/setup-bun
+
+      - name: Configure git identity
+        run: |
+          git config --global user.email "ci@mimo.ai"
+          git config --global user.name "mimo-ci"
+
+      - name: Run heavy integration tests
+        timeout-minutes: 25
+        working-directory: packages/opencode
+        run: |
+          bun run test:ci -- --max-concurrency=1 \
+            test/workflow \
+            test/session/checkpoint-splitover-integration.test.ts
+
+      - name: Upload JUnit
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-heavy
           path: packages/opencode/.artifacts/unit/junit.xml

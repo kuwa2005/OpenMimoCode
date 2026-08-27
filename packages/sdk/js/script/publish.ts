@@ -40,7 +40,7 @@ if (await published(pkg.name, pkg.version)) {
   await Bun.write("package.json", JSON.stringify(pkg, null, 2))
   try {
     await $`bun pm pack`
-    await $`npm publish *.tgz --tag ${Script.channel} --access public`
+    await $`npm publish *.tgz --tag ${Script.channel} --access public --fund false --audit false --loglevel error`
   } finally {
     await Bun.write("package.json", originalText)
     await $`rm -f README.md LICENSE *.tgz`

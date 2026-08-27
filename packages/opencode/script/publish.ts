@@ -19,7 +19,7 @@ async function publish(dir: string, name: string, version: string) {
   }
   await $`rm -f *.tgz`.cwd(dir).nothrow()
   await $`bun pm pack`.cwd(dir)
-  await $`npm publish *.tgz --access public --tag ${Script.channel}`.cwd(dir)
+  await $`npm publish *.tgz --access public --tag ${Script.channel} --fund false --audit false --loglevel error`.cwd(dir)
 }
 
 const binaries: { dir: string; name: string; version: string }[] = []
