@@ -405,7 +405,7 @@ const InfoSchema = Schema.Struct({
     Schema.Struct({
       auto: Schema.optional(Schema.Boolean).annotate({
         description:
-          "Auto-trigger Self Improvement Session (evolve) on new session start. Default: false.",
+          "Auto-trigger Self Improvement Session (evolve) on new session start and write logs under ~/.oimo/evolve/<projectID>/. Default: true (opt-out with false).",
       }),
       interval_days: Schema.optional(NonNegativeInt).annotate({
         description: "Minimum days between automatic evolve runs. Default: 14.",
@@ -452,7 +452,7 @@ const InfoSchema = Schema.Struct({
       ),
       condition_triggers: Schema.optional(Schema.Boolean).annotate({
         description:
-          "Allow auto-evolve to fire early when HAC/corrections/tool-churn thresholds are hit (still requires evolve.auto). Default: true.",
+          "Allow auto-evolve to fire early when HAC/corrections/tool-churn thresholds are hit (requires evolve.auto, which defaults to true). Default: true.",
       }),
     }),
   ),

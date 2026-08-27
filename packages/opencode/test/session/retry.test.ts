@@ -97,17 +97,32 @@ describe("session.retry.delay", () => {
     expect(SessionRetry.delay(1, error)).toBe(1000)
   })
 
-  test("uses retry-after values even when exceeding 10 minutes with headers", () => {
+  test("honors short retry-after headers under the soft cap", () => {
     const error = apiError({ "retry-after": "50" })
     expect(SessionRetry.delay(1, error)).toBe(50000)
-
-    const longError = apiError({ "retry-after-ms": "700000" })
-    expect(SessionRetry.delay(1, longError)).toBe(700000)
   })
 
-  test("caps oversized header delays to the runtime timer limit", () => {
+  test("soft-caps long retry-after headers so SessionRetry keeps retrying", () => {
+    // Console free tier often advertises ~10+ minutes; without a soft cap the
+    // first wait exceeds RETRY_MODEL_SWITCH_MS and the main agent stops immediately.
+    const longError = apiError({ "retry-after-ms": "700000" })
+    expect(SessionRetry.delay(1, longError)).toBe(SessionRetry.RETRY_SOFT_HEADER_CAP_MS)
+    expect(SessionRetry.delay(1, longError)).toBeLessThan(SessionRetry.RETRY_MODEL_SWITCH_MS)
+  })
+
+  test("soft-caps oversized header delays (not the setTimeout ceiling)", () => {
     const error = apiError({ "retry-after-ms": "999999999999" })
-    expect(SessionRetry.delay(1, error)).toBe(SessionRetry.RETRY_MAX_DELAY)
+    expect(SessionRetry.delay(1, error)).toBe(SessionRetry.RETRY_SOFT_HEADER_CAP_MS)
+  })
+
+  test("soft-capped wait stays under maxWaitMs so policy does not stop on attempt 1", () => {
+    const error = apiError({
+      "retry-after-ms": String(SessionRetry.RETRY_MODEL_SWITCH_MS + 120_000),
+    })
+    const wait = SessionRetry.delay(1, error)
+    // policy stops only when wait > maxWaitMs; soft-cap keeps the first soft 429 retrying.
+    expect(wait).toBe(SessionRetry.RETRY_SOFT_HEADER_CAP_MS)
+    expect(wait).toBeLessThanOrEqual(SessionRetry.RETRY_MODEL_SWITCH_MS)
   })
 
   test("policy updates retry status and increments attempts", async () => {
@@ -328,6 +343,36 @@ describe("session.retry.retryable", () => {
     }).toObject() as MessageV2.APIError
 
     expect(SessionRetry.retryable(error)).toBe(SessionRetry.GO_UPSELL_MESSAGE)
+  })
+
+  test("FreeUsageLimitError publishes upsell status once then stops retrying", async () => {
+    let attempts = 0
+    const statuses: string[] = []
+    const error = new MessageV2.APIError({
+      message: "429: Rate limit exceeded",
+      isRetryable: false,
+      statusCode: 429,
+      responseBody: '{"type":"FreeUsageLimitError","message":"Rate limit exceeded"}',
+    }).toObject() as MessageV2.APIError
+    const program = Effect.gen(function* () {
+      attempts++
+      return yield* Effect.fail(error)
+    }).pipe(
+      Effect.retry(
+        SessionRetry.policy({
+          parse: (err) => err as MessageV2.APIError,
+          set: (info) =>
+            Effect.sync(() => {
+              statuses.push(info.message)
+            }),
+        }),
+      ),
+      Effect.catch(() => Effect.succeed("stopped")),
+    )
+    const result = await Effect.runPromise(program)
+    expect(result).toBe("stopped")
+    expect(attempts).toBe(1)
+    expect(statuses).toEqual([SessionRetry.GO_UPSELL_MESSAGE])
   })
 
   // PR #1680 follow-up: SubscriptionUsageLimitError is also a terminal 429 —

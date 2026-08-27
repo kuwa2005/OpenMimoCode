@@ -19,7 +19,7 @@ import { useKeybind } from "@tui/context/keybind"
 import { usePromptHistory, type PromptInfo } from "./history"
 import { assign, expandPlaceholders } from "./part"
 import { usePromptStash } from "./stash"
-import { clampStatusMessage, shouldShowSessionActivity } from "./footer"
+import { clampStatusMessage, shouldShowSessionActivity, isInfraChildSession } from "./footer"
 import { DialogStash } from "../dialog-stash"
 import { type AutocompleteRef, Autocomplete } from "./autocomplete"
 import { useCommandDialog } from "../dialog-command"
@@ -130,19 +130,18 @@ export function Prompt(props: PromptProps) {
   const dialog = useDialog()
   const toast = useToast()
   const status = createMemo(() => sync.data.session_status?.[props.sessionID ?? ""] ?? { type: "idle" })
-  // Sidebar Tasks can stay in_progress while the main session briefly goes idle
-  // between LLM turns / child agents. Keep the bottom-left activity spinner
-  // moving so hiding the sidebar (CTRL+X B) does not look like a hang — unless
-  // the goal already stopped (stopReason), in which case leftover board rows
-  // must not keep the footer animating.
+  // Keep the bottom-left spinner for live session work (busy/retry) and for
+  // concurrent actors / child sessions while this session is idle. Stale
+  // `in_progress` task rows and infra children (checkpoint-writer) alone must
+  // not keep it spinning after the main turn has already gone idle.
   const showActivity = createMemo(() => {
     const sid = props.sessionID
     if (!sid) return false
-    const tasks = sync.data.task[sid] ?? []
     const actors = sync.data.actor[sid] ?? []
     let hasActiveChild = false
     for (const child of sync.data.session) {
       if (child.parentID !== sid) continue
+      if (isInfraChildSession(child)) continue
       const childStatus = sync.data.session_status[child.id]
       if (childStatus && childStatus.type !== "idle") {
         hasActiveChild = true
@@ -151,8 +150,6 @@ export function Prompt(props: PromptProps) {
     }
     return shouldShowSessionActivity({
       statusType: status().type,
-      stopReason: sync.data.session_goal[sid]?.stopReason,
-      hasInProgressTask: tasks.some((t) => t.status === "in_progress"),
       hasActiveActor: actors.some((a) => a.status === "pending" || a.status === "running"),
       hasActiveChild,
     })

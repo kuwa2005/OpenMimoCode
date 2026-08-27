@@ -22,6 +22,11 @@ function optOutEnabled(value: boolean | undefined): boolean {
   return value !== false
 }
 
+/** Self-evolution logs under ~/.oimo/evolve — default ON (opt-out via evolve.auto: false). */
+export function evolveAutoEnabled(cfg: Config.Info): boolean {
+  return optOutEnabled(cfg.evolve?.auto)
+}
+
 export function evolveSkillsEnabled(cfg: Config.Info): boolean {
   return optOutEnabled(cfg.evolve?.skills?.enabled)
 }
@@ -167,7 +172,7 @@ function shouldAutoRun(input: {
 export function shouldAutoEvolve(cfg: Config.Info) {
   return Effect.gen(function* () {
     if (!isMemoryWriteEnabled(cfg)) return false
-    if (cfg.evolve?.auto !== true) return false
+    if (!evolveAutoEnabled(cfg)) return false
 
     const now = Date.now()
     if (now - lastEvolveSpawnTime < MIN_SPAWN_GAP_MS) return false

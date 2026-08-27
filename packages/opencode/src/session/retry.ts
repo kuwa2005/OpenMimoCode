@@ -28,8 +28,15 @@ export function isRateLimitMessage(message: string): boolean {
 
 export const RETRY_INITIAL_DELAY = 1000
 export const RETRY_BACKOFF_FACTOR = 2
-/** @deprecated OpenCode capped no-header waits at 30s; we now grow until RETRY_MODEL_SWITCH_MS. */
+/** @deprecated Prefer RETRY_SOFT_HEADER_CAP_MS — soft rate-limits must not honor day-long headers. */
 export const RETRY_MAX_DELAY_NO_HEADERS = 30_000
+/**
+ * Cap on provider `retry-after` / `retry-after-ms` for soft capacity errors.
+ * OpenCode Console free tier often returns hour-scale headers for transient
+ * congestion; honoring them made SessionRetry hit maxWaitMs on attempt 1 and
+ * stop the main agent even when a manual retry succeeds immediately.
+ */
+export const RETRY_SOFT_HEADER_CAP_MS = 60_000
 export const RETRY_MAX_DELAY = 2_147_483_647 // max 32-bit signed integer for setTimeout
 /** If a single wait would exceed this, SessionRetry stops so Auto Model can switch candidates. */
 export const RETRY_MODEL_SWITCH_MS = 5 * 60 * 1000
@@ -85,6 +92,7 @@ function cap(ms: number) {
 }
 
 export function delay(attempt: number, error?: MessageV2.APIError) {
+  const exponential = cap(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1))
   if (error) {
     const headers = error.data.responseHeaders
     if (headers) {
@@ -92,7 +100,7 @@ export function delay(attempt: number, error?: MessageV2.APIError) {
       if (retryAfterMs) {
         const parsedMs = Number.parseFloat(retryAfterMs)
         if (!Number.isNaN(parsedMs)) {
-          return cap(parsedMs)
+          return Math.min(cap(parsedMs), RETRY_SOFT_HEADER_CAP_MS)
         }
       }
 
@@ -100,24 +108,23 @@ export function delay(attempt: number, error?: MessageV2.APIError) {
       if (retryAfter) {
         const parsedSeconds = Number.parseFloat(retryAfter)
         if (!Number.isNaN(parsedSeconds)) {
-          // convert seconds to milliseconds
-          return cap(Math.ceil(parsedSeconds * 1000))
+          return Math.min(cap(Math.ceil(parsedSeconds * 1000)), RETRY_SOFT_HEADER_CAP_MS)
         }
         // Try parsing as HTTP date format
         const parsed = Date.parse(retryAfter) - Date.now()
         if (!Number.isNaN(parsed) && parsed > 0) {
-          return cap(Math.ceil(parsed))
+          return Math.min(cap(Math.ceil(parsed)), RETRY_SOFT_HEADER_CAP_MS)
         }
       }
 
-      return cap(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1))
+      return exponential
     }
   }
 
-  // OpenCode-style exponential: 1s, 2s, 4s, 8s, 16s, ... (no 30s soft-cap).
+  // OpenCode-style exponential: 1s, 2s, 4s, 8s, 16s, ... (no soft-cap).
   // SessionRetry.policy stops when a single wait would exceed RETRY_MODEL_SWITCH_MS
   // (5 minutes) so the TUI can show the recover dialog instead of hanging forever.
-  return cap(RETRY_INITIAL_DELAY * Math.pow(RETRY_BACKOFF_FACTOR, attempt - 1))
+  return exponential
 }
 
 export function retryable(error: Err) {
@@ -236,6 +243,18 @@ export function policy(opts: {
       const error = opts.parse(meta.input)
       const message = retryable(error)
       if (!message) return Cause.done(meta.attempt)
+      // FreeUsageLimitError is terminal (subscribe to Go). retryable() still
+      // returns GO_UPSELL_MESSAGE so the TUI can open the upsell dialog via
+      // session.status — publish once, then stop. Retrying would hang the
+      // session on a day-long retry-after the same way SubscriptionUsageLimit
+      // used to. See PR #1680.
+      if (message === GO_UPSELL_MESSAGE) {
+        return Effect.gen(function* () {
+          const now = yield* Clock.currentTimeMillis
+          yield* opts.set({ attempt: meta.attempt, message, next: now })
+          return yield* Cause.done(meta.attempt)
+        })
+      }
       let wait = delay(meta.attempt, MessageV2.APIError.isInstance(error) ? error : undefined)
       if (opts.maxWaitMs !== undefined && wait > opts.maxWaitMs) {
         // Wait would exceed the model-switch threshold — stop so the caller

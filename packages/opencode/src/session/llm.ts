@@ -770,10 +770,11 @@ const live: Layer.Layer<
         }),
         // AI SDK's internal retry loop is SILENT — it emits no events and does
         // not update session status, so the TUI shows only a dead spinner while
-        // it runs. When SessionRetry owns the turn (skipPersistentRetry), keep
-        // maxRetries at 0 so backoff is the visible 1s/2s/4s/… schedule only.
-        // Otherwise absorb a couple of quick blips (default 2 → 3 attempts).
-        maxRetries: input.skipPersistentRetry ? 0 : (input.retries ?? 2),
+        // it runs. Always leave maxRetries at 0: SessionRetry (or the Effect.retry
+        // layer below for non-processor callers) owns visible / structured backoff.
+        // Soft Console rate-limits used to burn 3 silent SDK attempts then surface
+        // "Failed after 3 attempts… Rate limit exceeded" and stop the main agent.
+        maxRetries: 0,
         messages,
         model: wrapLanguageModel({
           model: language,

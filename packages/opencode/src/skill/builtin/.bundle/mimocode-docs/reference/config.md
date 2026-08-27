@@ -136,13 +136,13 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 |-----|---------|
 | `dream.auto` / `dream.interval_days` | Auto memory consolidation on session start (default true / 7 days) |
 | `distill.auto` / `distill.interval_days` | Auto workflow packaging (default true / 30 days) |
-| `evolve.auto` / `evolve.interval_days` | Auto Self Improvement Session (default false / 14 days) |
+| `evolve.auto` / `evolve.interval_days` | Auto Self Improvement Session + logs under `~/.oimo/evolve/<projectID>/` (default true / 14 days; opt-out with `evolve.auto: false`) |
 | `evolve.skills.enabled` | Crystallize knowledge into `.oimo/skills` (default true, opt-out) |
 | `evolve.briefs.enabled` | AI-to-AI product briefs under `~/.oimo/evolve/<projectID>/briefs/` (default true, opt-out → later opt-in) |
 | `evolve.friction.enabled` | Friction / Human Attention Cost analyses under `~/.oimo/evolve/<projectID>/friction/` (default true, opt-out) |
 | `evolve.backlog.enabled` | Self Improvement Backlog at `~/.oimo/evolve/<projectID>/backlog/BACKLOG.md` (default true, opt-out) |
 | `evolve.session_review.enabled` | Session self-evaluation under `~/.oimo/evolve/<projectID>/reviews/` (default true, opt-out) |
-| `evolve.condition_triggers` | Allow early auto-evolve on HAC/corrections/tool-churn (default true; still needs `evolve.auto`) |
+| `evolve.condition_triggers` | Allow early auto-evolve on HAC/corrections/tool-churn (default true; disable with `evolve.auto: false`) |
 | `/evolve-status` | TUI Self Evolution dashboard (briefs, backlog, snapshots) |
 | `evolve_status` tool | metrics / dashboard / snapshot / rollback / evaluate |
 | `evolve-review` workflow | Multi-agent review of a product brief (Human-in-the-loop) |

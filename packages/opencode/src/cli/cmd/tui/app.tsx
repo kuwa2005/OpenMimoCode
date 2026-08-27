@@ -1235,26 +1235,63 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     const message = errorMessage(error)
     const sessionID = evt.properties.sessionID
 
+    // Free-tier exhaustion is terminal — DialogGoUpsell already opens from the
+    // session.status(GO_UPSELL) publish. Do not also ask "retry?".
+    if (message === SessionRetry.GO_UPSELL_MESSAGE || message.includes("FreeUsageLimitError")) {
+      toast.show({
+        variant: "error",
+        message: message.startsWith("メインが停止") ? message : `メインが停止しました: ${message}`,
+        duration: 8000,
+      })
+      return
+    }
+
+    const rateLimited = SessionRetry.isRateLimitMessage(message) || message.includes("Rate limit")
+
+    // Soft Console rate-limits usually clear on the next call. Auto-continue
+    // without DialogConfirm so a finished-looking turn is not framed as a
+    // hard stop the user must acknowledge.
+    if (rateLimited && sessionID && route.data.type === "session" && route.data.sessionID === sessionID) {
+      toast.show({
+        variant: "warning",
+        message: "Rate limit — 自動で再試行します…",
+        duration: 5000,
+      })
+      void sdk.client.session
+        .promptAsync({
+          sessionID,
+          parts: [
+            {
+              type: "text",
+              synthetic: true,
+              text: "Previous turn hit a soft provider rate limit. Continue from where we left off with the next concrete step. If the user's task is already complete, confirm briefly and wait.",
+            },
+          ],
+        })
+        .catch((err: unknown) =>
+          toast.show({
+            variant: "error",
+            message: err instanceof Error ? err.message : String(err),
+          }),
+        )
+      return
+    }
+
     toast.show({
       variant: "error",
       message: message.startsWith("メインが停止") ? message : `メインが停止しました: ${message}`,
       duration: 8000,
     })
 
-    // Offer a recoverable action when the main agent dies (rate-limit exhaustion,
-    // failover failure, etc.). Skip if another dialog is already open or this
-    // error belongs to a different session than the one on screen.
-    // Subagent failures no longer publish session.error (processor halt), so this
-    // should only fire for real main-turn stops after SessionRetry gives up.
+    // Offer a recoverable action when the main agent dies (failover failure,
+    // etc.). Skip if another dialog is already open or this error belongs to a
+    // different session than the one on screen.
     if (!sessionID) return
     if (route.data.type !== "session" || route.data.sessionID !== sessionID) return
     if (dialog.stack.length > 0) return
 
-    const rateLimited = SessionRetry.isRateLimitMessage(message) || message.includes("Rate limit")
     const title = "メインが停止しました"
-    const body = rateLimited
-      ? `Rate limit / 一時障害でメイン処理が停止しました。\n${message}\n\n再試行して続行しますか？`
-      : `メイン処理がエラーで停止しました。\n${message}\n\n再試行して続行しますか？`
+    const body = `メイン処理がエラーで停止しました。\n${message}\n\n再試行して続行しますか？`
 
     void DialogConfirm.show(dialog, title, body).then((ok) => {
       if (!ok) return

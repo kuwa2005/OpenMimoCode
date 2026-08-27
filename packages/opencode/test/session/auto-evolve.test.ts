@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import {
   buildEvolveTask,
+  evolveAutoEnabled,
   evolveBacklogEnabled,
   evolveBriefsEnabled,
   evolveFrictionEnabled,
@@ -13,6 +14,7 @@ import type { Config } from "../../src/config"
 describe("evolve track flags (opt-out)", () => {
   test("all tracks default to enabled when unset", () => {
     const cfg = {} as Config.Info
+    expect(evolveAutoEnabled(cfg)).toBe(true)
     expect(evolveSkillsEnabled(cfg)).toBe(true)
     expect(evolveBriefsEnabled(cfg)).toBe(true)
     expect(evolveFrictionEnabled(cfg)).toBe(true)
@@ -23,6 +25,7 @@ describe("evolve track flags (opt-out)", () => {
   test("explicit false disables each track", () => {
     const cfg = {
       evolve: {
+        auto: false,
         skills: { enabled: false },
         briefs: { enabled: false },
         friction: { enabled: false },
@@ -30,6 +33,7 @@ describe("evolve track flags (opt-out)", () => {
         session_review: { enabled: false },
       },
     } as Config.Info
+    expect(evolveAutoEnabled(cfg)).toBe(false)
     expect(evolveSkillsEnabled(cfg)).toBe(false)
     expect(evolveBriefsEnabled(cfg)).toBe(false)
     expect(evolveFrictionEnabled(cfg)).toBe(false)

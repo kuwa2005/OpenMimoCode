@@ -73,7 +73,25 @@ if [ -n "$BRANCH" ]; then
   git push origin "HEAD:$BRANCH"
 fi
 echo "--- Push tag ---"
-git tag "v$VERSION"
+# Stale local tags (same name, wrong SHA) make `git tag` fail after the bump
+# commit is already pushed. Drop a local-only mismatch; refuse if origin has it.
+if git rev-parse "refs/tags/v$VERSION" >/dev/null 2>&1; then
+  LOCAL_SHA=$(git rev-parse "refs/tags/v$VERSION^{}")
+  HEAD_SHA=$(git rev-parse HEAD)
+  if [ "$LOCAL_SHA" = "$HEAD_SHA" ]; then
+    echo "Local tag v$VERSION already points at HEAD"
+  else
+    echo "Removing stale local tag v$VERSION ($LOCAL_SHA != HEAD $HEAD_SHA)"
+    git tag -d "v$VERSION"
+  fi
+fi
+if git ls-remote --tags origin "refs/tags/v$VERSION" | grep -q .; then
+  echo "Error: origin already has tag v$VERSION — bump again or delete the remote tag first." >&2
+  exit 1
+fi
+if ! git rev-parse "refs/tags/v$VERSION" >/dev/null 2>&1; then
+  git tag "v$VERSION"
+fi
 git push origin "v$VERSION"
 
 # --- Locate the workflow run triggered by the tag push ---

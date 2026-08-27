@@ -4,6 +4,7 @@ import {
   STATUS_MESSAGE_MAX,
   shouldShowSessionActivity,
   shouldSpinInProgressTask,
+  isInfraChildSession,
 } from "../../../../src/cli/cmd/tui/component/prompt/footer"
 
 describe("clampStatusMessage", () => {
@@ -44,60 +45,59 @@ describe("shouldShowSessionActivity", () => {
     expect(
       shouldShowSessionActivity({
         statusType: "busy",
-        stopReason: "completed",
-        hasInProgressTask: false,
         hasActiveActor: false,
         hasActiveChild: false,
       }),
     ).toBe(true)
   })
 
-  test("idle between turns keeps spinner when tasks are in_progress", () => {
+  test("idle with no concurrent work hides activity even if board rows look stale", () => {
     expect(
       shouldShowSessionActivity({
         statusType: "idle",
-        hasInProgressTask: true,
-        hasActiveActor: false,
-        hasActiveChild: false,
-      }),
-    ).toBe(true)
-  })
-
-  test("idle after goal stop ignores leftover in_progress tasks", () => {
-    expect(
-      shouldShowSessionActivity({
-        statusType: "idle",
-        stopReason: "completed",
-        hasInProgressTask: true,
         hasActiveActor: false,
         hasActiveChild: false,
       }),
     ).toBe(false)
   })
 
-  test("idle after goal stop still shows activity for running actors", () => {
+  test("idle still shows activity for running actors", () => {
     expect(
       shouldShowSessionActivity({
         statusType: "idle",
-        stopReason: "completed",
-        hasInProgressTask: true,
         hasActiveActor: true,
         hasActiveChild: false,
       }),
     ).toBe(true)
   })
+
+  test("idle still shows activity for busy child sessions", () => {
+    expect(
+      shouldShowSessionActivity({
+        statusType: "idle",
+        hasActiveActor: false,
+        hasActiveChild: true,
+      }),
+    ).toBe(true)
+  })
+})
+
+describe("isInfraChildSession", () => {
+  test("treats checkpoint-writer children as infra", () => {
+    expect(isInfraChildSession({ title: "checkpoint-writer: Previous checkpoint: …" })).toBe(true)
+  })
+
+  test("does not treat ordinary child titles as infra", () => {
+    expect(isInfraChildSession({ title: "Explore auth module" })).toBe(false)
+  })
 })
 
 describe("shouldSpinInProgressTask", () => {
   test("spins while the session is busy", () => {
-    expect(shouldSpinInProgressTask({ sessionIdle: false, stopReason: "completed" })).toBe(true)
+    expect(shouldSpinInProgressTask({ sessionIdle: false })).toBe(true)
   })
 
-  test("spins while idle without a stop reason (between turns)", () => {
-    expect(shouldSpinInProgressTask({ sessionIdle: true })).toBe(true)
-  })
-
-  test("stops spinning once the goal has a stop reason", () => {
-    expect(shouldSpinInProgressTask({ sessionIdle: true, stopReason: "completed" })).toBe(false)
+  test("stops spinning once the session is idle", () => {
+    expect(shouldSpinInProgressTask({ sessionIdle: true })).toBe(false)
   })
 })

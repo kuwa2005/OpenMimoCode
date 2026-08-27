@@ -22,28 +22,39 @@ export function clampStatusMessage(message: string | undefined) {
 }
 
 /**
- * Bottom-left activity spinner. Session busy/retry always shows it. While idle,
- * leftover `in_progress` tasks normally keep it moving across brief between-turn
- * gaps — but once a goal has a `stopReason` the run is over, so stuck board
- * rows must not look like live work.
+ * Bottom-left activity spinner. Session busy/retry always shows it.
+ *
+ * While idle, only real concurrent work (actors / child sessions) keeps it
+ * moving. Leftover `in_progress` board rows alone must not — after a normal
+ * wait-for-user stop, rate-limit halt, or goal that never set `stopReason`,
+ * those rows stay stale and would otherwise spin forever.
+ *
+ * Infra child sessions (checkpoint-writer, etc.) also must not keep the parent
+ * footer spinning after the main turn is idle — they are background bookkeeping.
  */
 export function shouldShowSessionActivity(input: {
   statusType: string
-  stopReason?: string
-  hasInProgressTask: boolean
   hasActiveActor: boolean
   hasActiveChild: boolean
 }) {
   if (input.statusType !== "idle") return true
-  if (!input.stopReason && input.hasInProgressTask) return true
   if (input.hasActiveActor) return true
   if (input.hasActiveChild) return true
   return false
 }
 
-/** Sidebar task-row spinner: same stopReason rule as the footer activity bar. */
-export function shouldSpinInProgressTask(input: { sessionIdle: boolean; stopReason?: string }) {
-  if (!input.sessionIdle) return true
-  if (input.stopReason) return false
-  return true
+/** Background writer/title children — not user-visible "still working" on the parent. */
+export function isInfraChildSession(input: { title?: string }) {
+  const title = input.title ?? ""
+  return (
+    title.startsWith("checkpoint-writer:") ||
+    title === "Auto Evolve" ||
+    title === "Auto Dream" ||
+    title === "Auto Distill"
+  )
+}
+
+/** Sidebar task-row spinner: animate only while the session itself is busy. */
+export function shouldSpinInProgressTask(input: { sessionIdle: boolean }) {
+  return !input.sessionIdle
 }

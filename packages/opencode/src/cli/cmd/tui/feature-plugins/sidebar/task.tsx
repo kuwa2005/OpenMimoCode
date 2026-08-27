@@ -24,7 +24,6 @@ function View(props: { api: TuiPluginApi; session_id: string }) {
   const spinRunning = createMemo(() =>
     shouldSpinInProgressTask({
       sessionIdle: (props.api.state.session.status(props.session_id)?.type ?? "idle") === "idle",
-      stopReason: props.api.state.session.goal(props.session_id)?.stopReason,
     }),
   )
   // Active work, ordered in_progress → open(todo) → blocked; ties broken by id

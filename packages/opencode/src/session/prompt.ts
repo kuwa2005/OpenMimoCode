@@ -3188,21 +3188,38 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               const failures = yield* goal.recordJudgeFailure(sessionID)
               const refreshed = yield* goal.get(sessionID)
               if (!refreshed || failures >= refreshed.judgeMaxRetries) {
-                // Fail-OPEN to continue (not stop). Rate limits / flaky judges must
-                // not kill Super Auto — old permission-only --auto never had this trap.
-                yield* slog.warn("goal judge unavailable; forcing re-entry", {
+                // Pre-d293 behavior: judge unavailable stops the goal. Forcing
+                // re-entry on rate-limited judges blocked legitimate completion
+                // and often triggered another soft RL + recover dialog.
+                yield* goal.stopWithReason({
                   sessionID,
-                  failures,
+                  reason: "judge_failed",
+                  lastVerdict: {
+                    ok: false,
+                    reason: `Judge unavailable after ${failures} attempts.`,
+                    attempt: active.react,
+                    messageID: judgedMessageID,
+                    error: true,
+                  },
                 })
-                return yield* injectReentry(
-                  "The completion judge is temporarily unavailable (rate limit or error). Assume the goal is NOT done and continue with the next concrete tool call.",
-                )
+                yield* closeGoalBoard(sessionID, "judge_failed")
+                return false
               }
             }
             if (!resolved) {
-              return yield* injectReentry(
-                "The completion judge returned no verdict. Assume the goal is NOT done and continue.",
-              )
+              yield* goal.stopWithReason({
+                sessionID,
+                reason: "judge_failed",
+                lastVerdict: {
+                  ok: false,
+                  reason: "Judge returned no verdict.",
+                  attempt: active.react,
+                  messageID: judgedMessageID,
+                  error: true,
+                },
+              })
+              yield* closeGoalBoard(sessionID, "judge_failed")
+              return false
             }
             verdict = resolved
           } else {
