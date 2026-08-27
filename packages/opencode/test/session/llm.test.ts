@@ -581,6 +581,11 @@ describe("session.llm.stream", () => {
         },
       },
       {
+        type: "response.output_item.added",
+        output_index: 0,
+        item: { type: "message", id: "item-1" },
+      },
+      {
         type: "response.output_text.delta",
         item_id: "item-1",
         delta: "Hello",
@@ -890,6 +895,11 @@ describe("session.llm.stream", () => {
           model: model.id,
           service_tier: null,
         },
+      },
+      {
+        type: "response.output_item.added",
+        output_index: 0,
+        item: { type: "message", id: "item-data-url" },
       },
       {
         type: "response.output_text.delta",

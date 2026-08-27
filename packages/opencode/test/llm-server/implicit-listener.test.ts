@@ -81,7 +81,7 @@ describe("after a password is generated", () => {
 
   test("and reopens for a caller holding that password", async () => {
     await using tmp = await tmpdir({ git: true })
-    const username = Flag.MIMOCODE_SERVER_USERNAME ?? "mimocode"
+    const username = Flag.MIMOCODE_SERVER_USERNAME ?? "oimo"
     const response = await get(`/config?directory=${encodeURIComponent(tmp.path)}`, {
       authorization: `Basic ${btoa(`${username}:${Flag.MIMOCODE_SERVER_PASSWORD}`)}`,
     })

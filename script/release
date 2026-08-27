@@ -54,10 +54,10 @@ for s in NPM_TOKEN MIMO_FDS_AK MIMO_FDS_SK; do
     echo "  [ok]   $s"
   else
     case "$s" in
-      NPM_TOKEN) note="npm publish will be skipped" ;;
+      NPM_TOKEN) note="npm publish will be skipped (GitHub Release still publishes)" ;;
       *) note="FDS mirror upload will be skipped" ;;
     esac
-    echo "  [warn] $s is NOT set -> $note"
+    echo "  [skip] $s is not set -> $note"
   fi
 done
 

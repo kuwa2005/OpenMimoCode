@@ -4568,7 +4568,8 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             docsIntentStreak = 0
             goalReentryStreak = 0
             lastGoalReentryKey = ""
-            textLoopRecoveryAttempts = 0
+            // Do not reset textLoopRecoveryAttempts on tool presence alone —
+            // same-tool announcement loops must escalate mild → strong recovery.
           } else {
             noToolStreak++
           }
@@ -4576,6 +4577,11 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           const normalized = stepLoopFingerprint(completedParts)
           if (normalized.includes("intent:docs-evidence-fill") && !hasTool) docsIntentStreak++
           else if (hasTool) docsIntentStreak = 0
+
+          // A different fingerprint means the model left the loop; allow mild again.
+          if (normalized && textLoopBuffer.length > 0 && normalized !== textLoopBuffer[textLoopBuffer.length - 1]) {
+            textLoopRecoveryAttempts = 0
+          }
 
           if (normalized) {
             textLoopBuffer.push(normalized)

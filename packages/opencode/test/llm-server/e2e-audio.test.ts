@@ -32,7 +32,7 @@ const ENTRY = path.join(import.meta.dir, "..", "..", "src", "index.ts")
  * project directory — so the preload has to be passed explicitly or the TUI entry resolves
  * React's JSX runtime instead of Solid's and the process dies before printing a port.
  */
-const PRELOAD = path.join(import.meta.dir, "..", "..", "node_modules", "@opentui", "solid", "scripts", "preload.ts")
+const PRELOAD = "@opentui/solid/preload"
 
 afterEach(async () => {
   await Instance.disposeAll()
@@ -147,7 +147,7 @@ async function withEndpoint<T>(transcript: string, fn: (ctx: Ctx) => Promise<T>)
   // symptom is a freshly issued token being rejected as invalid.
   const dir = realpathSync(mkdtempSync(path.join(os.tmpdir(), "llm-api-e2e-")))
   try {
-    writeFileSync(path.join(dir, "mimocode.json"), JSON.stringify(projectConfig(up.port)))
+    writeFileSync(path.join(dir, "oimo.json"), JSON.stringify(projectConfig(up.port)))
     const issued = await Instance.provide({
       directory: dir,
       fn: () => LLMServerTokens.issue({ directory: dir, expiry: {} }),

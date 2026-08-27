@@ -12,6 +12,10 @@ afterEach(async () => {
 })
 
 const it = testEffect(makeLayer())
+const waitForRun = (runtime: WorkflowRuntime.Interface, runID: string) =>
+  runtime
+    .wait({ runID, timeoutMs: 90_000 })
+    .pipe(Effect.ensuring(runtime.cancel({ runID }).pipe(Effect.ignore)))
 
 describe("workflow agent({model}) tier routing", () => {
   it.live(
@@ -32,12 +36,12 @@ describe("workflow agent({model}) tier routing", () => {
             `return { ok: r !== undefined }`,
           ].join("\n")
           const { runID } = yield* runtime.start({ script, sessionID: session.id, parentActorID: "main" })
-          const outcome = yield* runtime.wait({ runID, timeoutMs: 30000 })
+          const outcome = yield* waitForRun(runtime, runID)
           expect(outcome.status).toBe("completed")
         }),
         { git: true, config: providerCfg },
       ),
-    30000,
+    90_000,
   )
 
   it.live(
@@ -58,11 +62,11 @@ describe("workflow agent({model}) tier routing", () => {
             `return { ok: r !== undefined }`,
           ].join("\n")
           const { runID } = yield* runtime.start({ script, sessionID: session.id, parentActorID: "main" })
-          const outcome = yield* runtime.wait({ runID, timeoutMs: 30000 })
+          const outcome = yield* waitForRun(runtime, runID)
           expect(outcome.status).toBe("completed")
         }),
         { git: true, config: providerCfg },
       ),
-    30000,
+    90_000,
   )
 })

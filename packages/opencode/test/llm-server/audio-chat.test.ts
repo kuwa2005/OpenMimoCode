@@ -621,7 +621,7 @@ describe("plugin hooks on the model path", () => {
       const file = path.join(tmp.path, "plugin.ts")
       await Bun.write(file, ["export default async () => ({", ...body, "})", ""].join("\n"))
       await Bun.write(
-        path.join(tmp.path, "mimocode.json"),
+        path.join(tmp.path, "oimo.json"),
         JSON.stringify({
           plugin: [pathToFileURL(file).href],
           provider: {

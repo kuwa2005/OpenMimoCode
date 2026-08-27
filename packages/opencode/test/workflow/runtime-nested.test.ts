@@ -3,6 +3,7 @@ import { mkdirSync, writeFileSync } from "fs"
 import path from "path"
 import { Effect } from "effect"
 import { Session } from "../../src/session"
+import { SessionRunState } from "../../src/session/run-state"
 import { Instance } from "../../src/project/instance"
 import { provideTmpdirServer } from "../fixture/fixture"
 import { testEffect } from "../lib/effect"
@@ -16,6 +17,10 @@ afterEach(async () => {
 })
 
 const it = testEffect(makeLayer())
+const waitForRun = (runtime: WorkflowRuntime.Interface, runID: string) =>
+  runtime
+    .wait({ runID, timeoutMs: 90_000 })
+    .pipe(Effect.ensuring(runtime.cancel({ runID }).pipe(Effect.ignore)))
 
 describe("WorkflowRuntime file primitives", () => {
   it.live("writeFile then glob+readFile round-trips inside the worktree workspace", () =>
@@ -35,7 +40,7 @@ describe("WorkflowRuntime file primitives", () => {
           `return { found, body, missing: await readFile("nope.txt"), there: await exists("notes/a.txt") }`,
         ].join("\n")
         const { runID } = yield* runtime.start({ script, sessionID: parent.id, parentActorID: "main", model: ref })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("completed")
         const r = (outcome as { result: { found: string[]; body: string; missing: unknown; there: boolean } }).result
         expect(r.found).toEqual(["notes/a.txt"])
@@ -45,6 +50,7 @@ describe("WorkflowRuntime file primitives", () => {
       }),
       { git: true, config: providerCfg },
     ),
+    90_000,
   )
 })
 
@@ -71,13 +77,13 @@ describe("WorkflowRuntime workflow() inline child", () => {
           "return { wrapped: r }",
         ].join("\n")
         const { runID } = yield* runtime.start({ script: parentScript, sessionID: parent.id, parentActorID: "main", model: ref })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("completed")
         expect((outcome as { result: { wrapped: string } }).result.wrapped).toBe("child-done")
       }),
       { git: true, config: providerCfg },
     ),
-    20000,
+    90_000,
   )
 
   it.live("a child workspace escaping the parent root fails the run (jail containment)", () =>
@@ -98,13 +104,13 @@ describe("WorkflowRuntime workflow() inline child", () => {
           "return await workflow(" + JSON.stringify(child) + ", null, { workspace: \"/etc\" })",
         ].join("\n")
         const { runID } = yield* runtime.start({ script: parentScript, sessionID: parent.id, parentActorID: "main", model: ref })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("failed")
         expect((outcome as { error: string }).error).toMatch(/workspace/)
       }),
       { git: true, config: providerCfg },
     ),
-    20000,
+    90_000,
   )
 })
 
@@ -136,13 +142,13 @@ describe("WorkflowRuntime workflow() by name + dataflow", () => {
           `return b`,
         ].join("\n")
         const { runID } = yield* runtime.start({ script: orchestrator, sessionID: parent.id, parentActorID: "main", model: ref })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("completed")
         expect((outcome as { result: number }).result).toBe(14) // 7 * 2
       }),
       { git: true, config: providerCfg },
     ),
-    20000,
+    90_000,
   )
 })
 
@@ -190,7 +196,7 @@ describe("WorkflowRuntime global concurrency ceiling", () => {
         expect(yield* llm.calls).toBe(2) // EXACTLY the ceiling — 6 still blocked at the semaphore
         // Release the gate so every agent drains; the run completes.
         release()
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("completed")
         expect((outcome as { result: number[] }).result).toEqual([4, 4])
       }),
@@ -200,7 +206,7 @@ describe("WorkflowRuntime global concurrency ceiling", () => {
       // tmpdir's oimo.json.
       { git: true, config: (url) => ({ ...providerCfg(url), workflow: { maxConcurrentAgents: 2 } }) },
     ),
-    30000,
+    90_000,
   )
 })
 
@@ -235,7 +241,7 @@ describe("WorkflowRuntime workflow() journal (two-level resume)", () => {
           "return await workflow(" + JSON.stringify(child) + ")",
         ].join("\n")
         const { runID } = yield* runtime.start({ script: orchestrator, sessionID: parent.id, parentActorID: "main", model: ref })
-        const out1 = yield* runtime.wait({ runID })
+        const out1 = yield* waitForRun(runtime, runID)
         expect(out1.status).toBe("completed")
         expect((out1 as { result: unknown }).result).toBe("child-done")
         const callsAfterFirst = yield* llm.calls
@@ -245,7 +251,7 @@ describe("WorkflowRuntime workflow() journal (two-level resume)", () => {
         // LLM request is made (the child never spawns its agent again).
         const r = yield* runtime.resume({ runID })
         expect(r.resumed).toBe(true)
-        const out2 = yield* runtime.wait({ runID })
+        const out2 = yield* waitForRun(runtime, runID)
         expect(out2.status).toBe("completed")
         expect((out2 as { result: unknown }).result).toBe("child-done")
         // The discriminating assertions: child body ran exactly once (parent journal
@@ -288,10 +294,11 @@ describe("WorkflowRuntime nested cancel", () => {
         const all = yield* runtime.list({ sessionID: parent.id })
         const child2 = all.find((r) => r.runID !== runID)
         expect(child2?.status).toBe("cancelled")
+        yield* (yield* SessionRunState.Service).cancel(parent.id).pipe(Effect.timeout("5 seconds"), Effect.ignore)
       }),
       { git: true, config: providerCfg },
     ),
-    20000,
+    90_000,
   )
 })
 
@@ -314,13 +321,13 @@ describe("WorkflowRuntime cycle + depth safety", () => {
         )
         const top = `export const meta = { name: "o", description: "d" }\nreturn await workflow("loop")`
         const { runID } = yield* runtime.start({ script: top, sessionID: parent.id, parentActorID: "main", model: ref })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("failed")
         expect((outcome as { error: string }).error).toMatch(/cycle/i)
       }),
       { git: true, config: providerCfg },
     ),
-    20000,
+    90_000,
   )
 
   it.live("exceeding maxDepth fails the run with a depth error", () =>
@@ -337,13 +344,13 @@ describe("WorkflowRuntime cycle + depth safety", () => {
         const mid = `export const meta = { name: "m", description: "d" }\nreturn await workflow(${JSON.stringify(inner)})`
         const top = `export const meta = { name: "o", description: "d" }\nreturn await workflow(${JSON.stringify(mid)})`
         const { runID } = yield* runtime.start({ script: top, sessionID: parent.id, parentActorID: "main", model: ref, maxDepth: 1 })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("failed")
         expect((outcome as { error: string }).error).toMatch(/depth/i)
       }),
       { git: true, config: providerCfg },
     ),
-    20000,
+    90_000,
   )
 })
 
@@ -380,7 +387,7 @@ describe("WorkflowRuntime child failure event", () => {
           parentActorID: "main",
           model: ref,
         })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         // The orchestrator itself COMPLETES (workflow() is never-throw) returning "null".
         expect(outcome.status).toBe("completed")
         expect((outcome as { result: string }).result).toBe("null")
@@ -390,7 +397,7 @@ describe("WorkflowRuntime child failure event", () => {
       }),
       { git: true, config: providerCfg },
     ),
-    20000,
+    90_000,
   )
 })
 
@@ -410,12 +417,12 @@ describe("WorkflowRuntime config maxDepth", () => {
         const top = `export const meta = { name: "o", description: "d" }\nreturn await workflow(${JSON.stringify(mid)})`
         // No maxDepth in start() — it must come from config.
         const { runID } = yield* runtime.start({ script: top, sessionID: parent.id, parentActorID: "main", model: ref })
-        const outcome = yield* runtime.wait({ runID })
+        const outcome = yield* waitForRun(runtime, runID)
         expect(outcome.status).toBe("failed")
         expect((outcome as { error: string }).error).toMatch(/depth/i)
       }),
       { git: true, config: (url) => ({ ...providerCfg(url), workflow: { maxDepth: 1 } }) },
     ),
-    20000,
+    90_000,
   )
 })

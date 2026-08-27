@@ -343,6 +343,8 @@ describe("WorkflowTool run", () => {
           )
           expect(res.metadata.runID).toBeDefined()
           expect(res.output).toContain("run_id")
+          const runtime = yield* WorkflowRuntime.Service
+          yield* runtime.cancel({ runID: res.metadata.runID as string }).pipe(Effect.ignore)
         }),
         { git: true, config: providerCfg },
       ),
@@ -433,13 +435,17 @@ describe("WorkflowTool run", () => {
         const runtime = yield* WorkflowRuntime.Service
         const runs = yield* runtime.list({ sessionID: session.id })
         expect(runs.length).toBeGreaterThanOrEqual(1)
+        yield* Effect.forEach(runs, (run) => runtime.cancel({ runID: run.runID }).pipe(Effect.ignore), {
+          concurrency: "unbounded",
+          discard: true,
+        })
       }),
       { git: true, config: providerCfg },
     ),
     // Real agent loop + an inner workflow spawn through the full stack legitimately
     // exceeds the 5s default on a cold provider/server warmup (it's order-dependent
     // otherwise — green only when a prior test warms the layer). Give it headroom.
-    60000,
+    90_000,
   )
 
   // SKIPPED (flaky on cold CI runners; net-new coverage is minimal):

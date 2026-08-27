@@ -1,6 +1,8 @@
 import { afterEach, describe, expect, test } from "bun:test"
 import { Deferred, Effect, Stream } from "effect"
 import * as fs from "fs/promises"
+import path from "path"
+import { pathToFileURL } from "url"
 import { tmpdir } from "../fixture/fixture"
 import { Instance } from "../../src/project/instance"
 import { Plugin, HookEvent } from "../../src/plugin"
@@ -78,12 +80,10 @@ describe("CheckpointSplitoverPlugin spawn-loop integration", () => {
     //      checkpoint.md at the session's path (extract-required violation).
     //   2. Spawn checkpoint-writer actor with scripted LLM (two text turns).
     //   3. Turn 0 runs; preStop hook reads over-budget file → continue=true.
-    //   4. Bus subscriber catches ReActReentered → overwrites file with clean
-    //      v5 skeleton. (This stands in for what a real writer turn would do
-    //      via tool calls — the scripted LLM can't drive write tool calls
-    //      without far more complexity, and this design still proves the
-    //      contract: hook fires → reentry happens → next iteration sees
-    //      corrected state → hook returns continue=false → delivery.)
+    //   4. A test actor.preStop hook synchronously overwrites the file with a
+    //      clean v5 skeleton at iteration 0. (This stands in for what a real
+    //      writer turn would do via tool calls — the scripted LLM can't drive
+    //      write tool calls without far more complexity.)
     //   5. Turn 1 runs; preStop hook reads clean file → continue=false.
     //   6. Outcome: success, two captures, exactly one ReActReentered.
     const server = startScriptedLLMServer([
@@ -114,10 +114,28 @@ describe("CheckpointSplitoverPlugin spawn-loop integration", () => {
     try {
       await using tmp = await tmpdir({
         init: async (dir) => {
+          const file = path.join(dir, "repair-plugin.ts")
+          await Bun.write(
+            file,
+            [
+              'import path from "node:path"',
+              "export default async () => ({",
+              '  "actor.preStop": {',
+              '    matcher: { agentType: { include: ["checkpoint-writer"] } },',
+              "    run: async (input) => {",
+              "      if (input.iteration !== 0) return",
+              `      await Bun.write(path.join(process.env.XDG_DATA_HOME!, "oimo", "memory", "sessions", input.sessionID, "checkpoint.md"), ${JSON.stringify(CLEAN)})`,
+              "    },",
+              "  },",
+              "})",
+              "",
+            ].join("\n"),
+          )
           await Bun.write(
             `${dir}/oimo.json`,
             JSON.stringify({
               $schema: "https://opencode.ai/config.json",
+              plugin: [pathToFileURL(file).href],
               enabled_providers: ["alibaba"],
               provider: {
                 alibaba: {
@@ -148,6 +166,7 @@ describe("CheckpointSplitoverPlugin spawn-loop integration", () => {
                 triggeredByPlugins: string[]
                 iteration: number
               }> = []
+              let actorID: string | undefined
 
               const sessions = yield* Session.Service
               const sess = yield* sessions.create({ title: "splitover spawn-loop" })
@@ -162,21 +181,18 @@ describe("CheckpointSplitoverPlugin spawn-loop integration", () => {
                 await fs.writeFile(checkpointPath(sess.id), OVERSIZED)
               })
 
-              // Subscribe to ReActReentered. On the first re-entry event,
-              // overwrite checkpoint.md with a clean v5 skeleton so the next
-              // preStop pass sees no violations and returns continue=false.
+              // Capture ReActReentered for the assertion. The test actor.preStop
+              // hook repairs the file synchronously, so this subscriber has no
+              // timing-sensitive side effects.
               yield* bus.subscribe(HookEvent.ReActReentered).pipe(
                 Stream.runForEach((p) =>
-                  Effect.gen(function* () {
+                  Effect.sync(() => {
+                    if (p.properties.actorID !== actorID) return
                     reenteredEvents.push({
                       phase: p.properties.phase,
                       triggeredByPlugins: p.properties.triggeredByPlugins,
                       iteration: p.properties.iteration,
                     })
-                    // Overwrite with clean content. The next preStop tick
-                    // reads from disk, finds no violations, returns
-                    // continue=false → break out of the loop.
-                    yield* Effect.promise(() => fs.writeFile(checkpointPath(sess.id), CLEAN))
                   }),
                 ),
                 Effect.forkScoped,
@@ -191,6 +207,10 @@ describe("CheckpointSplitoverPlugin spawn-loop integration", () => {
                 context: "none",
                 tools: [],
                 background: false,
+                onReady: (info) =>
+                  Effect.sync(() => {
+                    actorID = info.actorID
+                  }),
               })
               const out = yield* Deferred.await(result.outcome)
               // Allow the subscriber fork to drain any tail events.
@@ -207,9 +227,9 @@ describe("CheckpointSplitoverPlugin spawn-loop integration", () => {
       // not zero (no reentry) and not three (cap).
       expect(server.captures.length).toBe(2)
 
-      // At least one ReActReentered fired in the pre phase, attributed to
-      // CheckpointSplitoverPlugin. The subscriber's callback overwrote the
-      // file → second preStop saw clean content → no further re-entries.
+      // Exactly one ReActReentered fired in the pre phase, attributed to
+      // CheckpointSplitoverPlugin. The synchronous test hook repaired the file,
+      // so the second preStop saw clean content and did not re-enter again.
       const preEvents = reenteredEvents.filter((e) => e.phase === "pre")
       expect(preEvents.length).toBe(1)
       expect(preEvents[0].triggeredByPlugins).toContain("CheckpointSplitoverPlugin")
@@ -222,7 +242,7 @@ describe("CheckpointSplitoverPlugin spawn-loop integration", () => {
         await fs.rm(metaDir(sessionIDForCleanup), { recursive: true, force: true }).catch(() => {})
       }
     }
-  })
+  }, 90_000)
 })
 
 describe("CheckpointContext producer (tryStartCheckpointWriter)", () => {

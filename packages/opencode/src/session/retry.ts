@@ -62,9 +62,9 @@ export function isRetryableTransientError(error: unknown): boolean {
   // Auto Model (free) failover uses THIS helper — without unwrapping, a Console
   // "Rate limit exceeded" after 3 SDK attempts never advances to the next
   // free candidate and the turn dies on big-pickle alone.
-  const bag = error as { lastError?: unknown; errors?: unknown[] }
+  const bag = error as { lastError?: unknown; errors?: unknown[]; cause?: unknown }
   const nested =
-    bag.lastError ?? (Array.isArray(bag.errors) ? bag.errors[bag.errors.length - 1] : undefined)
+    bag.lastError ?? (Array.isArray(bag.errors) ? bag.errors[bag.errors.length - 1] : undefined) ?? bag.cause
   if (nested && nested !== error && isRetryableTransientError(nested)) return true
 
   // Plaintext rate-limit (common on wrapped RetryError.message after SDK retries).

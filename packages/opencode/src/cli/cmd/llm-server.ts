@@ -91,32 +91,32 @@ function renewArgs(args: {
 
 const issue = cmd({
   command: "issue",
-  describe: "mint a token for the local LLM server and print how to reach it",
+  describe: "ローカル LLM サーバー用トークンを発行し、接続方法を表示する",
   builder: (yargs: Argv) =>
     yargs
       .option("ttl", {
         type: "string",
-        describe: "sliding lifetime, measured from last use (e.g. 30m, 12h, 1d, none)",
+        describe: "最終利用からのスライディング有効期限（例: 30m, 12h, 1d, none）",
       })
       .option("max-age", {
         type: "string",
-        describe: "absolute ceiling from issue regardless of activity (e.g. 7d, none)",
+        describe: "発行時点からの絶対有効期限（例: 7d, none）",
       })
       .option("model", {
         type: "string",
         array: true,
-        describe: "restrict this token to the given provider/model (repeatable)",
+        describe: "このトークンを指定の provider/model に制限する（繰り返し可）",
         default: [] as string[],
       })
       .option("capability", {
         type: "string",
         choices: ["chat", "speech", "transcription"] as const,
         describe:
-          "resolve a model by what it can DO rather than by name, and scope the token to it. " +
-          "Lets a skill declare `speech` instead of binding to one installation's model id",
+          "モデル名ではなく能力（chat / speech / transcription）で解決し、そのモデルにスコープする。" +
+          "スキルがインストール先の model id に縛られず speech などを宣言できるようにする",
       })
-      .option("label", { type: "string", describe: "a note for `llm-server list`, e.g. the skill's name" })
-      .option("json", { type: "boolean", describe: "print connection details as JSON", default: false }),
+      .option("label", { type: "string", describe: "`llm-server list` 用のメモ（例: スキル名）" })
+      .option("json", { type: "boolean", describe: "接続情報を JSON で出力する", default: false }),
   handler: (args) =>
     inInstance(async () => {
       const cfg = await defaults()
@@ -218,7 +218,7 @@ const issue = cmd({
 
 const list = cmd({
   command: "list",
-  describe: "list tokens issued for this directory",
+  describe: "このディレクトリ向けに発行済みのトークンを一覧する",
   builder: (yargs: Argv) => yargs.option("json", { type: "boolean", default: false }),
   handler: (args) =>
     inInstance(async () => {
@@ -249,11 +249,11 @@ const list = cmd({
 
 const revoke = cmd({
   command: "revoke [id]",
-  describe: "revoke a token by id, or every token with --all",
+  describe: "トークン ID を指定して失効させる（--all ですべて失効）",
   builder: (yargs: Argv) =>
     yargs
-      .positional("id", { type: "string", describe: "token id from `llm-server list`" })
-      .option("all", { type: "boolean", describe: "revoke every token for this directory", default: false }),
+      .positional("id", { type: "string", describe: "`llm-server list` のトークン ID" })
+      .option("all", { type: "boolean", describe: "このディレクトリの全トークンを失効させる", default: false }),
   handler: (args) =>
     inInstance(async () => {
       if (args.all) {
@@ -277,7 +277,7 @@ const revoke = cmd({
 
 export const LlmServerCommand = cmd({
   command: "llm-server",
-  describe: "mint and manage credentials that let a task reach this instance's models",
+  describe: "このインスタンスのモデルへタスクが到達するための認証情報を発行・管理する",
   builder: (yargs: Argv) => yargs.command(issue).command(list).command(revoke).demandCommand(1),
   handler: () => {},
 })

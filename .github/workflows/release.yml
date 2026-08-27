@@ -9,6 +9,8 @@ on:
 
 permissions:
   contents: write
+  id-token: write
+  packages: write
 
 jobs:
   build-cli:
@@ -116,7 +118,8 @@ jobs:
       - name: Publish npm packages
         run: |
           if [ -z "$NPM_TOKEN" ]; then
-            echo "::warning::NPM_TOKEN is not set; skipping npm publish (GitHub release assets are already uploaded). Add the NPM_TOKEN secret to the repository to enable npm publishing."
+            echo "NPM_TOKEN not set; skipping npm publish (GitHub Release assets are already uploaded)."
+            echo "To publish @mimo-ai/* packages, set repository secret NPM_TOKEN (Automation token with publish access to the @mimo-ai scope)."
           else
             bun script/publish.ts
           fi

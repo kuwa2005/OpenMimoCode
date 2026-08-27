@@ -7,6 +7,8 @@ describe("BuiltinWorkflow registry", () => {
     expect(BuiltinWorkflow.list().map((w) => w.name)).toEqual([
       "compose",
       "deep-research",
+      "evolve-apply",
+      "evolve-review",
       "fact-check",
       "research-experiment",
     ])

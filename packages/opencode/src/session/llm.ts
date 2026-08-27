@@ -117,12 +117,16 @@ export function isTransientCapacityError(error: unknown): boolean {
  * brief upstream outages is the design goal. Bounding per-attempt latency
  * via chunkTimeout is the primary lever for hang-time control.
  */
-export const persistentRetrySchedule = Schedule.exponential("500 millis", 2).pipe(
-  Schedule.modifyDelay((_, delay) =>
-    Effect.succeed(Duration.isLessThanOrEqualTo(delay, Duration.minutes(5)) ? delay : Duration.minutes(5)),
-  ),
-  Schedule.both(Schedule.recurs(10)),
-)
+function persistentRetryScheduleFor(retries: number) {
+  return Schedule.exponential("500 millis", 2).pipe(
+    Schedule.modifyDelay((_, delay) =>
+      Effect.succeed(Duration.isLessThanOrEqualTo(delay, Duration.minutes(5)) ? delay : Duration.minutes(5)),
+    ),
+    Schedule.both(Schedule.recurs(retries)),
+  )
+}
+
+export const persistentRetrySchedule = persistentRetryScheduleFor(10)
 
 /**
  * Memory-system instructions appended to the main agent's system prompt.
@@ -809,6 +813,17 @@ const live: Layer.Layer<
     })
 
     const stream: Interface["stream"] = (input) => {
+      // Promote in-band `{ type: "error", error }` events into stream Failures so
+      // both retry layers see errors raised while consuming fullStream.
+      const promoteStreamErrors = (stream: Stream.Stream<Event, Error, never>) =>
+        stream.pipe(
+          Stream.flatMap((event) =>
+            event.type === "error"
+              ? Stream.fail(event.error instanceof Error ? event.error : new Error(String(event.error)))
+              : Stream.succeed(event),
+          ),
+        )
+
       // Build the scoped stream for one attempt. `dropAssistantPrefill` forces
       // run() to hard-prune the trailing assistant prefill before send — used only
       // by the reactive one-shot retry below.
@@ -844,49 +859,37 @@ const live: Layer.Layer<
                   )
                 })
 
-              const streamWithTelemetry = run({ ...input, abort: ctrl.signal, dropAssistantPrefill }).pipe(
-                Effect.tapError((error) => {
+              const streamWithTelemetry = promoteStreamErrors(
+                Stream.unwrap(
+                  run({ ...input, abort: ctrl.signal, dropAssistantPrefill }).pipe(
+                    Effect.map((result) =>
+                      Stream.fromAsyncIterable(result.fullStream, (e) =>
+                        e instanceof Error ? e : new Error(String(e)),
+                      ),
+                    ),
+                  ),
+                ),
+              ).pipe(
+                Stream.tapError((error) => {
                   if (!isTransientCapacityError(error)) return Effect.void
                   return Ref.updateAndGet(attemptRef, (n) => n + 1).pipe(
                     Effect.flatMap((nextAttempt) => publishRetryEvent(error, nextAttempt))
                   )
-                })
+                }),
               )
 
               // SessionRetry owns long-haul visible backoff when the processor
               // opts in (Auto Model / normal turns). Keep this silent LLM layer
               // for quick blips only when SessionRetry is not in play.
-              const result = input.skipPersistentRetry
-                ? yield* streamWithTelemetry
-                : yield* streamWithTelemetry.pipe(
-                    Effect.retry({
-                      while: isTransientCapacityError,
-                      schedule: persistentRetrySchedule,
-                    }),
-                  )
-
-              // Structurally identical to the pre-guard stream: a bare scoped
-              // stream over the provider's fullStream. No per-event combinator, no
-              // extra catch layer — so the normal (non-error) event flow and the
-              // AbortController scope teardown are exactly as before. The reactive
-              // prefill retry is layered lazily below and only pays a cost when an
-              // actual error surfaces.
-              return Stream.fromAsyncIterable(result.fullStream, (e) =>
-                e instanceof Error ? e : new Error(String(e)),
+              if (input.skipPersistentRetry) return streamWithTelemetry
+              return streamWithTelemetry.pipe(
+                Stream.retry(
+                  persistentRetryScheduleFor(input.retries ?? 10).pipe(
+                    Schedule.while((metadata) => isTransientCapacityError(metadata.input)),
+                  ),
+                ),
               )
             }),
-          ),
-        )
-
-      // Promote in-band `{ type: "error", error }` events into stream Failures so
-      // SessionRetry / Effect.catch see Fail (not a Die from handleEvent throw).
-      // Prefill-rejection still gets a one-shot pruned resend below.
-      const promoteStreamErrors = (stream: Stream.Stream<Event, Error, never>) =>
-        stream.pipe(
-          Stream.flatMap((event) =>
-            event.type === "error"
-              ? Stream.fail(event.error instanceof Error ? event.error : new Error(String(event.error)))
-              : Stream.succeed(event),
           ),
         )
 
@@ -900,7 +903,7 @@ const live: Layer.Layer<
       // hard-pruned. Guarded to a single reprune so a persistent failure surfaces
       // the retry's OWN error, falling back to the original prefill cause only when
       // the resend is again prefill-rejected.
-      return promoteStreamErrors(attempt(false)).pipe(
+      return attempt(false).pipe(
         Stream.catchCause((primaryCause) => {
           if (!ProviderTransform.isAssistantPrefillRejection(Cause.squash(primaryCause)))
             return Stream.failCause(primaryCause)
