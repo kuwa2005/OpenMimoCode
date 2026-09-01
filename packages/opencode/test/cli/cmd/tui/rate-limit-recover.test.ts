@@ -1,13 +1,13 @@
 import { describe, test, expect } from "bun:test"
 import {
   RATE_LIMIT_AUTO_RETRY_MAX,
-  RATE_LIMIT_ERROR_BURST_MS,
   RATE_LIMIT_STORM_RESET_MS,
+  SESSION_ERROR_BURST_MS,
   afterRateLimitRetrySent,
   nextRateLimitRecoverState,
   planRateLimitRecover,
   rateLimitRetryDelayMs,
-} from "../../../../src/cli/cmd/tui/rate-limit-recover"
+} from "../../../../src/session/recovery"
 
 describe("rateLimitRetryDelayMs", () => {
   test("uses exponential backoff from 15s", () => {
@@ -24,7 +24,7 @@ describe("planRateLimitRecover", () => {
     expect(
       planRateLimitRecover({
         state,
-        now: now + RATE_LIMIT_ERROR_BURST_MS - 1,
+        now: now + SESSION_ERROR_BURST_MS - 1,
         hasPendingTimer: false,
       }),
     ).toEqual({ action: "ignore_burst" })
@@ -46,7 +46,7 @@ describe("planRateLimitRecover", () => {
     expect(
       planRateLimitRecover({
         state,
-        now: now + RATE_LIMIT_ERROR_BURST_MS + 1,
+        now: now + SESSION_ERROR_BURST_MS + 1,
         hasPendingTimer: false,
       }),
     ).toEqual({ action: "stop_max" })
@@ -100,15 +100,13 @@ describe("rate limit recover storm simulation", () => {
         hasPendingTimer: pendingTimer,
       })
 
-    // Duplicate errors in one tick are ignored.
     expect(plan()).toEqual({ action: "schedule", delayMs: 15_000, attempt: 1 })
     state = nextRateLimitRecoverState(state, now)
     pendingTimer = true
     now += 100
     expect(plan()).toEqual({ action: "ignore_burst" })
-    now += RATE_LIMIT_ERROR_BURST_MS
+    now += SESSION_ERROR_BURST_MS
 
-    // Three scheduled recoveries consume the storm budget.
     for (let attempt = 1; attempt <= RATE_LIMIT_AUTO_RETRY_MAX; attempt++) {
       pendingTimer = false
       expect(plan()).toEqual({
@@ -119,13 +117,12 @@ describe("rate limit recover storm simulation", () => {
       state = nextRateLimitRecoverState(state, now)
       pendingTimer = true
       state = afterRateLimitRetrySent(state)
-      now += RATE_LIMIT_ERROR_BURST_MS + 1
+      now += SESSION_ERROR_BURST_MS + 1
     }
 
     pendingTimer = false
     expect(plan()).toEqual({ action: "stop_max" })
 
-    // After quiet, a new storm gets a fresh budget.
     now += RATE_LIMIT_STORM_RESET_MS + 1
     expect(plan()).toEqual({ action: "schedule", delayMs: 15_000, attempt: 1 })
   })

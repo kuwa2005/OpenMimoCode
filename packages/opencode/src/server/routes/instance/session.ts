@@ -34,12 +34,12 @@ import { NamedError } from "@mimo-ai/shared/util/error"
 import { jsonRequest, runRequest } from "./trace"
 import { RateLimitMiddleware } from "../../rate-limit"
 import { NotFoundError } from "@/storage"
-import { shouldPublishPromptAsyncError } from "@/session/prompt-async-error-burst"
+import { gateSessionErrorPublish } from "@/session/recovery/burst"
 
 const log = Log.create({ service: "server" })
 
 function publishPromptAsyncError(sessionID: SessionID, error: ReturnType<typeof MessageV2.fromError>) {
-  if (!shouldPublishPromptAsyncError(sessionID, Date.now())) return
+  if (!gateSessionErrorPublish(sessionID, Date.now())) return
   void Bus.publish(Session.Event.Error, { sessionID, error })
 }
 

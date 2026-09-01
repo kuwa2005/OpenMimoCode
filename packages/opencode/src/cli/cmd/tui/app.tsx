@@ -60,11 +60,8 @@ import { SessionRetry } from "@/session/retry"
 import {
   RATE_LIMIT_AUTO_RETRY_MAX,
   RATE_LIMIT_BUSY_DEFER_MS,
-  afterRateLimitRetrySent,
-  nextRateLimitRecoverState,
-  planRateLimitRecover,
-  type RateLimitRecoverEntry,
-} from "@tui/rate-limit-recover"
+  createRateLimitRecoveryCoordinator,
+} from "@/session/recovery"
 import { ToastProvider, useToast } from "./ui/toast"
 import { ExitProvider, useExit } from "./context/exit"
 import { Session as SessionApi } from "@/session"
@@ -151,19 +148,17 @@ function errorMessage(error: unknown) {
 }
 
 /** Per-session soft rate-limit auto-recover — capped, debounced, backoff. */
-const rateLimitRecover = new Map<string, RateLimitRecoverEntry>()
-const rateLimitRecoverTimers = new Map<string, ReturnType<typeof setTimeout>>()
+const rateLimitRecovery = createRateLimitRecoveryCoordinator()
 
-function clearRateLimitRecoverTimer(sessionID: string) {
+function clearRateLimitRecover(sessionID: string, reason: string) {
   const timer = rateLimitRecoverTimers.get(sessionID)
   if (timer) clearTimeout(timer)
   rateLimitRecoverTimers.delete(sessionID)
+  rateLimitRecovery.setPendingTimer(sessionID, false)
+  rateLimitRecovery.clear(sessionID, reason)
 }
 
-function clearRateLimitRecover(sessionID: string) {
-  clearRateLimitRecoverTimer(sessionID)
-  rateLimitRecover.delete(sessionID)
-}
+const rateLimitRecoverTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
 function runRateLimitRecoverAfterDelay(
   sessionID: string,
@@ -176,9 +171,12 @@ function runRateLimitRecoverAfterDelay(
     toast: ReturnType<typeof useToast>
   },
 ) {
-  clearRateLimitRecoverTimer(sessionID)
+  const existing = rateLimitRecoverTimers.get(sessionID)
+  if (existing) clearTimeout(existing)
+  rateLimitRecovery.setPendingTimer(sessionID, true)
   const timer = setTimeout(() => {
     rateLimitRecoverTimers.delete(sessionID)
+    rateLimitRecovery.setPendingTimer(sessionID, false)
     if (ctx.route.data.type !== "session" || ctx.route.data.sessionID !== sessionID) return
     const liveStatus = ctx.sync.data.session_status[sessionID]?.type ?? "idle"
     if (liveStatus === "busy" || liveStatus === "retry") {
@@ -186,10 +184,7 @@ function runRateLimitRecoverAfterDelay(
       return
     }
 
-    if (consumeAttempt) {
-      const entry = rateLimitRecover.get(sessionID)
-      if (entry) rateLimitRecover.set(sessionID, afterRateLimitRetrySent(entry))
-    }
+    if (consumeAttempt) rateLimitRecovery.markRetrySent(sessionID)
 
     void ctx.sdk.client.session
       .promptAsync({
@@ -1291,7 +1286,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   })
 
   event.on("session.deleted", (evt) => {
-    clearRateLimitRecover(evt.properties.info.id)
+    clearRateLimitRecover(evt.properties.info.id, "session_deleted")
     if (route.data.type === "session" && route.data.sessionID === evt.properties.info.id) {
       route.navigate({ type: "home" })
       toast.show({
@@ -1303,16 +1298,13 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
 
   event.on("session.status", (evt) => {
     if (evt.properties.status.type !== "idle") return
-    const sessionID = evt.properties.sessionID
-    if (rateLimitRecoverTimers.has(sessionID)) return
-    if (!rateLimitRecover.has(sessionID)) return
-    rateLimitRecover.delete(sessionID)
+    rateLimitRecovery.onIdle(evt.properties.sessionID)
   })
 
   createEffect(() => {
     const sessionID = route.data.type === "session" ? route.data.sessionID : undefined
     onCleanup(() => {
-      if (sessionID) clearRateLimitRecover(sessionID)
+      if (sessionID) clearRateLimitRecover(sessionID, "route_left")
     })
   })
 
@@ -1339,19 +1331,12 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     // backoff. Uncapped immediate promptAsync here caused API-burn loops when
     // duplicate session.error events fired in the same tick.
     if (rateLimited && sessionID && route.data.type === "session" && route.data.sessionID === sessionID) {
-      const now = Date.now()
-      const plan = planRateLimitRecover({
-        state: rateLimitRecover.get(sessionID),
-        now,
-        hasPendingTimer: rateLimitRecoverTimers.has(sessionID),
-      })
+      const result = rateLimitRecovery.onSessionError({ sessionID, now: Date.now(), source: "tui" })
 
-      if (plan.action === "ignore_burst" || plan.action === "ignore_pending") {
-        return
-      }
+      if (result.action === "noop") return
 
-      if (plan.action === "stop_max") {
-        clearRateLimitRecover(sessionID)
+      if (result.action === "stop_max") {
+        clearRateLimitRecover(sessionID, "stop_max")
         toast.show({
           variant: "warning",
           message:
@@ -1361,16 +1346,14 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         return
       }
 
-      rateLimitRecover.set(sessionID, nextRateLimitRecoverState(rateLimitRecover.get(sessionID), now))
-
-      const delaySec = Math.round(plan.delayMs / 1000)
+      const delaySec = Math.round(result.plan.delayMs / 1000)
       toast.show({
         variant: "warning",
-        message: `Rate limit — ${delaySec}秒後に自動再試行します (${plan.attempt}/${RATE_LIMIT_AUTO_RETRY_MAX})…`,
+        message: `Rate limit — ${delaySec}秒後に自動再試行します (${result.plan.attempt}/${RATE_LIMIT_AUTO_RETRY_MAX})…`,
         duration: 5000,
       })
 
-      runRateLimitRecoverAfterDelay(sessionID, plan.delayMs, true, { route, sync, sdk, toast })
+      runRateLimitRecoverAfterDelay(sessionID, result.plan.delayMs, true, { route, sync, sdk, toast })
       return
     }
 
