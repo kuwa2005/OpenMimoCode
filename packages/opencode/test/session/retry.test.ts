@@ -394,6 +394,28 @@ describe("session.retry.retryable", () => {
     expect(SessionRetry.isRateLimitMessage("something unrelated")).toBe(false)
   })
 
+  test("isRateLimitSessionError detects APIError 429 even when message is opaque", () => {
+    const error = {
+      name: "APIError",
+      data: { statusCode: 429, message: "Failed after 3 attempts", responseBody: '{"error":"rate_limit"}' },
+    }
+    expect(SessionRetry.isRateLimitSessionError(error, "Failed after 3 attempts")).toBe(true)
+  })
+
+  test("isRateLimitSessionError detects rate limit in responseBody when message is generic", () => {
+    const error = {
+      name: "APIError",
+      data: { message: "provider error", responseBody: "Rate limit exceeded. Please try again later." },
+    }
+    expect(SessionRetry.isRateLimitSessionError(error, "provider error")).toBe(true)
+  })
+
+  test("isRateLimitSessionError returns false for unrelated errors", () => {
+    expect(
+      SessionRetry.isRateLimitSessionError({ name: "APIError", data: { message: "context overflow" } }, "context overflow"),
+    ).toBe(false)
+  })
+
   test("retries ZlibError decompression failures", () => {
     const error = new MessageV2.APIError({
       message: "Response decompression failed",

@@ -26,6 +26,18 @@ export function isRateLimitMessage(message: string): boolean {
   )
 }
 
+/** Classify session.error / assistant terminal errors for rate-limit handling. */
+export function isRateLimitSessionError(error: unknown, message: string) {
+  if (message.includes("Rate limit")) return true
+  if (isRateLimitMessage(message)) return true
+  if (typeof error !== "object" || error === null || !("name" in error) || error.name !== "APIError") return false
+  const data = (error as { data?: { statusCode?: number; responseBody?: string; message?: string } }).data
+  if (data?.statusCode === 429) return true
+  if (typeof data?.message === "string" && isRateLimitMessage(data.message)) return true
+  if (typeof data?.responseBody === "string" && isRateLimitMessage(data.responseBody)) return true
+  return false
+}
+
 export const RETRY_INITIAL_DELAY = 1000
 export const RETRY_BACKOFF_FACTOR = 2
 /** @deprecated Prefer RETRY_SOFT_HEADER_CAP_MS — soft rate-limits must not honor day-long headers. */

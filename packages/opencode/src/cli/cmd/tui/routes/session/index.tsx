@@ -2041,17 +2041,8 @@ type MessageError = NonNullable<AssistantMessage["error"]>
 // dumping a raw provider blob into the transcript. A rate-limit gets its own
 // kind so the header reads "Rate limited" instead of a generic error. See T30.
 function errorKind(error: MessageError): "rate-limit" | "error" {
-  if (error.name === "APIError") {
-    const data = error.data as { statusCode?: number; responseBody?: string; message?: string }
-    if (
-      data.statusCode === 429 ||
-      SessionRetry.isRateLimitMessage(data.message ?? "") ||
-      (typeof data.responseBody === "string" && SessionRetry.isRateLimitMessage(data.responseBody))
-    ) {
-      return "rate-limit"
-    }
-  }
-  return "error"
+  const message = (error.data as { message?: string }).message ?? ""
+  return SessionRetry.isRateLimitSessionError(error, message) ? "rate-limit" : "error"
 }
 
 function errorBody(error: MessageError): string {

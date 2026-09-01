@@ -34,8 +34,14 @@ import { NamedError } from "@mimo-ai/shared/util/error"
 import { jsonRequest, runRequest } from "./trace"
 import { RateLimitMiddleware } from "../../rate-limit"
 import { NotFoundError } from "@/storage"
+import { shouldPublishPromptAsyncError } from "@/session/prompt-async-error-burst"
 
 const log = Log.create({ service: "server" })
+
+function publishPromptAsyncError(sessionID: SessionID, error: ReturnType<typeof MessageV2.fromError>) {
+  if (!shouldPublishPromptAsyncError(sessionID, Date.now())) return
+  void Bus.publish(Session.Event.Error, { sessionID, error })
+}
 
 // Cadence of the keep-alive whitespace written on the POST /:sessionID/message
 // stream while a turn is in flight. Matches the 10s SSE heartbeat in
@@ -1233,12 +1239,12 @@ export const SessionRoutes = lazy(() =>
           log.error("prompt_async failed", { sessionID, error: err })
           // Prefer fromError so AI_RetryError unwraps to the underlying rate-limit
           // (matches processor halt). Raw err.message was "Failed after 3 attempts…".
-          void Bus.publish(Session.Event.Error, {
+          publishPromptAsyncError(
             sessionID,
-            error: MessageV2.fromError(err, {
+            MessageV2.fromError(err, {
               providerID: body.model?.providerID ?? ProviderID.make("opencode"),
             }),
-          })
+          )
         })
 
         return c.body(null, 204)

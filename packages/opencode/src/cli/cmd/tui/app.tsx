@@ -11,6 +11,7 @@ import {
   ErrorBoundary,
   createSignal,
   onMount,
+  onCleanup,
   batch,
   Show,
 } from "solid-js"
@@ -56,6 +57,14 @@ import { PromptStashProvider } from "./component/prompt/stash"
 import { DialogAlert } from "./ui/dialog-alert"
 import { DialogConfirm } from "./ui/dialog-confirm"
 import { SessionRetry } from "@/session/retry"
+import {
+  RATE_LIMIT_AUTO_RETRY_MAX,
+  RATE_LIMIT_BUSY_DEFER_MS,
+  afterRateLimitRetrySent,
+  nextRateLimitRecoverState,
+  planRateLimitRecover,
+  type RateLimitRecoverEntry,
+} from "@tui/rate-limit-recover"
 import { ToastProvider, useToast } from "./ui/toast"
 import { ExitProvider, useExit } from "./context/exit"
 import { Session as SessionApi } from "@/session"
@@ -139,6 +148,68 @@ function errorMessage(error: unknown) {
     return error.data.message
   }
   return FormatUnknownError(error)
+}
+
+/** Per-session soft rate-limit auto-recover — capped, debounced, backoff. */
+const rateLimitRecover = new Map<string, RateLimitRecoverEntry>()
+const rateLimitRecoverTimers = new Map<string, ReturnType<typeof setTimeout>>()
+
+function clearRateLimitRecoverTimer(sessionID: string) {
+  const timer = rateLimitRecoverTimers.get(sessionID)
+  if (timer) clearTimeout(timer)
+  rateLimitRecoverTimers.delete(sessionID)
+}
+
+function clearRateLimitRecover(sessionID: string) {
+  clearRateLimitRecoverTimer(sessionID)
+  rateLimitRecover.delete(sessionID)
+}
+
+function runRateLimitRecoverAfterDelay(
+  sessionID: string,
+  delayMs: number,
+  consumeAttempt: boolean,
+  ctx: {
+    route: ReturnType<typeof useRoute>
+    sync: ReturnType<typeof useSync>
+    sdk: ReturnType<typeof useSDK>
+    toast: ReturnType<typeof useToast>
+  },
+) {
+  clearRateLimitRecoverTimer(sessionID)
+  const timer = setTimeout(() => {
+    rateLimitRecoverTimers.delete(sessionID)
+    if (ctx.route.data.type !== "session" || ctx.route.data.sessionID !== sessionID) return
+    const liveStatus = ctx.sync.data.session_status[sessionID]?.type ?? "idle"
+    if (liveStatus === "busy" || liveStatus === "retry") {
+      runRateLimitRecoverAfterDelay(sessionID, RATE_LIMIT_BUSY_DEFER_MS, false, ctx)
+      return
+    }
+
+    if (consumeAttempt) {
+      const entry = rateLimitRecover.get(sessionID)
+      if (entry) rateLimitRecover.set(sessionID, afterRateLimitRetrySent(entry))
+    }
+
+    void ctx.sdk.client.session
+      .promptAsync({
+        sessionID,
+        parts: [
+          {
+            type: "text",
+            synthetic: true,
+            text: "Previous turn hit a soft provider rate limit. Continue from where we left off with the next concrete step. If the user's task is already complete, confirm briefly and wait.",
+          },
+        ],
+      })
+      .catch((err: unknown) =>
+        ctx.toast.show({
+          variant: "error",
+          message: err instanceof Error ? err.message : String(err),
+        }),
+      )
+  }, delayMs)
+  rateLimitRecoverTimers.set(sessionID, timer)
 }
 
 export function tui(input: {
@@ -1220,6 +1291,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
   })
 
   event.on("session.deleted", (evt) => {
+    clearRateLimitRecover(evt.properties.info.id)
     if (route.data.type === "session" && route.data.sessionID === evt.properties.info.id) {
       route.navigate({ type: "home" })
       toast.show({
@@ -1227,6 +1299,21 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         message: "The current session was deleted",
       })
     }
+  })
+
+  event.on("session.status", (evt) => {
+    if (evt.properties.status.type !== "idle") return
+    const sessionID = evt.properties.sessionID
+    if (rateLimitRecoverTimers.has(sessionID)) return
+    if (!rateLimitRecover.has(sessionID)) return
+    rateLimitRecover.delete(sessionID)
+  })
+
+  createEffect(() => {
+    const sessionID = route.data.type === "session" ? route.data.sessionID : undefined
+    onCleanup(() => {
+      if (sessionID) clearRateLimitRecover(sessionID)
+    })
   })
 
   event.on("session.error", (evt) => {
@@ -1246,34 +1333,44 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       return
     }
 
-    const rateLimited = SessionRetry.isRateLimitMessage(message) || message.includes("Rate limit")
+    const rateLimited = SessionRetry.isRateLimitSessionError(error, message)
 
-    // Soft Console rate-limits usually clear on the next call. Auto-continue
-    // without DialogConfirm so a finished-looking turn is not framed as a
-    // hard stop the user must acknowledge.
+    // Soft Console rate-limits: schedule at most a few delayed recoveries with
+    // backoff. Uncapped immediate promptAsync here caused API-burn loops when
+    // duplicate session.error events fired in the same tick.
     if (rateLimited && sessionID && route.data.type === "session" && route.data.sessionID === sessionID) {
+      const now = Date.now()
+      const plan = planRateLimitRecover({
+        state: rateLimitRecover.get(sessionID),
+        now,
+        hasPendingTimer: rateLimitRecoverTimers.has(sessionID),
+      })
+
+      if (plan.action === "ignore_burst" || plan.action === "ignore_pending") {
+        return
+      }
+
+      if (plan.action === "stop_max") {
+        clearRateLimitRecover(sessionID)
+        toast.show({
+          variant: "warning",
+          message:
+            "Rate limit — 自動再試行の上限に達しました。しばらく待ってから続行するか、モデルを切り替えてください。",
+          duration: 8000,
+        })
+        return
+      }
+
+      rateLimitRecover.set(sessionID, nextRateLimitRecoverState(rateLimitRecover.get(sessionID), now))
+
+      const delaySec = Math.round(plan.delayMs / 1000)
       toast.show({
         variant: "warning",
-        message: "Rate limit — 自動で再試行します…",
+        message: `Rate limit — ${delaySec}秒後に自動再試行します (${plan.attempt}/${RATE_LIMIT_AUTO_RETRY_MAX})…`,
         duration: 5000,
       })
-      void sdk.client.session
-        .promptAsync({
-          sessionID,
-          parts: [
-            {
-              type: "text",
-              synthetic: true,
-              text: "Previous turn hit a soft provider rate limit. Continue from where we left off with the next concrete step. If the user's task is already complete, confirm briefly and wait.",
-            },
-          ],
-        })
-        .catch((err: unknown) =>
-          toast.show({
-            variant: "error",
-            message: err instanceof Error ? err.message : String(err),
-          }),
-        )
+
+      runRateLimitRecoverAfterDelay(sessionID, plan.delayMs, true, { route, sync, sdk, toast })
       return
     }
 
