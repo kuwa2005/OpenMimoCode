@@ -14,6 +14,8 @@ export { resolveAutoFreeCandidates, ZEN_FREE_PREFERRED_ORDER } from "./resolve"
 export {
   isCommitStreamEvent,
   classifyFailoverFailure,
+  isAutoFreeCandidateUnavailableError,
+  isAutoFreeFailoverAdvanceError,
   runWithFailover,
 } from "./failover"
 export {

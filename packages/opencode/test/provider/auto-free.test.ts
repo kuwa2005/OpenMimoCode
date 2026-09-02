@@ -1,6 +1,8 @@
 import { describe, expect, test } from "bun:test"
 import {
   classifyFailoverFailure,
+  isAutoFreeCandidateUnavailableError,
+  isAutoFreeFailoverAdvanceError,
   isCommitStreamEvent,
   resolveAutoFreeCandidates,
   runWithFailover,
@@ -157,6 +159,14 @@ describe("auto-free.failover", () => {
     expect(classifyFailoverFailure(auth, false, true)).toEqual({
       action: "fail",
       reason: "non-retryable",
+    })
+
+    const notFound = Object.assign(new Error("Not Found"), { statusCode: 404 })
+    expect(isAutoFreeCandidateUnavailableError(notFound)).toBe(true)
+    expect(isAutoFreeFailoverAdvanceError(notFound)).toBe(true)
+    expect(classifyFailoverFailure(notFound, false, true)).toEqual({
+      action: "advance",
+      reason: "unavailable-pre-commit",
     })
   })
 

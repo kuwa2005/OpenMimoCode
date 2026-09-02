@@ -21,8 +21,11 @@ import type { Provider } from "@/provider"
 import { Provider as ProviderNS } from "@/provider"
 import {
   isAutoFreeModel,
+  isAutoFreeCandidateUnavailableError,
+  isAutoFreeFailoverAdvanceError,
   isCommitStreamEvent,
   consumeAutoFreeStartupProbe,
+  rememberAutoFreeBad,
   rememberAutoFreeFailure,
   rememberAutoFreeSuccess,
   reorderAutoFreeCandidates,
@@ -984,19 +987,22 @@ export const layer: Layer.Layer<
 
               lastError = Cause.squash(exit.cause)
               const hasNext = index + 1 < candidates.length
-              const retryable = SessionRetry.isRetryableTransientError(lastError)
+              const advance = isAutoFreeFailoverAdvanceError(lastError)
+              const unavailable = isAutoFreeCandidateUnavailableError(lastError)
               // FCC: never switch after a real tool commit. Reasoning-only first
               // frames still mark committed — if the stream then dies on rate
               // limit with no tools, advance so --se/--spauto do not die on
               // big-pickle alone (prompt_async failed → idle).
               const toolsStarted = Object.keys(ctx.toolcalls).length > 0
-              const canAdvance = retryable && hasNext && (!committed || !toolsStarted)
+              const canAdvance = advance && hasNext && (!committed || !toolsStarted)
               if (!canAdvance) {
-                if (retryable) rememberAutoFreeFailure(ref)
+                if (unavailable) rememberAutoFreeBad(ref)
+                else if (advance) rememberAutoFreeFailure(ref)
                 break
               }
 
-              rememberAutoFreeFailure(ref)
+              if (unavailable) rememberAutoFreeBad(ref)
+              else rememberAutoFreeFailure(ref)
               yield* clearStepParts
               const next = candidates[index + 1]!
               slog.info("auto-free failover", {
