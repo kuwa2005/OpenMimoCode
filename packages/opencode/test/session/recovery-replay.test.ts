@@ -60,6 +60,17 @@ describe("recovery replay — fx rate-limit storm", () => {
     expect(exhausted.action).toBe("stop_max")
   })
 
+  test("skip_done stays distinct so TUI can toast instead of going silent", () => {
+    const coord = createRateLimitRecoveryCoordinator()
+    const skipped = coord.onSessionError({
+      sessionID,
+      now: 1_700_000_000_000,
+      source: "tui",
+      assistantDoneOrWaiting: true,
+    })
+    expect(skipped.action).toBe("skip_done")
+  })
+
   test("idle clears coordinator state without canceling a pending timer", () => {
     const coord = createRateLimitRecoveryCoordinator()
     const now = 1_700_000_000_000

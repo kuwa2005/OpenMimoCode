@@ -414,6 +414,7 @@ export const dict = {
   "tui.dialog.export.hint.options_action": "查看选项",
   "tui.toast.copied_to_clipboard": "已复制到剪贴板",
   "tui.toast.try_best.paused_other": "检测到 Try-best 循环；会话 {{session}} 已暂停。",
+  "tui.toast.try_best.auto_continue": "同一操作卡住了 — 暂停后改用其他方案继续。",
   "tui.toast.try_best.handoff_failed": "启动所选 harness 的交接失败。",
   "tui.toast.try_best.continue_failed": "继续会话失败",
   "tui.toast.session.recover.started": "正在继续中断回合",

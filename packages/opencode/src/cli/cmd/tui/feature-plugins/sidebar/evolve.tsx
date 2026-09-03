@@ -1,25 +1,20 @@
-import type { TuiPlugin, TuiPluginApi, TuiPluginModule } from "@mimo-ai/plugin/tui"
+import type { TuiPlugin, TuiPluginModule } from "@mimo-ai/plugin/tui"
 import { createResource, createMemo, Show } from "solid-js"
 import { loadDashboard } from "@/evolve/store"
+import { useProject } from "@tui/context/project"
+import { useTheme } from "@tui/context/theme"
 
 const id = "internal:sidebar-evolve"
 
-function View(props: { api: TuiPluginApi }) {
-  const theme = () => props.api.theme.current
-  const worktree = () => props.api.state.path.worktree || props.api.state.path.directory
-  const [projectID] = createResource(
-    () => props.api.state.path.directory,
-    async () => {
-      const res = await props.api.client.project.current()
-      return res.data?.id as string | undefined
-    },
-  )
+function View() {
+  const project = useProject()
+  const { theme } = useTheme()
   const [dash] = createResource(
     () => {
-      const pid = projectID()
-      const wt = worktree()
-      if (!pid || !wt) return undefined
-      return { projectID: pid, worktree: wt }
+      const projectID = project.project()
+      const worktree = project.instance.path().worktree || project.instance.path().directory
+      if (!projectID || !worktree) return undefined
+      return { projectID, worktree }
     },
     (key) => (key ? loadDashboard(key) : undefined),
   )
@@ -33,15 +28,15 @@ function View(props: { api: TuiPluginApi }) {
     <Show when={show()}>
       <box>
         <box flexDirection="row" gap={1}>
-          <text fg={theme().text}>
+          <text fg={theme.text}>
             <b>Evolve</b>
           </text>
         </box>
         <box flexDirection="row" gap={1}>
-          <text flexShrink={0} fg={theme().primary}>
+          <text flexShrink={0} fg={theme.primary}>
             •
           </text>
-          <text fg={theme().textMuted}>
+          <text fg={theme.textMuted}>
             skills {dash()!.skillsCount} · backlog {dash()!.backlogOpen} · briefs {dash()!.briefsOpen.length}
           </text>
         </box>
@@ -54,8 +49,8 @@ const tui: TuiPlugin = async (api) => {
   api.slots.register({
     order: 360,
     slots: {
-      sidebar_content(_ctx, _props) {
-        return <View api={api} />
+      sidebar_content() {
+        return <View />
       },
     },
   })

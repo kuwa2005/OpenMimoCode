@@ -9,6 +9,7 @@ import {
 
 export type RateLimitRecoveryResult =
   | { action: "noop" }
+  | { action: "skip_done" }
   | { action: "stop_max" }
   | { action: "schedule"; plan: Extract<RateLimitRecoverPlan, { action: "schedule" }>; state: RateLimitRecoverEntry }
 
@@ -45,7 +46,7 @@ export function createRateLimitRecoveryCoordinator() {
 
       if (plan.action === "skip_done") {
         recordRecovery({ event: "rate_limit.skip_done", sessionID: input.sessionID, source: input.source, plan })
-        return { action: "noop" }
+        return { action: "skip_done" }
       }
 
       if (plan.action === "ignore_burst") {

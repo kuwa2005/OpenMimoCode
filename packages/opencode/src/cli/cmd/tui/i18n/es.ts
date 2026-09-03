@@ -438,6 +438,7 @@ export const dict = {
   "tui.dialog.export.hint.options_action": "para opciones",
   "tui.toast.copied_to_clipboard": "Copiado al portapapeles",
   "tui.toast.try_best.paused_other": "Se detectó un bucle try-best; la sesión {{session}} se ha pausado.",
+  "tui.toast.try_best.auto_continue": "La misma acción se estancó — se pausa y se continúa con otro enfoque.",
   "tui.toast.try_best.handoff_failed": "No se pudo iniciar la transferencia al entorno seleccionado.",
   "tui.toast.try_best.continue_failed": "No se pudo continuar la sesión",
   "tui.toast.session.recover.started": "Continuando el turno interrumpido",

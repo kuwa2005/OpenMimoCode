@@ -442,6 +442,7 @@ export const dict = {
   "tui.dialog.export.hint.options_action": "для параметров",
   "tui.toast.copied_to_clipboard": "Скопировано в буфер обмена",
   "tui.toast.try_best.paused_other": "Обнаружен цикл try-best; сеанс {{session}} приостановлен.",
+  "tui.toast.try_best.auto_continue": "То же действие застряло — пауза и продолжение с другим подходом.",
   "tui.toast.try_best.handoff_failed": "Не удалось запустить передачу выбранному исполнителю.",
   "tui.toast.try_best.continue_failed": "Не удалось продолжить сеанс",
   "tui.toast.session.recover.started": "Продолжаем прерванный ход",

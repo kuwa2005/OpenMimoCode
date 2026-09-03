@@ -427,6 +427,7 @@ export const dict = {
   "tui.dialog.export.hint.options_action": "pour les options",
   "tui.toast.copied_to_clipboard": "Copié dans le presse-papiers",
   "tui.toast.try_best.paused_other": "Boucle try-best détectée ; la session {{session}} a été suspendue.",
+  "tui.toast.try_best.auto_continue": "Même action bloquée — pause puis poursuite avec une autre approche.",
   "tui.toast.try_best.handoff_failed": "Impossible de démarrer le transfert vers le harnais sélectionné.",
   "tui.toast.try_best.continue_failed": "Impossible de poursuivre la session",
   "tui.toast.session.recover.started": "Reprise du tour interrompu",

@@ -7,6 +7,8 @@ import {
   intentFingerprint,
   isAwaitingUserOrDone,
   assistantVisibleText,
+  assistantSignalsDone,
+  hasTryBestPause,
   TEXT_LOOP_TRIGGER_COUNT,
   TEXT_LOOP_BUFFER_SIZE,
   TEXT_LOOP_MAX_RECOVERY,
@@ -36,6 +38,22 @@ describe("isAwaitingUserOrDone", () => {
         { type: "reasoning", text: "thought" },
       ]),
     ).toBe("real answer")
+  })
+
+  test("try-best pause is not treated as done even if earlier text sounds complete", () => {
+    const parts = [
+      { type: "text", text: "All tasks are complete.", synthetic: false },
+      {
+        type: "text",
+        text: "Try-best loop detected; this turn was paused. 3 consecutive edit actions made no observable progress.",
+        synthetic: true,
+        metadata: { origin: { kind: "try_best" } },
+      },
+    ]
+    expect(hasTryBestPause(parts)).toBe(true)
+    expect(assistantVisibleText(parts)).toBe("All tasks are complete.")
+    expect(isAwaitingUserOrDone(assistantVisibleText(parts))).toBe(true)
+    expect(assistantSignalsDone(parts)).toBe(false)
   })
 
   test("exports hard caps", () => {

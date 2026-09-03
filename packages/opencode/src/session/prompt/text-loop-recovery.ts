@@ -54,6 +54,34 @@ export function assistantVisibleText(
     .trim()
 }
 
+/** Synthetic try-best pause — the user request is unfinished even if earlier text sounded done. */
+export function hasTryBestPause(
+  parts: ReadonlyArray<{
+    type: string
+    text?: string
+    metadata?: { origin?: { kind?: string } }
+  }>,
+): boolean {
+  return parts.some((part) => {
+    if (part.type !== "text") return false
+    if (part.metadata?.origin?.kind === "try_best") return true
+    return part.text?.startsWith("Try-best loop detected") ?? false
+  })
+}
+
+export function assistantSignalsDone(
+  parts: ReadonlyArray<{
+    type: string
+    text?: string
+    synthetic?: boolean
+    ignored?: boolean
+    metadata?: { origin?: { kind?: string } }
+  }>,
+): boolean {
+  if (hasTryBestPause(parts)) return false
+  return isAwaitingUserOrDone(assistantVisibleText(parts))
+}
+
 export function normalizeForLoopDetection(text: string): string {
   return text
     .trim()

@@ -10,6 +10,7 @@ import { dict as zht } from "../../../src/cli/cmd/tui/i18n/zht"
 
 const i18nKeys = [
   "tui.toast.try_best.paused_other",
+  "tui.toast.try_best.auto_continue",
   "tui.toast.try_best.handoff_failed",
   "tui.toast.try_best.continue_failed",
   "tui.dialog.try_best.title",

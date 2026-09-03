@@ -63,7 +63,7 @@ import {
   RATE_LIMIT_BUSY_DEFER_MS,
   createRateLimitRecoveryCoordinator,
 } from "@/session/recovery"
-import { assistantVisibleText, isAwaitingUserOrDone } from "@/session/prompt/text-loop-recovery"
+import { assistantSignalsDone } from "@/session/prompt/text-loop-recovery"
 import { ToastProvider, useToast } from "./ui/toast"
 import { ExitProvider, useExit } from "./context/exit"
 import { Session as SessionApi } from "@/session"
@@ -166,8 +166,7 @@ function lastAssistantSignalsDone(sync: ReturnType<typeof useSync>, sessionID: s
   const messages = sync.data.message[sessionID]?.["main"] ?? []
   const last = [...messages].reverse().find((m) => m.role === "assistant")
   if (!last) return false
-  const parts = sync.data.part[last.id] ?? []
-  return isAwaitingUserOrDone(assistantVisibleText(parts))
+  return assistantSignalsDone(sync.data.part[last.id] ?? [])
 }
 
 function runRateLimitRecoverAfterDelay(
@@ -1373,6 +1372,15 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
 
       if (result.action === "noop") return
 
+      if (result.action === "skip_done") {
+        toast.show({
+          variant: "info",
+          message: "Rate limit — 作業完了のため自動再試行をスキップしました。",
+          duration: 5000,
+        })
+        return
+      }
+
       if (result.action === "stop_max") {
         clearRateLimitRecover(sessionID, "stop_max")
         toast.show({
@@ -1456,6 +1464,11 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       route.data.type === "session" &&
       route.data.sessionID === detection.sessionID
     ) {
+      toast.show({
+        variant: "warning",
+        message: t("tui.toast.try_best.auto_continue"),
+        duration: 5000,
+      })
       void sdk.client.session
         .promptAsync({
           sessionID: detection.sessionID,
