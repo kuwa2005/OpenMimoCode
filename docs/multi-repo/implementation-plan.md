@@ -1,5 +1,7 @@
 # oimo マルチリポジトリ実装計画
 
+利用ガイド: [README.md](./README.md) · 設定キー: [config-reference.ja.md](./config-reference.ja.md)
+
 根拠: `docs/oimo-multi-repository-implementation-instructions.md`  
 現状: `docs/multi-repo/current-architecture.md`  
 方針日: 2026-09-03

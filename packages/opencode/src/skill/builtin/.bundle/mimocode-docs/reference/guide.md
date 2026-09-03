@@ -184,8 +184,9 @@ https://github.com/org/infra read-only
 Clone each URL into a sibling folder named after the repo (or `id=`), then start oimo. Discovery order: `workspace.yaml` → `repos.txt` → `.gitmodules` (superproject + submodules).
 
 Copy-paste samples: repository `docs/multi-repo/samples/`.  
-**Full key reference (Japanese):** `docs/multi-repo/config-reference.ja.md`.  
-Guide: `docs/multi-repo/README.md`.
+**Japanese guide (primary):** `docs/multi-repo/README.md`  
+**Full key reference:** `docs/multi-repo/config-reference.ja.md`  
+English overview: `docs/multi-repo/README.en.md`.
 
 **FDE tip:** `oimo --fde` in a multi-repo workspace is ideal for field spikes that touch API + UI + schema — keep infra `read-only` until you explicitly expand scope.
 

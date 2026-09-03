@@ -1,5 +1,7 @@
 # oimo 現状アーキテクチャ（マルチリポジトリ準備）
 
+利用ガイド: [README.md](./README.md) · 設定キー: [config-reference.ja.md](./config-reference.ja.md)
+
 調査日: 2026-09-03  
 対象: `packages/opencode/src` を中心とした実行時  
 指示書: `docs/oimo-multi-repository-implementation-instructions.md`

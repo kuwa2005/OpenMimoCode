@@ -1,5 +1,8 @@
 # マルチリポジトリ設定リファレンス
 
+利用手順の入口: [README.md](./README.md)  
+English overview: [README.en.md](./README.en.md)
+
 発見順（あるディレクトリを起点）:
 
 1. `.oimo/workspace.yaml`（または `.yml` / `.json` / `.jsonc`。ルート直下の同名も可）
