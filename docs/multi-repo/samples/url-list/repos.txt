@@ -1,0 +1,29 @@
+# oimo multi-repo — simplest setup
+# Copy this file to:  <workspace-root>/.oimo/repos.txt
+# Then clone each repo into a sibling folder named after the repo.
+#
+# Example layout after cloning:
+#   my-system/
+#     .oimo/repos.txt   ← this file
+#     frontend/
+#     backend/
+#     shared-schema/
+#     customer-infra/
+#
+# Optional headers:
+name: customer-platform
+primary: backend
+
+# One GitHub URL per line (id = last path segment)
+https://github.com/example-org/frontend
+https://github.com/example-org/backend
+https://github.com/example-org/shared-schema
+
+# Mark infra read-only (impact analysis yes, edits no)
+https://github.com/example-org/customer-infra read-only
+
+# Custom id when the folder name should differ from the GitHub repo name:
+# https://github.com/example-org/api-server id=backend
+
+# Local path instead of URL (already cloned elsewhere):
+# ../legacy-billing

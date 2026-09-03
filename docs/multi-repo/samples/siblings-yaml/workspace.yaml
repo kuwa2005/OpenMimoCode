@@ -1,0 +1,24 @@
+version: 1
+name: customer-platform
+primary: backend
+repositories:
+  - id: frontend
+    path: ../frontend
+    role: Web UI
+    access: read-write
+  - id: backend
+    path: .
+    role: REST API and domain logic
+    access: read-write
+  - id: shared-schema
+    path: ../shared-schema
+    role: API schema and generated types
+    access: read-write
+  - id: infra
+    path: ../customer-infra
+    role: deployment and cloud resources
+    access: read-only
+defaults:
+  allow_unregistered_reads: false
+  allow_unregistered_writes: false
+  require_cross_repo_plan: true

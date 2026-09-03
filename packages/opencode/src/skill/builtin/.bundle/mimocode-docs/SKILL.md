@@ -27,6 +27,8 @@ Open Mimo Code (CLI binary `oimo`) is an agentic coding tool with a terminal UI,
 | **Distill** | Packages repeated manual workflows into skills/subagents/commands | `/distill` |
 | **Scheduled prompts** | Cron/loop: inject a prompt on a schedule or repeating loop (UTC, 5-field) | `cron` tool · `/loop` · `/loops` |
 | **Dynamic workflows** | JS scripts that orchestrate many subagents deterministically (fan-out, pipelines, nesting); built-ins include `compose`, `deep-research`, `fact-check`, and `research-experiment` | `.oimo/workflows/*.js` + `workflow` tool |
+| **FDE mode** | Forward Deployed Engineer autonomy: field problem → L1–3 → PoC → Solution Lock → implement/verify | `oimo --fde` · `/auto` → fde |
+| **Multi-repo workspace** | Register several Git repos (or a `.gitmodules` superproject) as one system; URL-list config | `.oimo/repos.txt` · see multi-repo docs |
 | **Skills / self-extension** | Add tools, hooks, skills under `.oimo/` | see the `evolve` skill |
 | **Skill discovery** | `/skill-name` slash invocation (2+ in one message auto-load with an orchestration plan); `skill_search` tool matches by exact name/alias + BM25 and auto-loads high-confidence hits; some builtins (`claude-code`, `codex`) only appear when their CLI is installed | `/` autocomplete · automatic |
 | **MCP** | Local & remote Model Context Protocol servers | `mcp` config + `oimo mcp` |

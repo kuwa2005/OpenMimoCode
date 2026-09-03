@@ -185,6 +185,18 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 
 **`-c` alone does not re-apply CLI flags.** `--se` / `--fde` / `--auto` are process env for that launch only (not stored on the session). To keep the persona, pass the flag again (`oimo -c --fde`) or switch with `/auto` (which persists mode to global config).
 
+### Multi-repository workspace files
+
+Not merged into `oimo.jsonc` yet — discovered beside the project:
+
+| File | Purpose |
+|------|---------|
+| `.oimo/repos.txt` | Simplest: one GitHub URL per line (`read-only`, `id=`, `name:`, `primary:`) |
+| `.oimo/workspace.yaml` | Full registry (roles, relative paths, defaults) |
+| `.gitmodules` | Auto superproject + submodule registration |
+
+See `docs/multi-repo/README.md` and samples under `docs/multi-repo/samples/`.
+
 **Anti-burn (loop stop):** If the assistant clearly hands control back (“次の指示をお待ち”, “all tasks complete”, etc.), the goal stops (`waiting_user` / `completed`) instead of re-entering. Soft rate-limit auto-retry skips when that handoff is detected (max 2 retries per storm). Hearing-phase think-only auto-continues are capped at 2; automatic goal re-entries without a real user message stop after 5.
 
 High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) still require explicit user approval in `--se` / `--fde` mode; `--spauto` (after the launch gate) and `--auto` also set `MIMOCODE_AUTO_APPROVE_DELETE` so those do not block.

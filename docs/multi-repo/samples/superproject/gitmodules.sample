@@ -1,0 +1,27 @@
+# Place this file at the root of a Git superproject (alongside .gitmodules).
+# oimo auto-detects .gitmodules when no workspace.yaml / repos.txt is present.
+#
+# Copy-paste starter — replace URLs/paths with yours, then:
+#   git submodule add <url> <path>
+# or write .gitmodules and run (with approval):
+#   git submodule update --init --recursive
+
+[submodule "frontend"]
+	path = frontend
+	url = https://github.com/example-org/frontend.git
+	branch = main
+
+[submodule "backend"]
+	path = backend
+	url = https://github.com/example-org/backend.git
+	branch = main
+
+[submodule "shared-schema"]
+	path = packages/shared-schema
+	url = https://github.com/example-org/shared-schema.git
+	branch = main
+
+[submodule "infra"]
+	path = infra
+	url = https://github.com/example-org/customer-infra.git
+	branch = main

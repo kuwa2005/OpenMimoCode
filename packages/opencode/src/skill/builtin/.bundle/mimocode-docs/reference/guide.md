@@ -167,6 +167,26 @@ The `cron` tool has six verbs:
 
 `/loop` (cadence) and `/goal` (stop condition) are complementary and independent: `/goal` decides *whether* an autonomous agent may stop; `/loop` decides *how often* it runs.
 
+## Multi-repository (system workspace)
+
+Treat several Git checkouts as one product system.
+
+**Simplest config** — put GitHub URLs in `.oimo/repos.txt`:
+
+```text
+name: customer-platform
+primary: backend
+https://github.com/org/frontend
+https://github.com/org/backend
+https://github.com/org/infra read-only
+```
+
+Clone each URL into a sibling folder named after the repo (or `id=`), then start oimo. Discovery order: `workspace.yaml` → `repos.txt` → `.gitmodules` (superproject + submodules).
+
+Copy-paste samples: repository `docs/multi-repo/samples/`. Full guide: `docs/multi-repo/README.md`.
+
+**FDE tip:** `oimo --fde` in a multi-repo workspace is ideal for field spikes that touch API + UI + schema — keep infra `read-only` until you explicitly expand scope.
+
 ## Extending Open Mimo Code
 
 To add tools, hooks, or skills, use the `evolve` skill — it covers writing `.oimo/tools/*.ts`, `.oimo/hooks/*.ts`, and `.oimo/skills/*/SKILL.md`, all hot-reloaded on the next turn. Run `/evolve` or `/self-improve` for a full Self Improvement Session that crystallizes a project knowledge base, maintains `~/.oimo/evolve/<projectID>/backlog/BACKLOG.md`, records friction / Human Attention Cost, writes session reviews, and (by default) emits AI-to-AI product briefs under `~/.oimo/evolve/<projectID>/briefs/` for an external coding agent to apply to oimo itself. Auto Self Improvement Sessions also run by default on an interval (and on condition triggers); disable with `evolve.auto: false`. Tracks are opt-out via `evolve.*.enabled: false` (planned to become opt-in later). Do not auto-apply product changes — Human-in-the-loop only.

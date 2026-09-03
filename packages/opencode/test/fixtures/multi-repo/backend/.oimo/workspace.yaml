@@ -1,0 +1,25 @@
+version: 1
+name: fixture-platform
+primary: backend
+repositories:
+  - id: backend
+    path: .
+    role: REST API
+  - id: frontend
+    path: ../frontend
+    role: Web UI
+  - id: shared-schema
+    path: ../shared-schema
+    role: API schema
+  - id: infra
+    path: ../infra
+    role: deployment
+    access: read-only
+  - id: notes
+    path: ../notes
+    kind: directory
+    access: read-only
+defaults:
+  allow_unregistered_reads: false
+  allow_unregistered_writes: false
+  require_cross_repo_plan: true
