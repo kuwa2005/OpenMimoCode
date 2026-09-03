@@ -42,9 +42,10 @@ await Bun.file(`./dist/${pkg.name}/package.json`).write(
     {
       name: pkg.name,
       version: version,
-      description: "Open Open Mimo Code: Where Models and Agents Co-Evolve",
+      description:
+        "Open Mimo Code (oimo): self-evolving terminal AI coding agent with FDE/SE autonomy and multi-repo workspaces — Where Models and Agents Co-Evolve",
       license: "MIT",
-      author: "Open Open Mimo Code Team",
+      author: "kuwa2005",
       homepage: "https://github.com/kuwa2005/OpenMimoCode",
       repository: {
         type: "git",
