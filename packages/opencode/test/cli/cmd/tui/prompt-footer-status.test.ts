@@ -1,6 +1,7 @@
 import { describe, test, expect } from "bun:test"
 import {
   clampStatusMessage,
+  localizeSessionStatusMessage,
   STATUS_MESSAGE_MAX,
   shouldShowSessionActivity,
   shouldSpinInProgressTask,
@@ -8,6 +9,27 @@ import {
   isSessionMainActor,
   isConcurrentActiveActor,
 } from "../../../../src/cli/cmd/tui/component/prompt/footer"
+
+describe("localizeSessionStatusMessage", () => {
+  const t = (key: string) =>
+    ({
+      "tui.status.writing_checkpoint": "チェックポイントを書き込み中…",
+      "tui.status.rebuilding_context": "コンテキストを再構築中…",
+      "tui.status.preparing_context": "会話コンテキストを準備中…",
+    })[key] ?? key
+
+  test("maps known server busy strings onto i18n keys", () => {
+    expect(localizeSessionStatusMessage("Writing checkpoint…", t)).toBe("チェックポイントを書き込み中…")
+    expect(localizeSessionStatusMessage("Writing checkpoint...", t)).toBe("チェックポイントを書き込み中…")
+    expect(localizeSessionStatusMessage("Rebuilding context…", t)).toBe("コンテキストを再構築中…")
+    expect(localizeSessionStatusMessage("Preparing conversation context…", t)).toBe("会話コンテキストを準備中…")
+  })
+
+  test("clamps unknown status text instead of translating it", () => {
+    expect(localizeSessionStatusMessage("some provider note", t)).toBe("some provider note")
+    expect(localizeSessionStatusMessage(undefined, t)).toBeUndefined()
+  })
+})
 
 describe("clampStatusMessage", () => {
   test("an over-long status cannot outgrow the footer budget", () => {

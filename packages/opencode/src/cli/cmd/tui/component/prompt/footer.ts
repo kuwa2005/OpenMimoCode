@@ -21,6 +21,21 @@ export function clampStatusMessage(message: string | undefined) {
   return Locale.truncate(flat, STATUS_MESSAGE_MAX)
 }
 
+const SESSION_STATUS_MESSAGE_KEY: Record<string, string> = {
+  "Writing checkpoint…": "tui.status.writing_checkpoint",
+  "Rebuilding context…": "tui.status.rebuilding_context",
+  "Preparing conversation context…": "tui.status.preparing_context",
+}
+
+/** Map server-supplied English busy strings to i18n keys. Unknown text is clamped as-is. */
+export function localizeSessionStatusMessage(message: string | undefined, t: (key: string) => string) {
+  if (!message) return undefined
+  const flat = message.replace(/\s+/g, " ").trim().replace(/\.\.\.$/, "…")
+  if (!flat) return undefined
+  const key = SESSION_STATUS_MESSAGE_KEY[flat]
+  return clampStatusMessage(key ? t(key) : flat)
+}
+
 /**
  * Bottom-left activity spinner. Session busy/retry always shows it.
  *

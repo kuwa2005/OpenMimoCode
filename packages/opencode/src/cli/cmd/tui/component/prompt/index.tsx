@@ -19,7 +19,12 @@ import { useKeybind } from "@tui/context/keybind"
 import { usePromptHistory, type PromptInfo } from "./history"
 import { assign, expandPlaceholders } from "./part"
 import { usePromptStash } from "./stash"
-import { clampStatusMessage, shouldShowSessionActivity, isInfraChildSession, isConcurrentActiveActor } from "./footer"
+import {
+  localizeSessionStatusMessage,
+  shouldShowSessionActivity,
+  isInfraChildSession,
+  isConcurrentActiveActor,
+} from "./footer"
 import { DialogStash } from "../dialog-stash"
 import { type AutocompleteRef, Autocomplete } from "./autocomplete"
 import { useCommandDialog } from "../dialog-command"
@@ -1946,8 +1951,8 @@ export function Prompt(props: PromptProps) {
                 {(() => {
                   const busyMessage = createMemo(() => {
                     const s = status()
-                    if (s.type === "busy") return clampStatusMessage(s.message)
-                    if (s.type === "idle" && showActivity()) return "Working…"
+                    if (s.type === "busy") return localizeSessionStatusMessage(s.message, t)
+                    if (s.type === "idle" && showActivity()) return t("tui.status.working")
                     return undefined
                   })
                   return (
@@ -2006,12 +2011,14 @@ export function Prompt(props: PromptProps) {
                       const r = retry()
                       return r ? SessionRetry.isRateLimitMessage(r.message) : false
                     })
-                    const label = createMemo(() => (isRateLimit() ? "Rate limited" : message()))
+                    const label = createMemo(() => (isRateLimit() ? t("tui.prompt.retry.rate_limited") : message()))
                     const statusText = createMemo(() => {
                       const r = retry()
                       if (!r) return ""
                       const duration = formatDuration(seconds())
-                      return `attempt #${r.attempt}${duration ? ` · retrying in ${duration}` : " · retrying"}`
+                      return duration
+                        ? t("tui.prompt.retry.attempt", { attempt: r.attempt, duration })
+                        : t("tui.prompt.retry.retrying", { attempt: r.attempt })
                     })
 
                     return (
@@ -2021,7 +2028,7 @@ export function Prompt(props: PromptProps) {
                             {label()}
                           </text>
                           <Show when={isTruncated()}>
-                            <text fg={theme.textMuted}>(click to expand)</text>
+                            <text fg={theme.textMuted}>{t("tui.prompt.retry.expand")}</text>
                           </Show>
                           <text fg={theme.textMuted}>{statusText()}</text>
                         </box>
@@ -2034,7 +2041,7 @@ export function Prompt(props: PromptProps) {
                 <text fg={store.interrupt > 0 ? theme.primary : theme.text}>
                   esc{" "}
                   <span style={{ fg: store.interrupt > 0 ? theme.primary : theme.textMuted }}>
-                    {store.interrupt > 0 ? "again to interrupt" : "interrupt"}
+                    {store.interrupt > 0 ? t("tui.prompt.interrupt_again") : t("tui.prompt.interrupt")}
                   </span>
                 </text>
               </Show>
