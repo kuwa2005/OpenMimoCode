@@ -224,8 +224,14 @@ export const TuiThreadCommand = cmd({
       .option("fde", {
         type: "boolean",
         describe:
-          "FDE 自律モード: 現場課題を定義し Level1–3 を提案、PoC 後に Solution Lock、実装・検証までノンストップ (compose)",
+          "FDE 自律モード: 現場課題を定義し Level1–3 を提案、PoC 後に Solution Lock、実装・検証までノンストップ (compose)。--se と併用可 (Friction Learning を双方視点で実行)",
         default: false,
+      })
+      .option("character", {
+        type: "string",
+        describe:
+          "Friction Learning の表示口調のみ変更 (推論・学習は不変)。default | off。未指定は default",
+        default: "default",
       })
       .option("spauto", {
         alias: ["autosp"],
@@ -283,12 +289,18 @@ export const TuiThreadCommand = cmd({
 
       const spauto = !!args.spauto
       const fde = !!args.fde
-      // SE and FDE are opposing personas — never combine on one launch.
-      // Mid-session handoff is via /auto or a later `-c --se` / `-c --fde` (one flag only).
-      if (args.autonomy && fde) {
-        UI.error("--se and --fde cannot be used together (conflicting autonomy personas)")
-        process.exitCode = 1
-        return
+      const se = !!args.autonomy
+      // --se and --fde may be combined: autonomy persona prefers FDE when --fde is set;
+      // Friction Learning runs with both SE and FDE analysis lenses.
+      const characterArg = typeof args.character === "string" ? args.character : "default"
+      {
+        const { validateCharacterArg } = await import("@/character/mode")
+        const characterError = validateCharacterArg(characterArg)
+        if (characterError) {
+          UI.error(characterError)
+          process.exitCode = 1
+          return
+        }
       }
       // Super Auto: dramatic risk acknowledgment EVERY launch, before any auto-approve.
       // After accept, TUI will not stop for trust / permissions / questions.
@@ -324,7 +336,7 @@ export const TuiThreadCommand = cmd({
         process.env.MIMOCODE_AUTO_APPROVE_DELETE = "1"
       }
 
-      if (args.autonomy || fde || spauto) {
+      if (se || fde || spauto) {
         process.env.MIMOCODE_AUTONOMY = "1"
         // Safe permission auto-approve base (forced-ask still human-gated unless spauto/auto).
         process.env.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS = "1"
@@ -332,7 +344,14 @@ export const TuiThreadCommand = cmd({
 
       if (fde) {
         process.env.MIMOCODE_FDE = "1"
+        process.env.MIMOCODE_FRICTION_FDE = "1"
       }
+
+      if (se) {
+        process.env.MIMOCODE_FRICTION_SE = "1"
+      }
+
+      process.env.MIMOCODE_CHARACTER = characterArg
 
       if (spauto) {
         process.env.MIMOCODE_SPAUTO = "1"

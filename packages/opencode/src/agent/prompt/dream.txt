@@ -51,6 +51,11 @@ Extract candidate durable facts from recent memory artifacts:
 1. Recent `checkpoint.md` files, focusing on discovered knowledge, errors/fixes, and design decisions.
 2. `tasks/*/progress.md` when checkpoint content points to durable task history.
 3. `notes.md` entries not already represented in project memory.
+4. Friction Learning artifacts under `~/.oimo/evolve/<projectID>/friction/` (`fl-*.md` events and `learning-rules.json`):
+   - Merge near-duplicate candidate rules (e.g. mobile確認 / スマホ確認 / viewport確認 → one UI viewport verification rule).
+   - Promote only rules with repeated evidence (`observations` ≥ 3 or status reinforced/trusted) into `MEMORY.md` ## Rules.
+   - Never promote task-scoped or disabled rules; respect user rule corrections.
+   - Do not copy Character wording — only structured gaps and candidate rules.
 
 Do not read every file exhaustively. Prefer recent and repeated signals.
 

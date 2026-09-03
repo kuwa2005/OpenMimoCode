@@ -181,9 +181,15 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 
 **Super Auto (`--spauto`):** same autonomy stack with `hearing_first=false` — never-ask and skip-permissions from turn one. **Every launch** shows a red risk acknowledgment (refuse is default; interactive TTY required).
 
-**Mutual exclusion:** `--se` and `--fde` cannot be combined on the same launch (conflicting personas). Mid-session handoff is allowed via `/auto` (none / normal / fde / special), or by continuing with **one** flag: `oimo -c --fde` after SE work, or `oimo -c --se` after FDE.
+**Combined (`--se --fde`):** Allowed. Autonomy persona follows FDE (Solution Lock). **Friction Learning** analyzes with both SE (how to implement/verify) and FDE (business intent / field expectation) lenses.
 
-**`-c` alone does not re-apply CLI flags.** `--se` / `--fde` / `--auto` are process env for that launch only (not stored on the session). To keep the persona, pass the flag again (`oimo -c --fde`) or switch with `/auto` (which persists mode to global config).
+**Friction Learning** (no dedicated `--friction-*` flag): when `--se` and/or `--fde` is on, oimo detects corrective feedback (後出し条件、やり直し、否定、差し戻し、検証要求、バグ報告), classifies gaps (Instruction / Interpretation / Implementation / Verification / …), writes rule candidates under `~/.oimo/evolve/<projectID>/friction/` and `.oimo/friction/rules.json`, and injects applicable rules into later similar tasks. Temporary phrases (`今回だけ`) stay Task-scoped. Users can disable bad rules (`今後その確認はいらない`).
+
+**Character (presentation only):** `--character=default|off` (default `default`). Changes wording/tone of Friction feedback only — never responsibility, classification, or what gets learned. `off` keeps learning on with neutral copy. Future modes (e.g. osaka) add a renderer only.
+
+**Mid-session handoff:** `/auto` (none / normal / fde / special), or continue with flags: `oimo -c --fde`, `oimo -c --se`, or `oimo -c --se --fde`.
+
+**`-c` alone does not re-apply CLI flags.** `--se` / `--fde` / `--character` / `--auto` are process env for that launch only (not stored on the session). To keep the persona, pass the flag again or switch with `/auto` (persists mode to global config).
 
 ### Multi-repository workspace files
 

@@ -50,6 +50,7 @@ import PROMPT_COMPOSE from "../session/prompt/compose.txt"
 import PROMPT_AUTONOMY_SE from "../session/prompt/autonomy-se.txt"
 import PROMPT_AUTONOMY_SP from "../session/prompt/autonomy-sp.txt"
 import PROMPT_AUTONOMY_FDE from "../session/prompt/autonomy-fde.txt"
+import * as Friction from "@/friction"
 import {
   RECOVERY_PROMPT_MILD,
   RECOVERY_PROMPT_STRONG,
@@ -1044,6 +1045,75 @@ export const layer = Layer.effect(
             text: autonomyPrompt + phaseHint,
             synthetic: true,
           })
+        }
+      }
+
+      // Friction Learning (--se / --fde): detect gaps, update rules, inject presentation + learned requirements.
+      if (Friction.frictionLearningEnabled()) {
+        const ctx = yield* InstanceState.context
+        const modes = Friction.frictionModesFromFlag()
+        const characterMode = Friction.characterModeFromFlag()
+        const userText = userMessage.parts
+          .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text" && !p.synthetic)
+          .map((p) => p.text)
+          .join("\n")
+          .trim()
+        if (userText) {
+          const priorUserTexts = input.messages
+            .filter((m) => m.info.role === "user" && m.info.id !== userMessage.info.id)
+            .flatMap((m) =>
+              m.parts
+                .filter((p): p is Extract<typeof p, { type: "text" }> => p.type === "text" && !p.synthetic)
+                .map((p) => p.text.trim()),
+            )
+            .filter(Boolean)
+          const existingRules = yield* Effect.promise(() =>
+            Friction.loadRules({ projectID: ctx.project.id, worktree: ctx.worktree }),
+          )
+          const out = Friction.processFeedback({
+            projectID: ctx.project.id,
+            sessionID: input.session.id,
+            userText,
+            priorUserTexts,
+            existingRules,
+            modes,
+            characterMode,
+          })
+          if (out.friction && isMemoryWriteEnabled(cfg)) {
+            yield* Effect.promise(() =>
+              Friction.appendFrictionEvent({
+                projectID: ctx.project.id,
+                sessionID: input.session.id,
+                friction: out.friction!,
+              }),
+            )
+            yield* Effect.promise(() =>
+              Friction.saveRules({
+                projectID: ctx.project.id,
+                worktree: ctx.worktree,
+                rules: out.rules,
+              }),
+            )
+          }
+          const inject: string[] = []
+          const rulesBlock = Friction.formatRulesForPrompt(out.rules)
+          if (rulesBlock) inject.push(rulesBlock)
+          if (out.message) inject.push(out.message)
+          if (modes.includes("se") && modes.includes("fde")) {
+            inject.push(
+              `<system-reminder>\nFriction Learning modes: SE + FDE. Analyze both how to implement/verify (SE) and what business outcome was intended (FDE).\n</system-reminder>`,
+            )
+          }
+          if (inject.length) {
+            userMessage.parts.unshift({
+              id: PartID.ascending(),
+              messageID: userMessage.info.id,
+              sessionID: userMessage.info.sessionID,
+              type: "text",
+              text: inject.join("\n\n"),
+              synthetic: true,
+            })
+          }
         }
       }
 

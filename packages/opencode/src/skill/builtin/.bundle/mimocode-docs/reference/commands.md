@@ -38,8 +38,9 @@ Notable TUI flags:
 | `--session` / `-s` | Open a specific session |
 | `--model` / `-m` | Model override |
 | `--agent` | Agent override |
-| `--se` / `--autonomy` | SE autonomy (Requirements Lock, then non-stop) |
-| `--fde` | FDE autonomy (Solution Lock; PoC allowed before lock). Mutually exclusive with `--se` |
+| `--se` / `--autonomy` | SE autonomy (Requirements Lock, then non-stop). Enables Friction Learning (SE lens) |
+| `--fde` | FDE autonomy (Solution Lock; PoC allowed before lock). Enables Friction Learning (FDE lens). Combinable with `--se` |
+| `--character` | Friction Learning presentation: `default` (default) or `off`. Does not change learning/reasoning |
 | `--spauto` / `--autosp` | Super Auto (self-hearing, never-ask from launch; risk gate every time) |
 | `--auto` / `--yolo` | Auto-approve permissions not explicitly denied; skip workspace trust; also auto-approves deletes |
 | `--never-ask` | Start with never-ask on |

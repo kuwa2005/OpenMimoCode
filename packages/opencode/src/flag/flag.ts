@@ -169,6 +169,13 @@ export const Flag = {
   MIMOCODE_AUTONOMY: truthy("MIMOCODE_AUTONOMY"),
   // Set by `oimo --fde`. Forward Deployed Engineer persona (hearing_first + Solution Lock).
   MIMOCODE_FDE: truthy("MIMOCODE_FDE"),
+  // Friction Learning analysis lenses (integrated into --se / --fde; no dedicated CLI flag).
+  MIMOCODE_FRICTION_SE: truthy("MIMOCODE_FRICTION_SE"),
+  MIMOCODE_FRICTION_FDE: truthy("MIMOCODE_FRICTION_FDE"),
+  // Presentation layer for Friction Learning feedback: default | off (future: osaka, …).
+  get MIMOCODE_CHARACTER() {
+    return process.env["MIMOCODE_CHARACTER"]?.trim() || "default"
+  },
   // Set by `oimo --spauto` (primary) / `oimo --autosp` (alias). Super Auto:
   // autonomy with hearing_first=false — zero user prompts from the first turn.
   get MIMOCODE_SPAUTO() {

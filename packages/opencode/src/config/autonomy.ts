@@ -113,6 +113,8 @@ export function applyProcessEnv(next: Mode) {
       "MIMOCODE_AUTOSP",
       "MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS",
       "MIMOCODE_AUTO_APPROVE_DELETE",
+      "MIMOCODE_FRICTION_SE",
+      "MIMOCODE_FRICTION_FDE",
     )
     return
   }
@@ -121,15 +123,17 @@ export function applyProcessEnv(next: Mode) {
   if (next === "special") {
     process.env.MIMOCODE_SPAUTO = "1"
     process.env.MIMOCODE_AUTO_APPROVE_DELETE = "1"
-    clear("MIMOCODE_FDE")
+    clear("MIMOCODE_FDE", "MIMOCODE_FRICTION_SE", "MIMOCODE_FRICTION_FDE")
     return
   }
   if (next === "fde") {
     process.env.MIMOCODE_FDE = "1"
-    clear("MIMOCODE_SPAUTO", "MIMOCODE_AUTOSP", "MIMOCODE_AUTO_APPROVE_DELETE")
+    process.env.MIMOCODE_FRICTION_FDE = "1"
+    clear("MIMOCODE_SPAUTO", "MIMOCODE_AUTOSP", "MIMOCODE_AUTO_APPROVE_DELETE", "MIMOCODE_FRICTION_SE")
     return
   }
-  clear("MIMOCODE_FDE", "MIMOCODE_SPAUTO", "MIMOCODE_AUTOSP", "MIMOCODE_AUTO_APPROVE_DELETE")
+  process.env.MIMOCODE_FRICTION_SE = "1"
+  clear("MIMOCODE_FDE", "MIMOCODE_SPAUTO", "MIMOCODE_AUTOSP", "MIMOCODE_AUTO_APPROVE_DELETE", "MIMOCODE_FRICTION_FDE")
 }
 
 /** Default true: clarify with the user before never-ask execution. */
