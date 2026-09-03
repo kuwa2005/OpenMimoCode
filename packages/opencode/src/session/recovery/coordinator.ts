@@ -36,12 +36,14 @@ export function createRateLimitRecoveryCoordinator() {
       now: number
       source: "tui"
       assistantDoneOrWaiting?: boolean
+      goalStopped?: boolean
     }): RateLimitRecoveryResult {
       const plan = planRateLimitRecover({
         state: states.get(input.sessionID),
         now: input.now,
         hasPendingTimer: pendingTimers.has(input.sessionID),
         assistantDoneOrWaiting: input.assistantDoneOrWaiting,
+        goalStopped: input.goalStopped,
       })
 
       if (plan.action === "skip_done") {
@@ -96,11 +98,7 @@ export function createRateLimitRecoveryCoordinator() {
       recordRecovery({ event: "rate_limit.cleared", sessionID, source: "tui", reason })
     },
 
-    onIdle(sessionID: string) {
-      if (pendingTimers.has(sessionID)) return
-      if (!states.has(sessionID)) return
-      states.delete(sessionID)
-      recordRecovery({ event: "rate_limit.cleared", sessionID, source: "tui", reason: "session_idle" })
-    },
+    /** Intentionally no-op: clearing on idle reset attempt counters and caused infinite retry loops. */
+    onIdle(_sessionID: string) {},
   }
 }

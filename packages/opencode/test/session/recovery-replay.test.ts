@@ -71,16 +71,41 @@ describe("recovery replay — fx rate-limit storm", () => {
     expect(skipped.action).toBe("skip_done")
   })
 
-  test("idle clears coordinator state without canceling a pending timer", () => {
+  test("skip_done when session goal already stopped", () => {
     const coord = createRateLimitRecoveryCoordinator()
-    const now = 1_700_000_000_000
-    const scheduled = coord.onSessionError({ sessionID, now, source: "tui" })
-    expect(scheduled.action).toBe("schedule")
+    const skipped = coord.onSessionError({
+      sessionID,
+      now: 1_700_000_000_000,
+      source: "tui",
+      goalStopped: true,
+    })
+    expect(skipped.action).toBe("skip_done")
+  })
+
+  test("idle does not reset attempt budget (regression: cleared→schedule loop)", () => {
+    const coord = createRateLimitRecoveryCoordinator()
+    let now = 1_700_000_000_000
+
+    const first = coord.onSessionError({ sessionID, now, source: "tui" })
+    expect(first.action).toBe("schedule")
     coord.setPendingTimer(sessionID, true)
     coord.onIdle(sessionID)
     expect(coord.getState(sessionID)).toBeDefined()
     coord.setPendingTimer(sessionID, false)
     coord.onIdle(sessionID)
-    expect(coord.getState(sessionID)).toBeUndefined()
+    expect(coord.getState(sessionID)).toBeDefined()
+
+    coord.markRetrySent(sessionID)
+    now += SESSION_ERROR_BURST_MS + 1
+    const second = coord.onSessionError({ sessionID, now, source: "tui" })
+    expect(second.action).toBe("schedule")
+    if (second.action !== "schedule") return
+    coord.setPendingTimer(sessionID, true)
+
+    coord.setPendingTimer(sessionID, false)
+    coord.markRetrySent(sessionID)
+    now += SESSION_ERROR_BURST_MS + 1
+    const exhausted = coord.onSessionError({ sessionID, now, source: "tui" })
+    expect(exhausted.action).toBe("stop_max")
   })
 })

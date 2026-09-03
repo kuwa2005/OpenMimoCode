@@ -28,8 +28,10 @@ export function planRateLimitRecover(input: {
   hasPendingTimer: boolean
   /** Last assistant already handed control back — do not auto-kick. */
   assistantDoneOrWaiting?: boolean
+  /** Session goal already stopped (waiting_user / completed) — do not auto-kick. */
+  goalStopped?: boolean
 }): RateLimitRecoverPlan {
-  if (input.assistantDoneOrWaiting) return { action: "skip_done" }
+  if (input.assistantDoneOrWaiting || input.goalStopped) return { action: "skip_done" }
 
   if (input.state && input.now - input.state.lastBurstAt < SESSION_ERROR_BURST_MS) {
     return { action: "ignore_burst" }

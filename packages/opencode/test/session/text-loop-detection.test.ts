@@ -24,6 +24,7 @@ describe("isAwaitingUserOrDone", () => {
     expect(isAwaitingUserOrDone("All tasks are complete.")).toBe(true)
     expect(isAwaitingUserOrDone("実装完了しています。ユーザーの確認をお待ちします。")).toBe(true)
     expect(isAwaitingUserOrDone("実装完了しています。ユーザーの確認待ちです。")).toBe(true)
+    expect(isAwaitingUserOrDone("完了しました。")).toBe(true)
     expect(isAwaitingUserOrDone("ユーザーのWindows Chromeでの動作確認をお待ちします。")).toBe(true)
     expect(isAwaitingUserOrDone("追加の変更やコミットが必要でしたらお知らせください。")).toBe(true)
     expect(isAwaitingUserOrDone("The implementation is complete. Waiting for your confirmation.")).toBe(true)

@@ -169,6 +169,10 @@ function lastAssistantSignalsDone(sync: ReturnType<typeof useSync>, sessionID: s
   return assistantSignalsDone(sync.data.part[last.id] ?? [])
 }
 
+function sessionGoalStopped(sync: ReturnType<typeof useSync>, sessionID: string) {
+  return sync.data.session_goal[sessionID]?.stopReason != null
+}
+
 function runRateLimitRecoverAfterDelay(
   sessionID: string,
   delayMs: number,
@@ -194,7 +198,10 @@ function runRateLimitRecoverAfterDelay(
     }
 
     // Model already handed control back — do not burn another API turn.
-    if (lastAssistantSignalsDone(ctx.sync, sessionID)) {
+    if (
+      lastAssistantSignalsDone(ctx.sync, sessionID) ||
+      sessionGoalStopped(ctx.sync, sessionID)
+    ) {
       clearRateLimitRecover(sessionID, "assistant_done")
       ctx.toast.show({
         variant: "info",
@@ -1328,14 +1335,6 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     }
   })
 
-  event.on("session.status", (evt) => {
-    if (evt.properties.status.type !== "idle") return
-    // A "waiting for the user" idle is not a recovered storm. Clearing here
-    // re-armed unlimited rate-limit auto-continues on the next FDE kick.
-    if (lastAssistantSignalsDone(sync, evt.properties.sessionID)) return
-    rateLimitRecovery.onIdle(evt.properties.sessionID)
-  })
-
   createEffect(() => {
     const sessionID = route.data.type === "session" ? route.data.sessionID : undefined
     onCleanup(() => {
@@ -1371,6 +1370,7 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
         now: Date.now(),
         source: "tui",
         assistantDoneOrWaiting: lastAssistantSignalsDone(sync, sessionID),
+        goalStopped: sessionGoalStopped(sync, sessionID),
       })
 
       if (result.action === "noop") return
