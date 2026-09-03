@@ -213,7 +213,7 @@ function runRateLimitRecoverAfterDelay(
           {
             type: "text",
             synthetic: true,
-            text: "Previous turn hit a soft provider rate limit. Continue from where we left off with the next concrete step. If the user's task is already complete, confirm briefly and wait.",
+            text: "Previous turn hit a soft provider rate limit. If the task is already done or you are waiting for the user, stop — do not send another status update. Otherwise take the next concrete tool action.",
           },
         ],
       })
@@ -1330,6 +1330,9 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
 
   event.on("session.status", (evt) => {
     if (evt.properties.status.type !== "idle") return
+    // A "waiting for the user" idle is not a recovered storm. Clearing here
+    // re-armed unlimited rate-limit auto-continues on the next FDE kick.
+    if (lastAssistantSignalsDone(sync, evt.properties.sessionID)) return
     rateLimitRecovery.onIdle(evt.properties.sessionID)
   })
 

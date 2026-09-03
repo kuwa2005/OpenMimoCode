@@ -22,19 +22,29 @@ export function isAwaitingUserOrDone(text: string): boolean {
   if (!t) return false
   const lower = t.toLowerCase()
   if (
-    /次の指示を?(お)?待ち|指示を?お待ち|ご指示を?お待ち|待機(して|します|中)|入力を?お待ち|human\s*input|awaiting\s*(your\s*)?(input|instructions?|orders?)|waiting\s+for\s+(your\s+)?(input|instructions?|orders?|next\s+step)/i.test(
+    /(確認|指示|入力|動作確認)を?(お)?待ち|確認待ち|待機(して|します|中)|human\s*input/i.test(t)
+  ) {
+    return true
+  }
+  if (/お知らせください|必要でしたらお知らせ/.test(t)) {
+    return true
+  }
+  if (
+    /実装完了|完了しています|(全作業|すべて|全て|両タスク).{0,20}完了|作業完了を確認|全作業完了|両タスク完了済み/.test(
       t,
     )
   ) {
     return true
   }
   if (
-    /(全作業|すべて|全て|両タスク).{0,20}完了|作業完了を確認|全作業完了|両タスク完了済み|次の指示を?(お)?待ち/.test(t)
+    /awaiting\s*(your\s*)?(input|instructions?|orders?|confirmation)|waiting\s+for\s+(your\s+)?(input|instructions?|orders?|next\s+step|confirmation|verification|review)/i.test(
+      t,
+    )
   ) {
     return true
   }
   if (
-    /\b(all\s+tasks?\s+(are\s+)?(done|complete|finished)|work\s+is\s+(done|complete)|task\s+is\s+complete|nothing\s+further|no\s+further\s+action)\b/i.test(
+    /\b(all\s+tasks?\s+(are\s+)?(done|complete|finished)|work\s+is\s+(done|complete)|task\s+is\s+complete|implementation is complete|nothing\s+further|no\s+further\s+action)\b/i.test(
       lower,
     )
   ) {

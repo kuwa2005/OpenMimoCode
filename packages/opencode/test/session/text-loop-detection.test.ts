@@ -22,11 +22,17 @@ describe("isAwaitingUserOrDone", () => {
     expect(isAwaitingUserOrDone("検証結果 — 全作業完了を確認。")).toBe(true)
     expect(isAwaitingUserOrDone("Waiting for your instructions.")).toBe(true)
     expect(isAwaitingUserOrDone("All tasks are complete.")).toBe(true)
+    expect(isAwaitingUserOrDone("実装完了しています。ユーザーの確認をお待ちします。")).toBe(true)
+    expect(isAwaitingUserOrDone("実装完了しています。ユーザーの確認待ちです。")).toBe(true)
+    expect(isAwaitingUserOrDone("ユーザーのWindows Chromeでの動作確認をお待ちします。")).toBe(true)
+    expect(isAwaitingUserOrDone("追加の変更やコミットが必要でしたらお知らせください。")).toBe(true)
+    expect(isAwaitingUserOrDone("The implementation is complete. Waiting for your confirmation.")).toBe(true)
   })
 
   test("does not treat mid-work status as done", () => {
     expect(isAwaitingUserOrDone("次にテストを実行します。")).toBe(false)
     expect(isAwaitingUserOrDone("検証結果をまとめます")).toBe(false)
+    expect(isAwaitingUserOrDone("次に動作確認します。")).toBe(false)
     expect(isAwaitingUserOrDone("")).toBe(false)
   })
 
