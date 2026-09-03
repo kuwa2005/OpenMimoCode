@@ -635,7 +635,7 @@ export function Prompt(props: PromptProps) {
         keybind: "session_interrupt",
         category: "session",
         hidden: true,
-        enabled: status().type !== "idle",
+        enabled: status().type !== "idle" && !props.disabled,
         onSelect: (dialog) => {
           if (autocomplete.visible) return
           if (!input.focused) return

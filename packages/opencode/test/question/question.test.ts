@@ -16,6 +16,9 @@ const reply = (input: { requestID: QuestionID; answers: ReadonlyArray<Question.A
 
 const reject = (id: QuestionID) => AppRuntime.runPromise(Question.Service.use((svc) => svc.reject(id)))
 
+const rejectSession = (sessionID: SessionID) =>
+  AppRuntime.runPromise(Question.Service.use((svc) => svc.rejectSession(sessionID)))
+
 afterEach(async () => {
   await Instance.disposeAll()
 })
@@ -328,6 +331,44 @@ test("list - returns empty when no pending", async () => {
     fn: async () => {
       const pending = await list()
       expect(pending.length).toBe(0)
+    },
+  })
+})
+
+test("rejectSession - dismisses only that session's pending questions", async () => {
+  await using tmp = await tmpdir({ git: true })
+  await Instance.provide({
+    directory: tmp.path,
+    fn: async () => {
+      const keep = ask({
+        sessionID: SessionID.make("ses_keep"),
+        questions: [
+          {
+            question: "Keep me?",
+            header: "Keep",
+            options: [{ label: "Yes", description: "Yes" }],
+          },
+        ],
+      })
+      const drop = ask({
+        sessionID: SessionID.make("ses_drop"),
+        questions: [
+          {
+            question: "Drop me?",
+            header: "Drop",
+            options: [{ label: "Yes", description: "Yes" }],
+          },
+        ],
+      })
+
+      await rejectSession(SessionID.make("ses_drop"))
+      const pending = await list()
+      expect(pending).toHaveLength(1)
+      expect(pending[0].sessionID).toBe(SessionID.make("ses_keep"))
+
+      await expect(drop).rejects.toBeInstanceOf(Question.RejectedError)
+      await rejectAll()
+      await keep.catch(() => {})
     },
   })
 })

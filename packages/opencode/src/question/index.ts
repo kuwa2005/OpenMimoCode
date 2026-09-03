@@ -134,6 +134,7 @@ export interface Interface {
   }) => Effect.Effect<ReadonlyArray<Answer>, RejectedError>
   readonly reply: (input: { requestID: QuestionID; answers: ReadonlyArray<Answer> }) => Effect.Effect<void>
   readonly reject: (requestID: QuestionID) => Effect.Effect<void>
+  readonly rejectSession: (sessionID: SessionID) => Effect.Effect<void>
   readonly list: () => Effect.Effect<ReadonlyArray<Request>>
   readonly neverAsk: () => Effect.Effect<boolean>
   readonly setNeverAsk: (enabled: boolean) => Effect.Effect<void>
@@ -186,8 +187,17 @@ export const layer = Layer.effect(
 
       return yield* Effect.ensuring(
         Deferred.await(deferred),
-        Effect.sync(() => {
+        Effect.gen(function* () {
+          const leftover = pending.get(id)
+          if (!leftover) return
+          // Interrupted (session abort / fiber cancel) without reply or reject:
+          // drop the pending row AND tell the TUI, otherwise the choice overlay
+          // stays on screen with no live request behind it.
           pending.delete(id)
+          yield* bus.publish(Event.Rejected, {
+            sessionID: leftover.info.sessionID,
+            requestID: leftover.info.id,
+          })
         }),
       )
     })
@@ -228,6 +238,20 @@ export const layer = Layer.effect(
       yield* Deferred.fail(existing.deferred, new RejectedError())
     })
 
+    const rejectSession = Effect.fn("Question.rejectSession")(function* (sessionID: SessionID) {
+      const pending = (yield* InstanceState.get(state)).pending
+      for (const [id, entry] of [...pending.entries()]) {
+        if (entry.info.sessionID !== sessionID) continue
+        pending.delete(id)
+        log.info("rejected", { requestID: id, reason: "session-cancel" })
+        yield* bus.publish(Event.Rejected, {
+          sessionID: entry.info.sessionID,
+          requestID: entry.info.id,
+        })
+        yield* Deferred.fail(entry.deferred, new RejectedError())
+      }
+    })
+
     const list = Effect.fn("Question.list")(function* () {
       const pending = (yield* InstanceState.get(state)).pending
       return Array.from(pending.values(), (x) => x.info)
@@ -256,7 +280,7 @@ export const layer = Layer.effect(
       }
     })
 
-    return Service.of({ ask, reply, reject, list, neverAsk, setNeverAsk })
+    return Service.of({ ask, reply, reject, rejectSession, list, neverAsk, setNeverAsk })
   }),
 )
 

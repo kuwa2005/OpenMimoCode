@@ -1516,7 +1516,7 @@ export function Session() {
               <Show when={currentAgentID() !== "main"}>
                 <SubagentFooter />
               </Show>
-              <Show when={visible()}>
+              <Show when={currentAgentID() === "main"}>
                 <TuiPluginRuntime.Slot
                   name="session_prompt"
                   mode="replace"

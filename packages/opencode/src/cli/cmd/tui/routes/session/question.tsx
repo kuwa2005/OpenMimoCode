@@ -1,6 +1,6 @@
 import { createStore } from "solid-js/store"
-import { createMemo, createSignal, For, Show } from "solid-js"
-import { useKeyboard } from "@opentui/solid"
+import { createEffect, createMemo, createSignal, For, onCleanup, Show } from "solid-js"
+import { useKeyboard, useRenderer, useTerminalDimensions } from "@opentui/solid"
 import type { TextareaRenderable } from "@opentui/core"
 import { useKeybind } from "../../context/keybind"
 import { selectedForeground, tint, useTheme } from "../../context/theme"
@@ -10,6 +10,9 @@ import { useSDK } from "../../context/sdk"
 import { SplitBorder } from "../../component/border"
 import { useTextareaKeybindings } from "../../component/textarea-keybindings"
 import { useDialog } from "../../ui/dialog"
+import { useCommandDialog } from "../../component/dialog-command"
+import { useTuiConfig } from "../../context/tui-config"
+import { getScrollAcceleration } from "../../util/scroll"
 
 export function QuestionPrompt(props: { request: QuestionRequest }) {
   const sdk = useSDK()
@@ -17,6 +20,21 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
   const keybind = useKeybind()
   const bindings = useTextareaKeybindings()
   const { t } = useLanguage()
+  const command = useCommandDialog()
+  const renderer = useRenderer()
+  const dimensions = useTerminalDimensions()
+  const config = useTuiConfig()
+  const scrollAcceleration = createMemo(() => getScrollAcceleration(config))
+  const bodyHeight = createMemo(() => Math.max(6, Math.min(18, dimensions().height - 12)))
+
+  // Global command keybinds (left/right child cycle, tab agent cycle, Esc
+  // interrupt) run before this overlay and steal the keys the user needs to
+  // pick an option. Suspend them for as long as the prompt is mounted.
+  createEffect(() => {
+    command.keybinds(false)
+    renderer.currentFocusedRenderable?.blur()
+    onCleanup(() => command.keybinds(true))
+  })
 
   const translateQuestion = (q: QuestionRequest["questions"][number]) => {
     if (!q.key) return q
@@ -149,6 +167,7 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
     if (store.editing && !confirm()) {
       if (evt.name === "escape") {
         evt.preventDefault()
+        evt.stopPropagation()
         setStore("editing", false)
         return
       }
@@ -210,16 +229,19 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
 
     if (evt.name === "left" || evt.name === "h") {
       evt.preventDefault()
+      evt.stopPropagation()
       selectTab((store.tab - 1 + tabs()) % tabs())
     }
 
     if (evt.name === "right" || evt.name === "l") {
       evt.preventDefault()
+      evt.stopPropagation()
       selectTab((store.tab + 1) % tabs())
     }
 
     if (evt.name === "tab") {
       evt.preventDefault()
+      evt.stopPropagation()
       const direction = evt.shift ? -1 : 1
       selectTab((store.tab + direction + tabs()) % tabs())
     }
@@ -227,10 +249,12 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
     if (confirm()) {
       if (evt.name === "return") {
         evt.preventDefault()
+        evt.stopPropagation()
         submit()
       }
       if (evt.name === "escape" || keybind.match("app_exit", evt)) {
         evt.preventDefault()
+        evt.stopPropagation()
         reject()
       }
     } else {
@@ -241,6 +265,7 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
 
       if (!Number.isNaN(digit) && digit >= 1 && digit <= max) {
         evt.preventDefault()
+        evt.stopPropagation()
         const index = digit - 1
         moveTo(index)
         selectOption()
@@ -249,21 +274,25 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
 
       if (evt.name === "up" || evt.name === "k") {
         evt.preventDefault()
+        evt.stopPropagation()
         moveTo((store.selected - 1 + total) % total)
       }
 
       if (evt.name === "down" || evt.name === "j") {
         evt.preventDefault()
+        evt.stopPropagation()
         moveTo((store.selected + 1) % total)
       }
 
       if (evt.name === "return") {
         evt.preventDefault()
+        evt.stopPropagation()
         selectOption()
       }
 
       if (evt.name === "escape" || keybind.match("app_exit", evt)) {
         evt.preventDefault()
+        evt.stopPropagation()
         reject()
       }
     }
@@ -276,6 +305,16 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
       borderColor={theme.accent}
       customBorderChars={SplitBorder.customBorderChars}
     >
+      <scrollbox
+        height={bodyHeight()}
+        scrollAcceleration={scrollAcceleration()}
+        verticalScrollbarOptions={{
+          trackOptions: {
+            backgroundColor: theme.background,
+            foregroundColor: theme.borderActive,
+          },
+        }}
+      >
       <box gap={1} paddingLeft={1} paddingRight={3} paddingTop={1} paddingBottom={1}>
         <Show when={!single()}>
           <box flexDirection="row" gap={1} paddingLeft={1}>
@@ -454,6 +493,7 @@ export function QuestionPrompt(props: { request: QuestionRequest }) {
           </For>
         </Show>
       </box>
+      </scrollbox>
       <box
         flexDirection="row"
         flexShrink={0}

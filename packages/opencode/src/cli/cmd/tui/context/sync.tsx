@@ -1001,6 +1001,16 @@ export const { use: useSync, provider: SyncProvider } = createSimpleContext({
             guard(sdk.client.session.status({ workspace }), (x) => {
               setStore("session_status", reconcile(x.data ?? {}))
             }),
+            guard(sdk.client.question.list(), (x) => {
+              const grouped: Record<string, QuestionRequest[]> = {}
+              for (const request of x.data ?? []) {
+                const list = grouped[request.sessionID] ?? []
+                list.push(request)
+                grouped[request.sessionID] = list
+                pendingQuestions.set(request.id, request)
+              }
+              setStore("question", reconcile(grouped))
+            }),
             guard(sdk.client.provider.auth({ workspace }), (x) => setStore("provider_auth", reconcile(x.data ?? {}))),
             guard(sdk.client.vcs.get({ workspace }), (x) => setStore("vcs", reconcile(x.data))),
             project.workspace.sync(),
