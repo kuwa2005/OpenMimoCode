@@ -3,11 +3,56 @@ export const TEXT_LOOP_TRIGGER_COUNT = 3
 export const TEXT_LOOP_MAX_RECOVERY = 2
 export const GOAL_REENTRY_STREAK_SOFT = 3
 export const GOAL_REENTRY_STREAK_HARD = 6
+/** Consecutive goal re-entries without a real (non-synthetic) user turn. */
+export const GOAL_REENTRY_NO_USER_HARD = 5
+/** think-only auto-continues allowed while autonomy goal is still in hearing. */
+export const INVALID_OUTPUT_HEARING_LIMIT = 2
 /** Consecutive finished steps with zero tool calls (Cursor announcement loops). */
 export const NO_TOOL_STREAK_SOFT = 2
 export const NO_TOOL_STREAK_HARD = 4
 /** Consecutive docs-evidence announcement fingerprints without tools. */
 export const DOCS_INTENT_STREAK_SOFT = 2
+
+/**
+ * Assistant text that means "hand control back to the human" — stop the autonomy
+ * / rate-limit auto-kick loop instead of burning more API calls.
+ */
+export function isAwaitingUserOrDone(text: string): boolean {
+  const t = text.trim()
+  if (!t) return false
+  const lower = t.toLowerCase()
+  if (
+    /次の指示を?(お)?待ち|指示を?お待ち|ご指示を?お待ち|待機(して|します|中)|入力を?お待ち|human\s*input|awaiting\s*(your\s*)?(input|instructions?|orders?)|waiting\s+for\s+(your\s+)?(input|instructions?|orders?|next\s+step)/i.test(
+      t,
+    )
+  ) {
+    return true
+  }
+  if (
+    /(全作業|すべて|全て|両タスク).{0,20}完了|作業完了を確認|全作業完了|両タスク完了済み|次の指示を?(お)?待ち/.test(t)
+  ) {
+    return true
+  }
+  if (
+    /\b(all\s+tasks?\s+(are\s+)?(done|complete|finished)|work\s+is\s+(done|complete)|task\s+is\s+complete|nothing\s+further|no\s+further\s+action)\b/i.test(
+      lower,
+    )
+  ) {
+    return true
+  }
+  return false
+}
+
+/** Plain assistant text (non-synthetic) for completion / wait detection. */
+export function assistantVisibleText(
+  parts: ReadonlyArray<{ type: string; text?: string; synthetic?: boolean; ignored?: boolean }>,
+): string {
+  return parts
+    .filter((p) => p.type === "text" && !p.synthetic && !p.ignored)
+    .map((p) => p.text ?? "")
+    .join("\n")
+    .trim()
+}
 
 export function normalizeForLoopDetection(text: string): string {
   return text

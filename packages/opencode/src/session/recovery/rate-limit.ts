@@ -14,6 +14,7 @@ export type RateLimitRecoverEntry = {
 export type RateLimitRecoverPlan =
   | { action: "ignore_burst" }
   | { action: "ignore_pending" }
+  | { action: "skip_done" }
   | { action: "stop_max" }
   | { action: "schedule"; delayMs: number; attempt: number }
 
@@ -25,7 +26,11 @@ export function planRateLimitRecover(input: {
   state: RateLimitRecoverEntry | undefined
   now: number
   hasPendingTimer: boolean
+  /** Last assistant already handed control back — do not auto-kick. */
+  assistantDoneOrWaiting?: boolean
 }): RateLimitRecoverPlan {
+  if (input.assistantDoneOrWaiting) return { action: "skip_done" }
+
   if (input.state && input.now - input.state.lastBurstAt < SESSION_ERROR_BURST_MS) {
     return { action: "ignore_burst" }
   }

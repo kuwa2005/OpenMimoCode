@@ -30,12 +30,23 @@ export function createRateLimitRecoveryCoordinator() {
       else pendingTimers.delete(sessionID)
     },
 
-    onSessionError(input: { sessionID: string; now: number; source: "tui" }): RateLimitRecoveryResult {
+    onSessionError(input: {
+      sessionID: string
+      now: number
+      source: "tui"
+      assistantDoneOrWaiting?: boolean
+    }): RateLimitRecoveryResult {
       const plan = planRateLimitRecover({
         state: states.get(input.sessionID),
         now: input.now,
         hasPendingTimer: pendingTimers.has(input.sessionID),
+        assistantDoneOrWaiting: input.assistantDoneOrWaiting,
       })
+
+      if (plan.action === "skip_done") {
+        recordRecovery({ event: "rate_limit.skip_done", sessionID: input.sessionID, source: input.source, plan })
+        return { action: "noop" }
+      }
 
       if (plan.action === "ignore_burst") {
         recordRecovery({ event: "rate_limit.burst_ignored", sessionID: input.sessionID, source: input.source, plan })

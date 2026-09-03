@@ -59,12 +59,16 @@ import {
   TEXT_LOOP_MAX_RECOVERY,
   GOAL_REENTRY_STREAK_SOFT,
   GOAL_REENTRY_STREAK_HARD,
+  GOAL_REENTRY_NO_USER_HARD,
+  INVALID_OUTPUT_HEARING_LIMIT,
   NO_TOOL_STREAK_SOFT,
   NO_TOOL_STREAK_HARD,
   DOCS_INTENT_STREAK_SOFT,
   normalizeForLoopDetection,
   detectTextLoop,
   stepLoopFingerprint,
+  isAwaitingUserOrDone,
+  assistantVisibleText,
 } from "../session/prompt/text-loop-recovery"
 import {
   TEXT_NGRAM_MAX_RECOVERY,
@@ -2838,9 +2842,17 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         let invalidContinuations = 0
         // Under autonomy / Super Auto, free models often emit think-only steps;
         // the default limit of 2 exits earlier than permission-only --auto.
-        const invalidOutputLimit = ConfigAutonomy.enabled(yield* config.get())
-          ? Math.max(INVALID_OUTPUT_CONTINUATION_LIMIT, 8)
-          : INVALID_OUTPUT_CONTINUATION_LIMIT
+        // Hearing phase stays tight (INVALID_OUTPUT_HEARING_LIMIT) so FDE discovery
+        // cannot burn the larger budget before Solution Lock.
+        const resolveInvalidOutputLimit = Effect.fn("SessionPrompt.resolveInvalidOutputLimit")(function* () {
+          const cfg = yield* config.get()
+          if (!ConfigAutonomy.enabled(cfg)) return INVALID_OUTPUT_CONTINUATION_LIMIT
+          const active = yield* goal.get(sessionID)
+          if (active?.phase === "hearing" && ConfigAutonomy.hearingFirst(cfg.autonomy)) {
+            return Math.min(INVALID_OUTPUT_CONTINUATION_LIMIT, INVALID_OUTPUT_HEARING_LIMIT)
+          }
+          return Math.max(INVALID_OUTPUT_CONTINUATION_LIMIT, 8)
+        })
         // structured-output 专用 retry：上限来自 lastUser.format.retryCount（默认 2），
         // 与 invalidContinuations（generic invalid）分离，互不污染。局部于 runLoop，
         // 新一轮用户 turn 自动归零。
@@ -2972,6 +2984,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
         let textNgramRecoveryAttempts = 0
         let lastGoalReentryKey = ""
         let goalReentryStreak = 0
+        let goalReentryNoUser = 0
         let noToolStreak = 0
         let docsIntentStreak = 0
 
@@ -3054,6 +3067,39 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           })
           const judgedMessageID = transcriptMsgs.findLast((m) => m.info.role === "assistant")?.info.id
 
+          // Real user turn resets the no-user re-entry budget.
+          const lastUserMsg = transcriptMsgs.findLast((m) => m.info.role === "user" && m.info.id === lastUser.id)
+          const realUserTurn = lastUserMsg?.parts.some((p) => p.type === "text" && !p.synthetic) === true
+          if (realUserTurn) goalReentryNoUser = 0
+
+          // Assistant handed control back — stop burning API (especially under FDE hearing).
+          const lastAssistantParts =
+            transcriptMsgs.findLast((m) => m.info.role === "assistant")?.parts ?? []
+          const visible = assistantVisibleText(lastAssistantParts)
+          if (visible && isAwaitingUserOrDone(visible)) {
+            const reason = active.phase === "hearing" ? "waiting_user" : "completed"
+            yield* slog.info("goal stop: assistant awaiting user or done", {
+              sessionID,
+              phase: active.phase,
+              reason,
+            })
+            yield* goal.stopWithReason({
+              sessionID,
+              reason,
+              lastVerdict: {
+                ok: reason === "completed",
+                reason:
+                  reason === "waiting_user"
+                    ? "Assistant is waiting for user input (e.g. Solution Lock / next instructions)."
+                    : "Assistant reported the task complete.",
+                attempt: active.react,
+                messageID: judgedMessageID,
+              },
+            })
+            yield* closeGoalBoard(sessionID, reason)
+            return false
+          }
+
           yield* goal.syncCostFromTranscript({ sessionID, msgs: transcriptMsgs })
           const budget = yield* goal.checkBudget(sessionID)
           if (!budget.ok) {
@@ -3102,6 +3148,26 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               return false
             }
 
+            goalReentryNoUser++
+            if (goalReentryNoUser >= GOAL_REENTRY_NO_USER_HARD) {
+              yield* slog.warn("goal re-entry without user input; stopping for human review", {
+                sessionID,
+                streak: goalReentryNoUser,
+              })
+              yield* goal.stopWithReason({
+                sessionID,
+                reason: "waiting_user",
+                lastVerdict: {
+                  ok: false,
+                  reason: `Stopped after ${goalReentryNoUser} automatic goal re-entries without a new user message. Review the gap and continue when ready.`,
+                  attempt: count,
+                  messageID: judgedMessageID,
+                },
+              })
+              yield* closeGoalBoard(sessionID, "waiting_user")
+              return false
+            }
+
             const reasonKey = normalizeForLoopDetection(reason).slice(0, 160)
             if (reasonKey && reasonKey === lastGoalReentryKey) goalReentryStreak++
             else {
@@ -3129,7 +3195,12 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               return false
             }
 
-            yield* slog.info("goal not satisfied; re-entering", { sessionID, attempt: count, streak: goalReentryStreak })
+            yield* slog.info("goal not satisfied; re-entering", {
+              sessionID,
+              attempt: count,
+              streak: goalReentryStreak,
+              noUser: goalReentryNoUser,
+            })
             yield* bus.publish(Goal.Event.Updated, {
               sessionID,
               goal: {
@@ -3287,7 +3358,8 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           reason: string
         }) {
           if (input.assistant.error || input.assistant.summary || input.assistant.structured !== undefined) return false
-          if (invalidContinuations >= invalidOutputLimit) {
+          const limit = yield* resolveInvalidOutputLimit()
+          if (invalidContinuations >= limit) {
             input.assistant.error = new MessageV2.InvalidOutputError({ message: input.reason }).toObject()
             yield* sessions.updateMessage(input.assistant)
             yield* bus.publish(Session.Event.Error, {
@@ -3300,7 +3372,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
           invalidContinuations++
           yield* slog.info("auto-continuing invalid output", {
             attempt: invalidContinuations,
-            limit: invalidOutputLimit,
+            limit,
             reason: input.reason,
           })
           const policy = resolveInvalidOutputPolicy({
@@ -4576,6 +4648,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
             docsIntentStreak = 0
             goalReentryStreak = 0
             lastGoalReentryKey = ""
+            goalReentryNoUser = 0
             // Do not reset textLoopRecoveryAttempts on tool presence alone —
             // same-tool announcement loops must escalate mild → strong recovery.
           } else {

@@ -12,6 +12,7 @@ export type RecoveryLogEvent =
   | "error.publish_suppressed"
   | "rate_limit.burst_ignored"
   | "rate_limit.pending_ignored"
+  | "rate_limit.skip_done"
   | "rate_limit.scheduled"
   | "rate_limit.retry_sent"
   | "rate_limit.stop_max"

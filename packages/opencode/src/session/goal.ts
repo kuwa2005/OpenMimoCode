@@ -33,6 +33,7 @@ export type GoalStopReason =
   | "completed"
   | "impossible"
   | "cancelled"
+  | "waiting_user"
   | "budget_turns"
   | "budget_duration"
   | "budget_cost"

@@ -77,6 +77,17 @@ describe("planRateLimitRecover", () => {
       }),
     ).toEqual({ action: "schedule", delayMs: 15_000, attempt: 1 })
   })
+
+  test("skips auto-recover when assistant already done or waiting", () => {
+    expect(
+      planRateLimitRecover({
+        state: undefined,
+        now: 0,
+        hasPendingTimer: false,
+        assistantDoneOrWaiting: true,
+      }),
+    ).toEqual({ action: "skip_done" })
+  })
 })
 
 describe("nextRateLimitRecoverState / afterRateLimitRetrySent", () => {

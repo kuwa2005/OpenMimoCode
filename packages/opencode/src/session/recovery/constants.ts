@@ -1,5 +1,5 @@
 /** Max automatic promptAsync recoveries per rate-limit storm (then stop). */
-export const RATE_LIMIT_AUTO_RETRY_MAX = 3
+export const RATE_LIMIT_AUTO_RETRY_MAX = 2
 
 /** Ignore duplicate session.error signals within this window (same failure tick). */
 export const SESSION_ERROR_BURST_MS = 3_000

@@ -5,10 +5,44 @@ import {
   similarEnough,
   stepLoopFingerprint,
   intentFingerprint,
+  isAwaitingUserOrDone,
+  assistantVisibleText,
   TEXT_LOOP_TRIGGER_COUNT,
   TEXT_LOOP_BUFFER_SIZE,
   TEXT_LOOP_MAX_RECOVERY,
+  GOAL_REENTRY_NO_USER_HARD,
+  INVALID_OUTPUT_HEARING_LIMIT,
 } from "../../src/session/prompt/text-loop-recovery"
+
+describe("isAwaitingUserOrDone", () => {
+  test("detects Japanese wait / complete handoff", () => {
+    expect(isAwaitingUserOrDone("両タスク完了済み。次の指示をお待ちしています。")).toBe(true)
+    expect(isAwaitingUserOrDone("検証結果 — 全作業完了を確認。")).toBe(true)
+    expect(isAwaitingUserOrDone("Waiting for your instructions.")).toBe(true)
+    expect(isAwaitingUserOrDone("All tasks are complete.")).toBe(true)
+  })
+
+  test("does not treat mid-work status as done", () => {
+    expect(isAwaitingUserOrDone("次にテストを実行します。")).toBe(false)
+    expect(isAwaitingUserOrDone("検証結果をまとめます")).toBe(false)
+    expect(isAwaitingUserOrDone("")).toBe(false)
+  })
+
+  test("assistantVisibleText skips synthetic parts", () => {
+    expect(
+      assistantVisibleText([
+        { type: "text", text: "ignore", synthetic: true },
+        { type: "text", text: "real answer" },
+        { type: "reasoning", text: "thought" },
+      ]),
+    ).toBe("real answer")
+  })
+
+  test("exports hard caps", () => {
+    expect(GOAL_REENTRY_NO_USER_HARD).toBe(5)
+    expect(INVALID_OUTPUT_HEARING_LIMIT).toBe(2)
+  })
+})
 
 describe("normalizeForLoopDetection", () => {
   test("trims whitespace", () => {

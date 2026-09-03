@@ -62,6 +62,7 @@ import {
   RATE_LIMIT_BUSY_DEFER_MS,
   createRateLimitRecoveryCoordinator,
 } from "@/session/recovery"
+import { assistantVisibleText, isAwaitingUserOrDone } from "@/session/prompt/text-loop-recovery"
 import { ToastProvider, useToast } from "./ui/toast"
 import { ExitProvider, useExit } from "./context/exit"
 import { Session as SessionApi } from "@/session"
@@ -160,6 +161,14 @@ function clearRateLimitRecover(sessionID: string, reason: string) {
 
 const rateLimitRecoverTimers = new Map<string, ReturnType<typeof setTimeout>>()
 
+function lastAssistantSignalsDone(sync: ReturnType<typeof useSync>, sessionID: string) {
+  const messages = sync.data.message[sessionID]?.["main"] ?? []
+  const last = [...messages].reverse().find((m) => m.role === "assistant")
+  if (!last) return false
+  const parts = sync.data.part[last.id] ?? []
+  return isAwaitingUserOrDone(assistantVisibleText(parts))
+}
+
 function runRateLimitRecoverAfterDelay(
   sessionID: string,
   delayMs: number,
@@ -181,6 +190,17 @@ function runRateLimitRecoverAfterDelay(
     const liveStatus = ctx.sync.data.session_status[sessionID]?.type ?? "idle"
     if (liveStatus === "busy" || liveStatus === "retry") {
       runRateLimitRecoverAfterDelay(sessionID, RATE_LIMIT_BUSY_DEFER_MS, false, ctx)
+      return
+    }
+
+    // Model already handed control back — do not burn another API turn.
+    if (lastAssistantSignalsDone(ctx.sync, sessionID)) {
+      clearRateLimitRecover(sessionID, "assistant_done")
+      ctx.toast.show({
+        variant: "info",
+        message: "Rate limit — 作業完了のため自動再試行をスキップしました。",
+        duration: 5000,
+      })
       return
     }
 
@@ -1331,7 +1351,12 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
     // backoff. Uncapped immediate promptAsync here caused API-burn loops when
     // duplicate session.error events fired in the same tick.
     if (rateLimited && sessionID && route.data.type === "session" && route.data.sessionID === sessionID) {
-      const result = rateLimitRecovery.onSessionError({ sessionID, now: Date.now(), source: "tui" })
+      const result = rateLimitRecovery.onSessionError({
+        sessionID,
+        now: Date.now(),
+        source: "tui",
+        assistantDoneOrWaiting: lastAssistantSignalsDone(sync, sessionID),
+      })
 
       if (result.action === "noop") return
 
