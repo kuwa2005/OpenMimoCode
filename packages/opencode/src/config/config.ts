@@ -1040,8 +1040,12 @@ export const layer = Layer.effect(
           })
         }
 
-        if (Flag.MIMOCODE_AUTONOMY || Flag.MIMOCODE_SPAUTO) {
+        if (Flag.MIMOCODE_AUTONOMY || Flag.MIMOCODE_SPAUTO || Flag.MIMOCODE_FDE) {
           result.autonomy = { ...result.autonomy, enabled: true }
+        }
+        if (Flag.MIMOCODE_FDE) {
+          // Forward Deployed Engineer (--fde): hearing + Solution Lock; PoC allowed before lock.
+          result.autonomy = { ...result.autonomy, enabled: true, hearing_first: true, persona: "fde" }
         }
         if (Flag.MIMOCODE_SPAUTO) {
           // Super Auto (--spauto / --autosp): skip hearing; decide and execute non-stop.

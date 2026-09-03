@@ -274,6 +274,7 @@ export const layer = Layer.effect(
       goal.condition = ConfigAutonomy.buildGoalCondition(userText, {
         docsEvidence: ConfigAutonomy.docsEvidence(cfg.autonomy),
         hearingFirst: false,
+        persona: "se",
       })
       goal.autonomous = true
       goal.phase = "execute"

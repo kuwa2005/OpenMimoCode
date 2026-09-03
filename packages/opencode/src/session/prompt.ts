@@ -49,6 +49,7 @@ import MAX_STEPS from "../session/prompt/max-steps.txt"
 import PROMPT_COMPOSE from "../session/prompt/compose.txt"
 import PROMPT_AUTONOMY_SE from "../session/prompt/autonomy-se.txt"
 import PROMPT_AUTONOMY_SP from "../session/prompt/autonomy-sp.txt"
+import PROMPT_AUTONOMY_FDE from "../session/prompt/autonomy-fde.txt"
 import {
   RECOVERY_PROMPT_MILD,
   RECOVERY_PROMPT_STRONG,
@@ -1020,17 +1021,23 @@ export const layer = Layer.effect(
         const activeGoal = yield* goal.get(input.session.id)
         if (activeGoal?.autonomous) {
           const special = !ConfigAutonomy.hearingFirst(cfg.autonomy)
+          const fde = !special && ConfigAutonomy.persona(cfg.autonomy) === "fde"
+          const autonomyPrompt = special ? PROMPT_AUTONOMY_SP : fde ? PROMPT_AUTONOMY_FDE : PROMPT_AUTONOMY_SE
           const phaseHint = special
             ? "\nCurrent mode: SPECIAL (Super Auto) — raise doubts, self-answer, never wait; deliver non-stop with documentary evidence."
             : activeGoal.phase === "hearing"
-              ? "\nCurrent phase: HEARING — clarify and lock requirements before implementation."
-              : "\nCurrent phase: EXECUTE — requirements are locked; deliver non-stop with documentary evidence."
+              ? fde
+                ? "\nCurrent phase: FDE DISCOVERY — investigate field problem, propose Level 1–3, PoC spikes allowed; ask Solution Lock before production implementation."
+                : "\nCurrent phase: HEARING — clarify and lock requirements before implementation."
+              : fde
+                ? "\nCurrent phase: EXECUTE — Solution Lock approved; implement the chosen solution, verify, and finish with FDE documentary evidence."
+                : "\nCurrent phase: EXECUTE — requirements are locked; deliver non-stop with documentary evidence."
           userMessage.parts.unshift({
             id: PartID.ascending(),
             messageID: userMessage.info.id,
             sessionID: userMessage.info.sessionID,
             type: "text",
-            text: (special ? PROMPT_AUTONOMY_SP : PROMPT_AUTONOMY_SE) + phaseHint,
+            text: autonomyPrompt + phaseHint,
             synthetic: true,
           })
         }
@@ -2727,6 +2734,7 @@ NOTE: At any point in time through this workflow you should feel free to ask the
                   condition: ConfigAutonomy.buildGoalCondition(userText, {
                     docsEvidence: ConfigAutonomy.docsEvidence(cfg.autonomy),
                     hearingFirst: ConfigAutonomy.hearingFirst(cfg.autonomy),
+                    persona: ConfigAutonomy.persona(cfg.autonomy),
                   }),
                   startMessageID: message.info.id,
                   autonomous: true,

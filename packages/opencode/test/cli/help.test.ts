@@ -97,6 +97,8 @@ describe("session list launch flags", () => {
     expect(launchFlags({ auto: true, autonomy: true })).toEqual(["--auto", "--se"])
     expect(launchFlags({ auto: true })).toEqual(["--auto"])
     expect(launchFlags({ autonomy: true })).toEqual(["--se"])
+    expect(launchFlags({ fde: true })).toEqual(["--fde"])
+    expect(launchFlags({ auto: true, fde: true })).toEqual(["--auto", "--fde"])
     expect(launchFlags({ spauto: true })).toEqual(["--spauto"])
     expect(launchFlags({ auto: true, spauto: true })).toEqual(["--auto", "--spauto"])
     expect(launchFlags({})).toEqual([])

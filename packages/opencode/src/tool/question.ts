@@ -57,17 +57,23 @@ export const QuestionTool = Tool.define<typeof parameters, Metadata, Question.Se
             .map((q, i) => `"${q.question}"="${answers[i]?.length ? answers[i].join(", ") : "Unanswered"}"`)
             .join(", ")
 
-          // Requirements Lock gate: affirmative answer advances autonomy hearing → execute.
-          const lockAsked = params.questions.some((q) => ConfigAutonomy.isRequirementsLockHeader(q.header))
+          // Autonomy lock gate (Requirements Lock / Solution Lock): advance hearing → execute.
+          const lockAsked = params.questions.some((q) => ConfigAutonomy.isAutonomyLockHeader(q.header))
           const locked = lockAsked && ConfigAutonomy.isLockApproval(answers)
           if (locked) {
             goalRef.setPhase(ctx.sessionID, "execute")
           }
 
+          const solutionLock = params.questions.some((q) =>
+            q.header ? /solution\s*lock|解決策ロック|ソリューションロック|方針確定/i.test(q.header) : false,
+          )
+
           return {
             title: `Asked ${params.questions.length} question${params.questions.length > 1 ? "s" : ""}`,
             output: locked
-              ? `User has answered your questions: ${formatted}. Requirements Lock approved — hearing phase is complete. Enable non-stop execution: implement, verify, and finish. Do not ask further product-scope questions unless blocked.`
+              ? solutionLock
+                ? `User has answered your questions: ${formatted}. Solution Lock approved — FDE discovery phase is complete. Implement the chosen solution non-stop: build, verify, measure, and finish with FDE documentary evidence. Do not ask further product-scope questions unless blocked.`
+                : `User has answered your questions: ${formatted}. Requirements Lock approved — hearing phase is complete. Enable non-stop execution: implement, verify, and finish. Do not ask further product-scope questions unless blocked.`
               : `User has answered your questions: ${formatted}. You can now continue with the user's answers in mind. Record each Q&A (why / background / result) in the hearing log before proceeding.`,
             metadata: {
               answers,

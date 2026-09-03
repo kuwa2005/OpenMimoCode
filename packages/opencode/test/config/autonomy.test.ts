@@ -13,10 +13,23 @@ describe("ConfigAutonomy helpers", () => {
     expect(ConfigAutonomy.docsEvidence({ docs_evidence: false })).toBe(false)
   })
 
+  test("persona defaults se; fde when set", () => {
+    expect(ConfigAutonomy.persona(undefined)).toBe("se")
+    expect(ConfigAutonomy.persona({})).toBe("se")
+    expect(ConfigAutonomy.persona({ persona: "fde" })).toBe("fde")
+  })
+
   test("isRequirementsLockHeader matches EN/JA", () => {
     expect(ConfigAutonomy.isRequirementsLockHeader("Requirements Lock")).toBe(true)
     expect(ConfigAutonomy.isRequirementsLockHeader("仕様確定")).toBe(true)
     expect(ConfigAutonomy.isRequirementsLockHeader("Design Review")).toBe(false)
+  })
+
+  test("isAutonomyLockHeader matches Solution Lock for FDE", () => {
+    expect(ConfigAutonomy.isAutonomyLockHeader("Solution Lock")).toBe(true)
+    expect(ConfigAutonomy.isAutonomyLockHeader("解決策ロック")).toBe(true)
+    expect(ConfigAutonomy.isAutonomyLockHeader("Requirements Lock")).toBe(true)
+    expect(ConfigAutonomy.isAutonomyLockHeader("Design Review")).toBe(false)
   })
 
   test("isLockApproval detects affirmative answers", () => {
@@ -37,6 +50,21 @@ describe("ConfigAutonomy helpers", () => {
     expect(text).toContain("Tests EXECUTED")
   })
 
+  test("buildGoalCondition FDE uses Solution Lock and PoC docs", () => {
+    const text = ConfigAutonomy.buildGoalCondition("Excel業務を自動化したい", {
+      docsEvidence: true,
+      hearingFirst: true,
+      persona: "fde",
+    })
+    expect(text).toContain("Forward Deployed Engineer")
+    expect(text).toContain("Solution Lock")
+    expect(text).toContain("PoC")
+    expect(text).toContain("Level 1")
+    expect(text).toContain("Next Improvement")
+    expect(text).not.toContain("Do NOT write implementation code until Requirements Lock is Approved")
+    expect(text).toContain("After Solution Lock")
+  })
+
   test("buildGoalCondition Super Auto skips user hearing", () => {
     const text = ConfigAutonomy.buildGoalCondition("電卓を作って", {
       docsEvidence: true,
@@ -49,19 +77,26 @@ describe("ConfigAutonomy helpers", () => {
     expect(text).toContain("Tests EXECUTED")
   })
 
-  test("mode maps enabled + hearing_first", () => {
+  test("mode maps enabled + hearing_first + persona", () => {
     expect(ConfigAutonomy.mode({})).toBe("none")
     expect(ConfigAutonomy.mode({ autonomy: { enabled: true } })).toBe("normal")
     expect(ConfigAutonomy.mode({ autonomy: { enabled: true, hearing_first: true } })).toBe("normal")
+    expect(ConfigAutonomy.mode({ autonomy: { enabled: true, hearing_first: true, persona: "fde" } })).toBe("fde")
     expect(ConfigAutonomy.mode({ autonomy: { enabled: true, hearing_first: false } })).toBe("special")
     expect(ConfigAutonomy.mode({ experimental: { auto_continue: true } })).toBe("normal")
   })
 
   test("patchForMode and isMode", () => {
     expect(ConfigAutonomy.isMode("none")).toBe(true)
+    expect(ConfigAutonomy.isMode("fde")).toBe(true)
     expect(ConfigAutonomy.isMode("weird")).toBe(false)
     expect(ConfigAutonomy.patchForMode("none")).toEqual({ autonomy: { enabled: false } })
-    expect(ConfigAutonomy.patchForMode("normal")).toEqual({ autonomy: { enabled: true, hearing_first: true } })
+    expect(ConfigAutonomy.patchForMode("normal")).toEqual({
+      autonomy: { enabled: true, hearing_first: true, persona: "se" },
+    })
+    expect(ConfigAutonomy.patchForMode("fde")).toEqual({
+      autonomy: { enabled: true, hearing_first: true, persona: "fde" },
+    })
     expect(ConfigAutonomy.patchForMode("special")).toEqual({ autonomy: { enabled: true, hearing_first: false } })
   })
 

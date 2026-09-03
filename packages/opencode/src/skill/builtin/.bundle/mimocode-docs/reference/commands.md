@@ -30,7 +30,23 @@ Invoked from the shell. `oimo` with no command opens the TUI.
 
 Run `oimo <command> --help` for flags on any command.
 
-Notable TUI flags: `--continue`/`-c` (resume last session), `--session`/`-s`, `--model`/`-m`, `--agent`, `--never-ask`, `--trust`, and `--dangerously-skip-permissions` (auto-approve everything not explicitly denied; prompts once for confirmation — see permissions.md).
+Notable TUI flags:
+
+| Flag | Purpose |
+|------|---------|
+| `--continue` / `-c` | Resume last session (does **not** re-apply `--se`/`--fde`/`--auto` by itself) |
+| `--session` / `-s` | Open a specific session |
+| `--model` / `-m` | Model override |
+| `--agent` | Agent override |
+| `--se` / `--autonomy` | SE autonomy (Requirements Lock, then non-stop) |
+| `--fde` | FDE autonomy (Solution Lock; PoC allowed before lock). Mutually exclusive with `--se` |
+| `--spauto` / `--autosp` | Super Auto (self-hearing, never-ask from launch; risk gate every time) |
+| `--auto` / `--yolo` | Auto-approve permissions not explicitly denied; skip workspace trust; also auto-approves deletes |
+| `--never-ask` | Start with never-ask on |
+| `--trust` | Skip workspace trust prompt |
+| `--dangerously-skip-permissions` | Same permission auto-approve as `--auto` (without the yolo alias) |
+
+Autonomy modes and handoff: see @config.md (Autonomy). Permissions details: @permissions.md.
 
 For terminal compatibility, TUI rendering or lag, and local rendering over SSH with `oimo serve` + `oimo attach`, see @guide.md.
 
@@ -51,6 +67,7 @@ Most client commands run only when the whole input is the command. `/btw <questi
 | `/agents` | — | Switch agents |
 | `/modalities` | — | Configure a custom model's input modalities (image/audio/video/PDF) |
 | `/never-ask` | — | Toggle never-ask permission mode |
+| `/auto` | — | Switch autonomy mode mid-session: none / normal (SE) / fde / special (persists to global config; keeps current goal) |
 | `/skip-permissions` | — | Toggle runtime auto-allow for permission asks; explicit denies still block |
 | `/mcps` | — | Show MCP server status |
 | `/variants` | — | Switch model variants; shown only when variants are available |

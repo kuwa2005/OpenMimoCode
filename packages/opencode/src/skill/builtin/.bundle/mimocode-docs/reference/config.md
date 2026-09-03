@@ -152,23 +152,40 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 | `workflow.maxConcurrentAgents` | Process-wide subagent concurrency ceiling (default min(16, 2×cores)) |
 | `workflow.maxDepth` | Max workflow nesting depth (default 8) |
 
-### Autonomy (AI-driven SE delivery)
+### Autonomy (AI-driven delivery)
+
 | Key | Purpose |
 |-----|---------|
-| `autonomy.enabled` | Enable SE-style mode: hearing-first clarification, then non-stop delivery until judge confirms completion |
-| `autonomy.hearing_first` | Ask the user and lock requirements before never-ask (default true) |
-| `autonomy.docs_evidence` | Require documentary evidence (hearing log, specs incl. test criteria, verification) in the stop condition (default true) |
+| `autonomy.enabled` | Enable autonomy stack: hearing (or Super Auto), then non-stop delivery until judge confirms completion |
+| `autonomy.hearing_first` | Ask the user and lock before never-ask (default true). `false` = Super Auto |
+| `autonomy.persona` | When hearing_first: `se` (default, Requirements Lock) or `fde` (Forward Deployed Engineer, Solution Lock, PoC before lock) |
+| `autonomy.docs_evidence` | Require documentary evidence in the stop condition (default true) |
 | `autonomy.max_turns` | Max judge re-entries per task (default 50) |
 | `autonomy.max_duration_ms` | Wall-clock budget per task in ms (default 7_200_000) |
 | `autonomy.max_cost_usd` | Soft cost ceiling per task in USD (default 10) |
 | `autonomy.judge_max_retries` | Judge retries before `judge_failed` stop (default 2) |
 | `experimental.auto_continue` | **Deprecated** — alias for `autonomy.enabled` (does not auto-submit predicted prompts) |
 
-CLI: `oimo --autonomy` or `oimo --se` starts hearing-first SE mode (compose agent). After a `Requirements Lock` approval, never-ask engages for non-stop implementation.
+#### Modes (CLI / `/auto`)
 
-**Super Auto:** `oimo --spauto` (alias `--autosp`) enables the same autonomy stack with `hearing_first=false` — never-ask and skip-permissions from turn one; the agent self-decides all clarifying questions and still leaves documentary evidence for the judge. **Every launch** shows a red risk acknowledgment screen (refuse is default; interactive TTY required). Only after you accept does the session run fully unattended.
+| Mode | CLI | Hearing | Lock gate | PoC before lock | never-ask |
+|------|-----|---------|-----------|-----------------|-----------|
+| none | (default) | ask as needed | — | — | off |
+| normal (SE) | `--se` / `--autonomy` | clarify with you | **Requirements Lock** | no (no prod code until lock) | after lock |
+| **fde** | **`--fde`** | field discovery + Level 1–3 | **Solution Lock** | **yes** (spikes only) | after lock |
+| special | `--spauto` / `--autosp` | self-answer | — | n/a | from launch |
 
-High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) still require explicit user approval in `--se` mode; `--spauto` (after the launch gate) also sets `MIMOCODE_AUTO_APPROVE_DELETE` so even those do not block (same as `--auto`).
+**SE (`--se`):** hearing-first compose agent. After `Requirements Lock` approval, never-ask engages for non-stop implementation with SE documentary evidence (hearing log, requirements, tests, verification).
+
+**FDE (`--fde`):** Forward Deployed Engineer. Frame the field problem, propose Level 1–3 solutions, allow PoC spikes before lock, then ask `Solution Lock`. After approval, implement, verify, and leave FDE evidence: Understanding / Problem / Solutions(L1–3) / PoC / Implementation / Verification (Before/After when possible) / Next Improvement ≤3.
+
+**Super Auto (`--spauto`):** same autonomy stack with `hearing_first=false` — never-ask and skip-permissions from turn one. **Every launch** shows a red risk acknowledgment (refuse is default; interactive TTY required).
+
+**Mutual exclusion:** `--se` and `--fde` cannot be combined on the same launch (conflicting personas). Mid-session handoff is allowed via `/auto` (none / normal / fde / special), or by continuing with **one** flag: `oimo -c --fde` after SE work, or `oimo -c --se` after FDE.
+
+**`-c` alone does not re-apply CLI flags.** `--se` / `--fde` / `--auto` are process env for that launch only (not stored on the session). To keep the persona, pass the flag again (`oimo -c --fde`) or switch with `/auto` (which persists mode to global config).
+
+High-risk operations (`bash_delete`: rm, force push, destructive git, etc.) still require explicit user approval in `--se` / `--fde` mode; `--spauto` (after the launch gate) and `--auto` also set `MIMOCODE_AUTO_APPROVE_DELETE` so those do not block.
 
 ### Experimental
 | Key | Purpose |

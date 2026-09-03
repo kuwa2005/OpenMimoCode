@@ -8,7 +8,7 @@ import { useLanguage } from "@tui/context/language"
 import { useRoute } from "@tui/context/route"
 import * as ConfigAutonomy from "@/config/autonomy"
 
-const MODE_ORDER: ConfigAutonomy.Mode[] = ["none", "normal", "special"]
+const MODE_ORDER: ConfigAutonomy.Mode[] = ["none", "normal", "fde", "special"]
 
 export function DialogAutoMode() {
   const dialog = useDialog()
@@ -91,7 +91,7 @@ export function DialogAutoMode() {
       local.neverAsk.set(false)
       local.skipPermissions.set(false)
     }
-    if (next === "normal") {
+    if (next === "normal" || next === "fde") {
       local.neverAsk.set(false)
       local.skipPermissions.set(true)
       local.agent.forceSwitch("compose")

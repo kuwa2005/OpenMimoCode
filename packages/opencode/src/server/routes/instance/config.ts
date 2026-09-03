@@ -11,7 +11,7 @@ import { lazy } from "@/util/lazy"
 import { jsonRequest } from "./trace"
 
 const AutonomyModeBody = z.object({
-  mode: z.enum(["none", "normal", "special"]),
+  mode: z.enum(["none", "normal", "fde", "special"]),
 })
 
 export const ConfigRoutes = lazy(() =>
@@ -71,7 +71,7 @@ export const ConfigRoutes = lazy(() =>
       describeRoute({
         summary: "Set autonomy mode",
         description:
-          "Switch none/normal/special without disposing the instance so in-flight session goals survive. Special enables never-ask, skip-permissions, and promotes goals to execute.",
+          "Switch none/normal/fde/special without disposing the instance so in-flight session goals survive. Special enables never-ask, skip-permissions, and promotes goals to execute.",
         operationId: "config.autonomyMode",
         responses: {
           200: {
@@ -81,7 +81,7 @@ export const ConfigRoutes = lazy(() =>
                 schema: resolver(
                   z.object({
                     config: Config.Info,
-                    mode: z.enum(["none", "normal", "special"]),
+                    mode: z.enum(["none", "normal", "fde", "special"]),
                     goalsPromoted: z.number(),
                   }),
                 ),
@@ -104,7 +104,7 @@ export const ConfigRoutes = lazy(() =>
             yield* question.setNeverAsk(false)
             yield* permission.setSkipAll(false)
           }
-          if (mode === "normal") {
+          if (mode === "normal" || mode === "fde") {
             yield* question.setNeverAsk(false)
             yield* permission.setSkipAll(true)
           }

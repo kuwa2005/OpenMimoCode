@@ -221,6 +221,12 @@ export const TuiThreadCommand = cmd({
           "SE 自律モード: 要件をヒアリングしてロックしてから、証跡ドキュメント付きでノンストップ実装する (compose エージェントになる)",
         default: false,
       })
+      .option("fde", {
+        type: "boolean",
+        describe:
+          "FDE 自律モード: 現場課題を定義し Level1–3 を提案、PoC 後に Solution Lock、実装・検証までノンストップ (compose)",
+        default: false,
+      })
       .option("spauto", {
         alias: ["autosp"],
         type: "boolean",
@@ -276,6 +282,14 @@ export const TuiThreadCommand = cmd({
       const cwd = Filesystem.resolve(process.cwd())
 
       const spauto = !!args.spauto
+      const fde = !!args.fde
+      // SE and FDE are opposing personas — never combine on one launch.
+      // Mid-session handoff is via /auto or a later `-c --se` / `-c --fde` (one flag only).
+      if (args.autonomy && fde) {
+        UI.error("--se and --fde cannot be used together (conflicting autonomy personas)")
+        process.exitCode = 1
+        return
+      }
       // Super Auto: dramatic risk acknowledgment EVERY launch, before any auto-approve.
       // After accept, TUI will not stop for trust / permissions / questions.
       if (spauto) {
@@ -310,10 +324,14 @@ export const TuiThreadCommand = cmd({
         process.env.MIMOCODE_AUTO_APPROVE_DELETE = "1"
       }
 
-      if (args.autonomy || spauto) {
+      if (args.autonomy || fde || spauto) {
         process.env.MIMOCODE_AUTONOMY = "1"
         // Safe permission auto-approve base (forced-ask still human-gated unless spauto/auto).
         process.env.MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS = "1"
+      }
+
+      if (fde) {
+        process.env.MIMOCODE_FDE = "1"
       }
 
       if (spauto) {
@@ -409,7 +427,7 @@ export const TuiThreadCommand = cmd({
         client.call("checkUpgrade", { directory: cwd }).catch(() => {})
       }, 1000).unref?.()
 
-      const autonomy = args.autonomy || spauto
+      const autonomy = args.autonomy || fde || spauto
       try {
         await tui({
           url: transport.url,
@@ -431,6 +449,7 @@ export const TuiThreadCommand = cmd({
             fork: args.fork,
             neverAsk: args["never-ask"] || spauto,
             autonomy,
+            fde,
             spauto,
           },
         })

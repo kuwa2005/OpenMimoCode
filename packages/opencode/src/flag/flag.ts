@@ -165,8 +165,10 @@ export const Flag = {
   // allow-all base ruleset is injected UNDER the user's config permission so
   // every tool auto-approves unless the user explicitly denied it.
   MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS: truthy("MIMOCODE_DANGEROUSLY_SKIP_PERMISSIONS"),
-  // Set by `oimo --autonomy` / `oimo --se`. Forces autonomy.enabled for this process.
+  // Set by `oimo --autonomy` / `oimo --se` / `oimo --fde`. Forces autonomy.enabled for this process.
   MIMOCODE_AUTONOMY: truthy("MIMOCODE_AUTONOMY"),
+  // Set by `oimo --fde`. Forward Deployed Engineer persona (hearing_first + Solution Lock).
+  MIMOCODE_FDE: truthy("MIMOCODE_FDE"),
   // Set by `oimo --spauto` (primary) / `oimo --autosp` (alias). Super Auto:
   // autonomy with hearing_first=false — zero user prompts from the first turn.
   get MIMOCODE_SPAUTO() {

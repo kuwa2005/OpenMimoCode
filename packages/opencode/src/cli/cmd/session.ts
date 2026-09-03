@@ -95,6 +95,10 @@ export const SessionListCommand = cmd({
         describe: "選択したセッションを SE 自律モード (ヒアリング→要件ロック→自律実装) で起動する",
         type: "boolean",
       })
+      .option("fde", {
+        describe: "選択したセッションを FDE 自律モード (課題定義→PoC→Solution Lock→実装) で起動する",
+        type: "boolean",
+      })
       .option("spauto", {
         alias: "autosp",
         describe:
@@ -124,6 +128,11 @@ export const SessionListCommand = cmd({
         return
       }
 
+      if (args.autonomy && args.fde) {
+        UI.error("--se and --fde cannot be used together (conflicting autonomy personas)")
+        await Log.exit(1)
+        return
+      }
       const flags = launchFlags(args)
       if (args.continue) {
         await launchTui(["--continue", ...flags])
@@ -134,10 +143,11 @@ export const SessionListCommand = cmd({
   },
 })
 
-export function launchFlags(args: { auto?: boolean; autonomy?: boolean; spauto?: boolean }): string[] {
+export function launchFlags(args: { auto?: boolean; autonomy?: boolean; fde?: boolean; spauto?: boolean }): string[] {
   const flags: string[] = []
   if (args.auto) flags.push("--auto")
   if (args.autonomy) flags.push("--se")
+  if (args.fde) flags.push("--fde")
   if (args.spauto) flags.push("--spauto")
   return flags
 }
