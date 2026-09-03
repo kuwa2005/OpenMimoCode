@@ -1,6 +1,6 @@
 {
   "name": "@mimo-ai/console-function",
-  "version": "0.1.32",
+  "version": "0.1.33",
   "$schema": "https://json.schemastore.org/package.json",
   "private": true,
   "type": "module",
