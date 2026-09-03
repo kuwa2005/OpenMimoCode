@@ -1,6 +1,6 @@
 {
   "name": "@mimo-ai/ui",
-  "version": "1.2.1",
+  "version": "0.2.1",
   "type": "module",
   "license": "MIT",
   "exports": {
