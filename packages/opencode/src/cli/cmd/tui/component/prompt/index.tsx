@@ -19,7 +19,7 @@ import { useKeybind } from "@tui/context/keybind"
 import { usePromptHistory, type PromptInfo } from "./history"
 import { assign, expandPlaceholders } from "./part"
 import { usePromptStash } from "./stash"
-import { clampStatusMessage, shouldShowSessionActivity, isInfraChildSession } from "./footer"
+import { clampStatusMessage, shouldShowSessionActivity, isInfraChildSession, isConcurrentActiveActor } from "./footer"
 import { DialogStash } from "../dialog-stash"
 import { type AutocompleteRef, Autocomplete } from "./autocomplete"
 import { useCommandDialog } from "../dialog-command"
@@ -131,9 +131,10 @@ export function Prompt(props: PromptProps) {
   const toast = useToast()
   const status = createMemo(() => sync.data.session_status?.[props.sessionID ?? ""] ?? { type: "idle" })
   // Keep the bottom-left spinner for live session work (busy/retry) and for
-  // concurrent actors / child sessions while this session is idle. Stale
-  // `in_progress` task rows and infra children (checkpoint-writer) alone must
-  // not keep it spinning after the main turn has already gone idle.
+  // concurrent spawned actors / child sessions while this session is idle.
+  // The leftover `main: pending` registry row, stale `in_progress` task rows,
+  // and infra children (checkpoint-writer) must not keep it spinning after
+  // the main turn has already gone idle.
   const showActivity = createMemo(() => {
     const sid = props.sessionID
     if (!sid) return false
@@ -150,7 +151,7 @@ export function Prompt(props: PromptProps) {
     }
     return shouldShowSessionActivity({
       statusType: status().type,
-      hasActiveActor: actors.some((a) => a.status === "pending" || a.status === "running"),
+      hasActiveActor: actors.some(isConcurrentActiveActor),
       hasActiveChild,
     })
   })

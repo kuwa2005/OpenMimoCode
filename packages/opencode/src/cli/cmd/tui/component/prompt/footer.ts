@@ -24,10 +24,15 @@ export function clampStatusMessage(message: string | undefined) {
 /**
  * Bottom-left activity spinner. Session busy/retry always shows it.
  *
- * While idle, only real concurrent work (actors / child sessions) keeps it
- * moving. Leftover `in_progress` board rows alone must not — after a normal
+ * While idle, only real concurrent work (spawned actors / child sessions) keeps
+ * it moving. The session's own `main` registry row is not concurrent work —
+ * `session_status` already represents that turn. It is registered `pending` at
+ * session create and never goes idle until process restart, so treating it as
+ * live work would spin forever after a wait-for-user stop.
+ *
+ * Leftover `in_progress` board rows alone must not either — after a normal
  * wait-for-user stop, rate-limit halt, or goal that never set `stopReason`,
- * those rows stay stale and would otherwise spin forever.
+ * those rows stay stale.
  *
  * Infra child sessions (checkpoint-writer, etc.) also must not keep the parent
  * footer spinning after the main turn is idle — they are background bookkeeping.
@@ -41,6 +46,17 @@ export function shouldShowSessionActivity(input: {
   if (input.hasActiveActor) return true
   if (input.hasActiveChild) return true
   return false
+}
+
+/** The session's own main row — covered by session_status, not by actor liveness. */
+export function isSessionMainActor(actor: { actor_id?: string; mode?: string }) {
+  return actor.mode === "main" || actor.actor_id === "main"
+}
+
+/** Spawned peer/subagent still pending or running. `main` never counts. */
+export function isConcurrentActiveActor(actor: { actor_id?: string; mode?: string; status: string }) {
+  if (isSessionMainActor(actor)) return false
+  return actor.status === "pending" || actor.status === "running"
 }
 
 /** Background writer/title children — not user-visible "still working" on the parent. */

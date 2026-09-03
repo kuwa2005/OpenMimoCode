@@ -5,6 +5,8 @@ import {
   shouldShowSessionActivity,
   shouldSpinInProgressTask,
   isInfraChildSession,
+  isSessionMainActor,
+  isConcurrentActiveActor,
 } from "../../../../src/cli/cmd/tui/component/prompt/footer"
 
 describe("clampStatusMessage", () => {
@@ -61,11 +63,38 @@ describe("shouldShowSessionActivity", () => {
     ).toBe(false)
   })
 
-  test("idle still shows activity for running actors", () => {
+  test("idle still shows activity for concurrent spawned actors", () => {
     expect(
       shouldShowSessionActivity({
         statusType: "idle",
         hasActiveActor: true,
+        hasActiveChild: false,
+      }),
+    ).toBe(true)
+  })
+
+  test("idle hides activity when the only pending actor is leftover main", () => {
+    const actors = [
+      { actor_id: "main", mode: "main", status: "pending" },
+    ]
+    expect(
+      shouldShowSessionActivity({
+        statusType: "idle",
+        hasActiveActor: actors.some(isConcurrentActiveActor),
+        hasActiveChild: false,
+      }),
+    ).toBe(false)
+  })
+
+  test("idle still shows activity when a spawned actor is pending beside leftover main", () => {
+    const actors = [
+      { actor_id: "main", mode: "main", status: "pending" },
+      { actor_id: "explore-1", mode: "subagent", status: "pending" },
+    ]
+    expect(
+      shouldShowSessionActivity({
+        statusType: "idle",
+        hasActiveActor: actors.some(isConcurrentActiveActor),
         hasActiveChild: false,
       }),
     ).toBe(true)
@@ -79,6 +108,23 @@ describe("shouldShowSessionActivity", () => {
         hasActiveChild: true,
       }),
     ).toBe(true)
+  })
+})
+
+describe("isConcurrentActiveActor", () => {
+  test("does not treat the session main row as concurrent work", () => {
+    expect(isSessionMainActor({ actor_id: "main", mode: "main" })).toBe(true)
+    expect(isSessionMainActor({ actor_id: "main" })).toBe(true)
+    expect(isSessionMainActor({ mode: "main", actor_id: "compose-1" })).toBe(true)
+    expect(isConcurrentActiveActor({ actor_id: "main", mode: "main", status: "pending" })).toBe(false)
+    expect(isConcurrentActiveActor({ actor_id: "main", mode: "main", status: "running" })).toBe(false)
+  })
+
+  test("treats pending or running spawned actors as concurrent work", () => {
+    expect(isConcurrentActiveActor({ actor_id: "explore-1", mode: "subagent", status: "pending" })).toBe(true)
+    expect(isConcurrentActiveActor({ actor_id: "explore-1", mode: "subagent", status: "running" })).toBe(true)
+    expect(isConcurrentActiveActor({ actor_id: "ses_child", mode: "peer", status: "pending" })).toBe(true)
+    expect(isConcurrentActiveActor({ actor_id: "explore-1", mode: "subagent", status: "completed" })).toBe(false)
   })
 })
 
