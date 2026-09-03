@@ -16,36 +16,11 @@
 
 ---
 
+
 Open Mimo Code is a terminal-native AI coding assistant. It can read and write code, run commands, manage Git, and use a persistent memory system to keep a deep understanding of your project across sessions while **continuously evolving itself**.
 
 OpenCode Zen is built in as a free default channel, so you can start with zero configuration. Open Mimo Code also supports connecting to any mainstream LLM provider API.
 
----
-
-## Self Evolution — the flagship capability
-
-Most coding agents just write code in the moment. oimo **observes how it works, quantifies friction (Human Attention Cost), and crystallizes improvements** — as skills, hooks, backlog items, and AI-to-AI product briefs. No model-weight training: durable knowledge lives in files you can review.
-
-```text
-Use oimo on real work
-  → /evolve (Self Improvement Session)
-  → quantify friction / Human Attention Cost
-  → project knowledge → .oimo/skills/
-  → product fixes → ~/.oimo/evolve/<projectID>/briefs/ (for an external agent)
-  → evolve-review → human approve → evolve-apply (draft PR)
-  → gate → merge → next cycle
-```
-
-| Command / tool | Role |
-|----------------|------|
-| `/evolve` · `/self-improve` | Full observe → analyze → propose pass |
-| `/evolve-status` | TUI dashboard (briefs / backlog / snapshots) |
-| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
-| `evolve-review` / `evolve-apply` | Multi-agent review / **approval-gated** worktree → verify → draft PR |
-
-Self-evolution logs live under **`~/.oimo/evolve/<projectID>/`** (not in the project tree). Hot-reloaded extensions stay in `<worktree>/.oimo/`. Product source is never auto-patched — Human-in-the-loop is required.
-
-**This is what “Where Models and Agents Co-Evolve” means in practice.**
 
 ---
 
@@ -382,6 +357,33 @@ Custom providers must register at least one model in their `models` field to be 
 
 - **`/dream`** — scans recent session traces, extracts persistent knowledge into project memory, and removes outdated entries
 - **`/distill`** — discovers repeated manual workflows in recent work and packages high-confidence candidates into reusable skills, subagents, or commands
+
+---
+
+## Self Evolution — the flagship capability
+
+Most coding agents just write code in the moment. oimo **observes how it works, quantifies friction (Human Attention Cost), and crystallizes improvements** — as skills, hooks, backlog items, and AI-to-AI product briefs. No model-weight training: durable knowledge lives in files you can review.
+
+```text
+Use oimo on real work
+  → /evolve (Self Improvement Session)
+  → quantify friction / Human Attention Cost
+  → project knowledge → .oimo/skills/
+  → product fixes → ~/.oimo/evolve/<projectID>/briefs/ (for an external agent)
+  → evolve-review → human approve → evolve-apply (draft PR)
+  → gate → merge → next cycle
+```
+
+| Command / tool | Role |
+|----------------|------|
+| `/evolve` · `/self-improve` | Full observe → analyze → propose pass |
+| `/evolve-status` | TUI dashboard (briefs / backlog / snapshots) |
+| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
+| `evolve-review` / `evolve-apply` | Multi-agent review / **approval-gated** worktree → verify → draft PR |
+
+Self-evolution logs live under **`~/.oimo/evolve/<projectID>/`** (not in the project tree). Hot-reloaded extensions stay in `<worktree>/.oimo/`. Product source is never auto-patched — Human-in-the-loop is required.
+
+**This is what “Where Models and Agents Co-Evolve” means in practice.**
 
 ---
 

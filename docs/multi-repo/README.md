@@ -1,6 +1,9 @@
 # Multi-repository usage (oimo)
 
 oimo can treat several Git repositories as one **system workspace**.
+
+**キー・パラメータの詳細（日本語）:** [config-reference.ja.md](./config-reference.ja.md)
+
 Start with the simplest format: a text file of GitHub URLs.
 
 ## Quick start (recommended): `repos.txt`
@@ -29,7 +32,7 @@ git clone https://github.com/example-org/backend
 bash /path/to/OpenMimoCode/docs/multi-repo/samples/url-list/clone-from-repos-txt.sh
 ```
 
-4. Launch oimo from the primary app repo (or the workspace root once CLI wiring is active):
+4. Launch oimo from the primary app repo:
 
 ```bash
 cd backend && oimo
@@ -41,31 +44,39 @@ Discovery order under a directory:
 2. `.oimo/repos.txt` (or `repos.list` / `repositories.txt`)
 3. `.gitmodules` → **superproject** mode
 
-### `repos.txt` syntax
+### `repos.txt` — keys at a glance
 
-```text
-name: customer-platform
-primary: backend
+| Line / token | Meaning |
+|--------------|---------|
+| `name: <label>` | Workspace display name (optional; default `workspace`) |
+| `primary: <id>` | Default repository id (optional; default = first repo line) |
+| `https://…` / `git@…` | Remote URL → expect clone at `<workspace>/<id>/` |
+| local path | Already-cloned path (relative to workspace root) |
+| `read-only` | Deny writes |
+| `id=<id>` | Override registry id (default = last path segment) |
+| `role=<text>` | Short human role note |
 
-https://github.com/org/frontend
-https://github.com/org/backend
-https://github.com/org/shared-schema
-https://github.com/org/infra read-only
-https://github.com/org/api-server id=backend
-../already-cloned-billing
-```
-
-- Blank lines and `#` comments are ignored.
-- Default id = last path segment of the URL.
-- `read-only` blocks writes (Phase 1 Resolver already enforces this).
-- Missing clones are reported by doctor with `git clone` hints (no auto-clone without approval).
+Full tables: [config-reference.ja.md §1](./config-reference.ja.md)
 
 Sample: `docs/multi-repo/samples/url-list/`
 
 ## Sibling YAML (full control)
 
-When you need roles and explicit relative paths, use `.oimo/workspace.yaml`:
+When you need roles and explicit relative paths, use `.oimo/workspace.yaml`.
 
+| Key | Meaning |
+|-----|---------|
+| `version` | Must be `1` |
+| `name` | Workspace display name |
+| `primary` | Must match a `repositories[].id` |
+| `repositories[].id` | Stable id (`repo-id:path` in UI) |
+| `repositories[].path` | Abs/rel path; for `kind: git` must be worktree root |
+| `repositories[].role` | Human role |
+| `repositories[].access` | `read-only` \| `read-write` |
+| `repositories[].kind` | `git` (default) \| `directory` \| `superproject` \| `submodule` |
+| `defaults.*` | Unregistered read/write + require cross-repo plan |
+
+Full tables: [config-reference.ja.md §2](./config-reference.ja.md)  
 Sample: `docs/multi-repo/samples/siblings-yaml/workspace.yaml`
 
 ## Git submodule superproject
@@ -77,13 +88,9 @@ If the directory has `.gitmodules` and no workspace/repos file, oimo registers:
 | `superproject` | Workspace management only (default read-only). Not preferred for app implementation. |
 | `submodule` | Real application repositories. Commits/PRs happen here. |
 
-oimo inspects each submodule locally (no network):
+`.gitmodules` keys oimo reads: section `name`, `path`, `url`, `branch` — see [config-reference.ja.md §3](./config-reference.ja.md).
 
-- recorded commit (gitlink in superproject)
-- checked-out commit / branch
-- tracking branch from `.gitmodules`
-- remotes, initialized?, dirty?
-- commit mismatch / behind tracking branch → **warnings** for impact analysis
+oimo inspects each submodule locally (no network): recorded vs checked-out commit, tracking branch, remotes, initialized?, dirty?, mismatch/behind → warnings.
 
 **Safety**
 
@@ -91,7 +98,7 @@ oimo inspects each submodule locally (no network):
 - Never auto `submodule update` / fetch / checkout — explain network + worktree impact and ask approval.
 - Superproject pointer updates are a **separate** change set from submodule code changes.
 
-Sample `.gitmodules`: `docs/multi-repo/samples/superproject/gitmodules.sample`
+Sample: `docs/multi-repo/samples/superproject/gitmodules.sample`
 
 ## What works in this release (Phase 1 foundation)
 
@@ -115,6 +122,7 @@ Single-repo use without any of these files is unchanged.
 
 ## Related docs
 
+- **設定キー詳細（日本語）:** [config-reference.ja.md](./config-reference.ja.md)
 - Architecture survey: `docs/multi-repo/current-architecture.md`
 - Implementation plan: `docs/multi-repo/implementation-plan.md`
 - Instruction source: `docs/oimo-multi-repository-implementation-instructions.md`

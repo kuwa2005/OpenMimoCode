@@ -16,36 +16,11 @@
 
 ---
 
+
 Open Mimo Code は、ターミナルネイティブの AI コーディングアシスタントです。コードの読み書き、コマンド実行、Git 操作に加えて、持続的なメモリシステムによってセッションをまたいでプロジェクトへの深い理解を維持し、**自分自身を進化させ続けます**。
 
 OpenCode Zen が無料のデフォルトチャネルとして組み込まれており、ゼロ設定ですぐに始められます。また、主要な LLM プロバイダーの API にも接続できます。
 
----
-
-## 自己進化（Self Evolution）— oimo の最大のウリ
-
-他のコーディングエージェントが「その場で書く」のに対し、oimo は **運用中に自分のやり方を観測し、摩擦を数値化し、改善案を結晶化**します。モデルの重みを触るのではなく、スキル・フック・バックログ・AI-to-AI 指示書として知識を残します。
-
-```text
-案件で使う
-  → /evolve（Self Improvement Session）
-  → 摩擦 / Human Attention Cost を定量化
-  → プロジェクト知識 → .oimo/skills/
-  → 製品改善 → ~/.oimo/evolve/<projectID>/briefs/（外部 Agent 向け）
-  → evolve-review → 人間承認 → evolve-apply（draft PR）
-  → ゲート通過後にマージ → 次サイクル
-```
-
-| コマンド / 道具 | 役割 |
-|----------------|------|
-| `/evolve` · `/self-improve` | 観測→分析→提案のフルパス |
-| `/evolve-status` | TUI ダッシュボード（briefs / backlog / snapshots） |
-| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
-| `evolve-review` / `evolve-apply` | 多視点レビュー / **承認付き** worktree→verify→draft PR |
-
-自己進化ログはプロジェクトを汚さず **`~/.oimo/evolve/<projectID>/`** に集約されます（skills などホットリロード拡張だけが `<worktree>/.oimo/`）。製品ソースの自動パッチはしません — Human-in-the-loop が前提です。
-
-**これが Co-Evolve の実体です。** モデルとエージェントが一緒に良くなる、という README の標語を、閉じたループとして実装しています。
 
 ---
 
@@ -373,6 +348,33 @@ export PULSE_SERVER=tcp:127.0.0.1:4713
 
 - **`/dream`** — 最近のセッショントレースをスキャンし、永続的な知識をプロジェクトメモリに抽出し、古いエントリを削除
 - **`/distill`** — 最近の作業から繰り返される手作業ワークフローを発見し、高信頼度の候補を再利用可能なスキル、サブエージェント、またはコマンドとしてパッケージ化
+
+---
+
+## 自己進化（Self Evolution）— oimo の最大のウリ
+
+他のコーディングエージェントが「その場で書く」のに対し、oimo は **運用中に自分のやり方を観測し、摩擦を数値化し、改善案を結晶化**します。モデルの重みを触るのではなく、スキル・フック・バックログ・AI-to-AI 指示書として知識を残します。
+
+```text
+案件で使う
+  → /evolve（Self Improvement Session）
+  → 摩擦 / Human Attention Cost を定量化
+  → プロジェクト知識 → .oimo/skills/
+  → 製品改善 → ~/.oimo/evolve/<projectID>/briefs/（外部 Agent 向け）
+  → evolve-review → 人間承認 → evolve-apply（draft PR）
+  → ゲート通過後にマージ → 次サイクル
+```
+
+| コマンド / 道具 | 役割 |
+|----------------|------|
+| `/evolve` · `/self-improve` | 観測→分析→提案のフルパス |
+| `/evolve-status` | TUI ダッシュボード（briefs / backlog / snapshots） |
+| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
+| `evolve-review` / `evolve-apply` | 多視点レビュー / **承認付き** worktree→verify→draft PR |
+
+自己進化ログはプロジェクトを汚さず **`~/.oimo/evolve/<projectID>/`** に集約されます（skills などホットリロード拡張だけが `<worktree>/.oimo/`）。製品ソースの自動パッチはしません — Human-in-the-loop が前提です。
+
+**これが Co-Evolve の実体です。** モデルとエージェントが一緒に良くなる、という README の標語を、閉じたループとして実装しています。
 
 ---
 

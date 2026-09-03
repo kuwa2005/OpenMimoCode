@@ -1,29 +1,37 @@
-# oimo multi-repo — simplest setup
-# Copy this file to:  <workspace-root>/.oimo/repos.txt
-# Then clone each repo into a sibling folder named after the repo.
+# <workspace>/.oimo/repos.txt
+# ────────────────────────────────────────
+# マルチリポを「URL を並べるだけ」で登録する最速フォーマット。
+# 詳細: docs/multi-repo/config-reference.ja.md
 #
-# Example layout after cloning:
-#   my-system/
-#     .oimo/repos.txt   ← this file
-#     frontend/
-#     backend/
-#     shared-schema/
-#     customer-infra/
-#
-# Optional headers:
+# 発見順: workspace.yaml → このファイル → .gitmodules
+# 空行と # コメントは無視。
+
+# ── ヘッダ（任意・ファイル全体に各1回）──
+# name:     Workspace の表示名（省略時 workspace）
+# primary:  主対象リポの id（省略時は最初のリポ行の id）
 name: customer-platform
 primary: backend
 
-# One GitHub URL per line (id = last path segment)
+# ── リポジトリ行（1行 = 1リポ）──
+# 先頭: https://... | git@... | またはローカルパス
+# 後ろに付けられるトークン:
+#   read-only | readonly     … 書込禁止
+#   read-write | readwrite   … 書込可（既定）
+#   id=<識別子>              … Registry id（省略時は URL/パス末尾）
+#   role=<短い役割>          … 人間向けメモ（空白不可）
+#
+# URL 行のローカル配置: <workspace>/<id>/
+#   例) https://github.com/org/frontend → ./frontend/
+
 https://github.com/example-org/frontend
 https://github.com/example-org/backend
 https://github.com/example-org/shared-schema
 
-# Mark infra read-only (impact analysis yes, edits no)
+# infra は確認のみ（編集させない）
 https://github.com/example-org/customer-infra read-only
 
-# Custom id when the folder name should differ from the GitHub repo name:
-# https://github.com/example-org/api-server id=backend
+# フォルダ名を GitHub リポ名と変えたいとき
+# https://github.com/example-org/api-server id=backend role=REST-API
 
-# Local path instead of URL (already cloned elsewhere):
+# すでに別場所に clone 済みならパスでも可
 # ../legacy-billing

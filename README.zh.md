@@ -16,36 +16,11 @@
 
 ---
 
+
 Open Mimo Code 是一个终端原生的 AI 编程助手。它能读写代码、执行命令、管理 Git，通过持久化记忆系统，在多次会话间保持对你项目的深度理解，并**持续自我进化**。
 
 内置 OpenCode Zen 免费默认通道——零配置即可开始使用。也支持接入各家主流 LLM 厂商 API。
 
----
-
-## 自我进化（Self Evolution）— oimo 的核心卖点
-
-多数编程 Agent 只是「当场写代码」。oimo 会在真实使用中**观测自身工作方式、量化摩擦（Human Attention Cost），并把改进结晶**为技能、钩子、backlog 与面向外部 Agent 的 AI-to-AI 产品改进指示书——不训练模型权重，知识以可审阅的文件形式保留。
-
-```text
-真实项目中使用 oimo
-  → /evolve（Self Improvement Session）
-  → 量化摩擦 / Human Attention Cost
-  → 项目知识 → .oimo/skills/
-  → 产品改进 → ~/.oimo/evolve/<projectID>/briefs/（交给外部 Agent）
-  → evolve-review → 人工批准 → evolve-apply（draft PR）
-  → 门禁通过后合并 → 下一轮
-```
-
-| 命令 / 工具 | 作用 |
-|-------------|------|
-| `/evolve` · `/self-improve` | 观测→分析→提案完整路径 |
-| `/evolve-status` | TUI 仪表盘（briefs / backlog / snapshots） |
-| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
-| `evolve-review` / `evolve-apply` | 多视角评审 / **需批准** 的 worktree→verify→draft PR |
-
-自我进化日志集中在 **`~/.oimo/evolve/<projectID>/`**（不污染项目树）；热重载扩展仍在 `<worktree>/.oimo/`。不会自动改写产品源码——Human-in-the-loop 是前提。
-
-**这就是 “Where Models and Agents Co-Evolve” 的落地形态。**
 
 ---
 
@@ -373,6 +348,33 @@ export PULSE_SERVER=tcp:127.0.0.1:4713
 
 - **`/dream`** — 扫描近期会话轨迹，提取持久知识到项目记忆，清理过时条目
 - **`/distill`** — 发现近期工作中重复的手动工作流，将高置信度候选打包成可复用的 skill、subagent 或 command
+
+---
+
+## 自我进化（Self Evolution）— oimo 的核心卖点
+
+多数编程 Agent 只是「当场写代码」。oimo 会在真实使用中**观测自身工作方式、量化摩擦（Human Attention Cost），并把改进结晶**为技能、钩子、backlog 与面向外部 Agent 的 AI-to-AI 产品改进指示书——不训练模型权重，知识以可审阅的文件形式保留。
+
+```text
+真实项目中使用 oimo
+  → /evolve（Self Improvement Session）
+  → 量化摩擦 / Human Attention Cost
+  → 项目知识 → .oimo/skills/
+  → 产品改进 → ~/.oimo/evolve/<projectID>/briefs/（交给外部 Agent）
+  → evolve-review → 人工批准 → evolve-apply（draft PR）
+  → 门禁通过后合并 → 下一轮
+```
+
+| 命令 / 工具 | 作用 |
+|-------------|------|
+| `/evolve` · `/self-improve` | 观测→分析→提案完整路径 |
+| `/evolve-status` | TUI 仪表盘（briefs / backlog / snapshots） |
+| `evolve_status` tool | metrics · snapshot · rollback · scenarios · gate |
+| `evolve-review` / `evolve-apply` | 多视角评审 / **需批准** 的 worktree→verify→draft PR |
+
+自我进化日志集中在 **`~/.oimo/evolve/<projectID>/`**（不污染项目树）；热重载扩展仍在 `<worktree>/.oimo/`。不会自动改写产品源码——Human-in-the-loop 是前提。
+
+**这就是 “Where Models and Agents Co-Evolve” 的落地形态。**
 
 ---
 

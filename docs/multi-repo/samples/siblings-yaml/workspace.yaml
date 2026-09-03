@@ -1,3 +1,21 @@
+# .oimo/workspace.yaml — 詳細レジストリ
+# 相対 path の基準: このファイルが .oimo/ 配下なら親ディレクトリ。
+# 詳細: docs/multi-repo/config-reference.ja.md
+#
+# version  … スキーマ版（今は 1 のみ）
+# name     … Workspace 表示名
+# primary  … repositories[].id のいずれか（主対象）
+# repositories[]:
+#   id      … 安定 id（必須）結果は id:相対パス で出す
+#   path    … 絶対 or 相対。git なら worktree ルート必須
+#   role    … 役割の説明（任意）
+#   access  … read-only | read-write（省略時は kind 依存）
+#   kind    … git（既定）| directory | superproject | submodule
+# defaults:
+#   allow_unregistered_reads   … 既定 false
+#   allow_unregistered_writes  … 既定 false（true は非推奨）
+#   require_cross_repo_plan    … 既定 true
+
 version: 1
 name: customer-platform
 primary: backend
@@ -18,6 +36,11 @@ repositories:
     path: ../customer-infra
     role: deployment and cloud resources
     access: read-only
+  # Git でない補助ディレクトリは kind: directory が必須
+  # - id: notes
+  #   path: ../notes
+  #   kind: directory
+  #   access: read-only
 defaults:
   allow_unregistered_reads: false
   allow_unregistered_writes: false

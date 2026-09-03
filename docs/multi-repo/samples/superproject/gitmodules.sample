@@ -1,9 +1,18 @@
-# Place this file at the root of a Git superproject (alongside .gitmodules).
-# oimo auto-detects .gitmodules when no workspace.yaml / repos.txt is present.
+# リポジトリルートに置く標準の .gitmodules（ファイル名は必ず .gitmodules）
+# oimo は workspace.yaml / repos.txt が無いときこれを読み、
+#   superproject（親・原則 read-only）+ 各 submodule（実装単位）
+# を Registry へ登録する。
 #
-# Copy-paste starter — replace URLs/paths with yours, then:
+# oimo が読むキー（Git 標準）:
+#   [submodule "<name>"]  … name → id の候補
+#   path = <相対パス>     … 必須。checkout 位置
+#   url  = <clone URL>    … 推奨
+#   branch = <追跡ブランチ> … 任意。behind 警告のヒント（fetch はしない）
+#
+# 詳細: docs/multi-repo/config-reference.ja.md
+# 使い方:
 #   git submodule add <url> <path>
-# or write .gitmodules and run (with approval):
+# またはこの内容を書いた後、承認のうえで:
 #   git submodule update --init --recursive
 
 [submodule "frontend"]
