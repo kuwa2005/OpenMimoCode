@@ -37,6 +37,7 @@ import { DialogModel, useConnected } from "@tui/component/dialog-model"
 import { DialogMcp } from "@tui/component/dialog-mcp"
 import { DialogStatus } from "@tui/component/dialog-status"
 import { DialogEvolve } from "@tui/component/dialog-evolve"
+import { DialogRepos } from "@tui/component/dialog-repos"
 import { DialogWorktree } from "@tui/component/dialog-worktree"
 import { DialogThemeList } from "@tui/component/dialog-theme-list"
 import { DialogImageList } from "@tui/component/dialog-image-list"
@@ -1018,6 +1019,18 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       },
       onSelect: () => {
         dialog.replace(() => <DialogEvolve />)
+      },
+      category: "system",
+    },
+    {
+      title: "Multi-repo /repos",
+      value: "repos.workspace",
+      slash: {
+        name: "repos",
+        aliases: ["workspace-repos"],
+      },
+      onSelect: () => {
+        dialog.replace(() => <DialogRepos />)
       },
       category: "system",
     },

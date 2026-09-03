@@ -136,15 +136,16 @@ oimo が読むキー: セクション名、`path`、`url`、`branch`
 
 ---
 
-## このリリースでできること（Phase 1 基盤）
+## このリリースでできること（進行中）
 
 | 能力 | 状態 |
 |------|------|
 | `repos.txt` / `workspace.yaml` / `.gitmodules` で登録 | 対応済み |
-| パス解決、`repo-id:path`、read-only・未登録書込の拒否 | Resolver 対応済み |
-| doctor・セッション指紋（submodule 状態含む） | 対応済み |
-| 横断検索・影響グラフ・計画付き横断編集 | 予定（Phase 2–5） |
-| TUI `/repos` | 予定 |
+| パス解決、`repo-id:path`、read-only・未登録書込の拒否 | Resolver + 書込ゲート配線済み |
+| doctor・セッション指紋（作成時キャプチャ） | 対応済み |
+| CLI `oimo repos list\|doctor` / TUI `/repos` | 対応済み |
+| 横断 grep（`repositories: [id…]` 明示時のみ） | Phase 2 一部対応 |
+| 影響グラフ・計画付き横断編集・リポ別検証 | 予定（Phase 3–5） |
 
 設定ファイルが無い単一リポ利用は従来どおりです。  
 FDE（`oimo --fde`）と組み合わせると、API + UI + schema にまたがる現場スパイクに向きます（infra は `read-only` 推奨）。

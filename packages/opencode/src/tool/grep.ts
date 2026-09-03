@@ -22,8 +22,17 @@ export const GrepTool = Tool.define(
         pattern: z.string().describe("The regex pattern to search for in file contents"),
         path: z.string().optional().describe("The directory to search in. Defaults to the current working directory."),
         include: z.string().optional().describe('File pattern to include in the search (e.g. "*.js", "*.{ts,tsx}")'),
+        repositories: z
+          .array(z.string())
+          .optional()
+          .describe(
+            "When a multi-repo workspace is configured: repository ids to search (explicit only — never implied all). Results are prefixed with repo-id:path.",
+          ),
       }),
-      execute: (params: { pattern: string; path?: string; include?: string }, ctx: Tool.Context) =>
+      execute: (
+        params: { pattern: string; path?: string; include?: string; repositories?: string[] },
+        ctx: Tool.Context,
+      ) =>
         Effect.gen(function* () {
           const empty = {
             title: params.pattern,
@@ -42,8 +51,42 @@ export const GrepTool = Tool.define(
               pattern: params.pattern,
               path: params.path,
               include: params.include,
+              repositories: params.repositories,
             },
           })
+
+          if (params.repositories?.length) {
+            const { Runtime, searchAcross, formatMatches } = yield* Effect.promise(() => import("@/repo-workspace"))
+            const workspace = yield* Effect.tryPromise(() => Runtime.current()).pipe(
+              Effect.catch(() => Effect.succeed(undefined)),
+            )
+            if (!workspace) {
+              return {
+                title: params.pattern,
+                metadata: { matches: 0, truncated: false },
+                output: "No multi-repo workspace loaded; omit repositories or configure repos.txt / workspace.yaml",
+              }
+            }
+            const result = yield* searchAcross(workspace, {
+              pattern: params.pattern,
+              repositoryIds: params.repositories,
+              include: params.include,
+              signal: ctx.abort,
+              limit: 100,
+            }).pipe(Effect.provide(Ripgrep.defaultLayer), Effect.orDie)
+            if (result.matches.length === 0) return empty
+            return {
+              title: params.pattern,
+              metadata: {
+                matches: result.matches.length,
+                truncated: result.truncated,
+              },
+              output: [
+                `Found ${result.matches.length} matches across [${params.repositories.join(", ")}]${result.truncated ? " (truncated)" : ""}`,
+                formatMatches(result.matches),
+              ].join("\n"),
+            }
+          }
 
           const effectiveCwd = SessionCwd.get(ctx.sessionID)
           const search = AppFileSystem.resolve(

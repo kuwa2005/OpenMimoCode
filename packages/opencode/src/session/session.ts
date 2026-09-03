@@ -642,7 +642,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
     }) {
       const directory = input?.directory ?? (yield* InstanceState.directory)
       const workspace = yield* InstanceState.workspaceID
-      return yield* createNext({
+      const session = yield* createNext({
         parentID: input?.parentID,
         contextFrom: input?.contextFrom,
         contextWatermark: input?.contextWatermark,
@@ -651,6 +651,10 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
         permission: input?.permission,
         workspaceID: workspace,
       })
+      yield* Effect.tryPromise(() =>
+        import("@/repo-workspace").then((m) => m.Runtime.captureSession(session.id, directory)),
+      ).pipe(Effect.catch(() => Effect.void))
+      return session
     })
 
     const fork = Effect.fn("Session.fork")(function* (input: { sessionID: SessionID; messageID?: MessageID }) {

@@ -22,6 +22,8 @@ import {
 } from "./resolve"
 import { Access, Defaults, File, Kind, RepositoryConfig } from "./schema"
 import * as SessionFingerprint from "./session-fingerprint"
+import * as Runtime from "./runtime"
+import { formatMatches, searchAcross } from "./search"
 import {
   cloneCommands,
   deriveId,
@@ -40,6 +42,7 @@ export {
   RepositoryConfig,
   RepoWorkspaceError,
   SessionFingerprint,
+  Runtime,
   candidatePaths,
   canWrite,
   cloneCommands,
@@ -49,6 +52,7 @@ export {
   findReposListPath,
   fingerprint,
   formatLocation,
+  formatMatches,
   gitWorktreeRoot,
   inspectAll,
   isSuperproject,
@@ -67,6 +71,7 @@ export {
   resolveRead,
   resolveWrite,
   rootOf,
+  searchAcross,
 }
 
 export type {

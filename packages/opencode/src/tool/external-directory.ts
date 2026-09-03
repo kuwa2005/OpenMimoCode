@@ -12,6 +12,7 @@ import { assertMemoryWriteAllowed, assertAgentWriteSandbox } from "./memory-path
 import { AppFileSystem } from "@mimo-ai/shared/filesystem"
 import * as ConfigReliability from "@/config/reliability"
 import * as Scope from "@/reliability/scope"
+import { Runtime as RepoWorkspaceRuntime, resolveWrite } from "@/repo-workspace"
 
 type Kind = "file" | "directory"
 
@@ -125,6 +126,21 @@ export const assertWriteAllowed = Effect.fn("Tool.assertWriteAllowed")(function*
 ) {
   yield* assertExternalDirectoryEffect(ctx, target, options)
   if (!target) return
+
+  // When a multi-repo workspace is loaded, enforce registry access (read-only /
+  // unregistered deny). Fail open if load fails so single-repo sessions stay usable.
+  const workspace = yield* Effect.tryPromise(() => RepoWorkspaceRuntime.current()).pipe(
+    Effect.catch(() => Effect.succeed(undefined)),
+  )
+  if (workspace) {
+    const full = process.platform === "win32" ? AppFileSystem.normalizePath(target) : AppFileSystem.resolve(target)
+    const hit = resolveWrite(workspace, { absolutePath: full })
+    if (!hit.ok) {
+      if (!(hit.code === "unregistered" && workspace.defaults.allowUnregisteredWrites)) {
+        throw new Error(`repo-workspace write denied (${hit.code}): ${hit.message}`)
+      }
+    }
+  }
 
   // Instance.current is a getter that THROWS when no instance is ALS-bound
   // (detached fibers, tests without a project fixture). The optional chain runs

@@ -238,8 +238,9 @@ Phase 完了ゲートとして番号を追跡する。E2E 合格基準は shared
 
 ## 直近の次アクション
 
-1. [done] Phase 1 registry: schema / repos.txt / gitmodules / Resolver / doctor / fingerprint / samples
-2. Phase 1-PR: TUI/CLI `/repos` list·doctor wiring into Instance boot
-3. Phase 2: read-only cross-repo search
+1. [done] Phase 1 registry + Resolver + doctor + fingerprint + samples
+2. [done] CLI `oimo repos` / TUI `/repos` + write-gate wiring + session capture
+3. [partial] Phase 2: grep `repositories[]` cross-search（glob/read の repo 指定は未）
+4. Phase 3: dependency graph + impact report
 
 本計画の更新は Phase 完了時に行い、逸脱は「安全条件を落とさない」範囲でのみ許可する。
