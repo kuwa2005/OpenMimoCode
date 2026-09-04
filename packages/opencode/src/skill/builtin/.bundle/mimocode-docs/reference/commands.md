@@ -40,7 +40,7 @@ Notable TUI flags:
 | `--agent` | Agent override |
 | `--se` / `--autonomy` | SE autonomy (Requirements Lock, then non-stop). Enables Friction Learning (SE lens) |
 | `--fde` | FDE autonomy (Solution Lock; PoC allowed before lock). Enables Friction Learning (FDE lens). Combinable with `--se` |
-| `--character` | Friction Learning presentation: `default` (default) or `off`. Does not change learning/reasoning |
+| `--character` | 愚痴モード (Friction フィードバック表示)。未指定=OFF、`--character`=ON、`--character=off` で明示 OFF。学習・推論は変わらない |
 | `--spauto` / `--autosp` | Super Auto (self-hearing, never-ask from launch; risk gate every time) |
 | `--auto` / `--yolo` | Auto-approve permissions not explicitly denied; skip workspace trust; also auto-approves deletes |
 | `--never-ask` | Start with never-ask on |

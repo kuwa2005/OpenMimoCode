@@ -18,6 +18,7 @@ import { TuiConfig } from "./config/tui"
 import { MIMOCODE_PROCESS_ROLE, MIMOCODE_RUN_ID, ensureRunID, sanitizedProcessEnv } from "@/util/mimo-process"
 import { checkTrust, markTrusted } from "@/project/workspace-trust"
 import { t } from "@/cli/i18n"
+import { CHARACTER_CLI_HELP } from "@/character/mode"
 
 declare global {
   const OPENCODE_WORKER_PATH: string
@@ -229,9 +230,8 @@ export const TuiThreadCommand = cmd({
       })
       .option("character", {
         type: "string",
-        describe:
-          "Friction Learning の表示口調のみ変更 (推論・学習は不変)。default | off。未指定は default",
-        default: "default",
+        requiresArg: false,
+        describe: CHARACTER_CLI_HELP,
       })
       .option("spauto", {
         alias: ["autosp"],
@@ -292,10 +292,12 @@ export const TuiThreadCommand = cmd({
       const se = !!args.autonomy
       // --se and --fde may be combined: autonomy persona prefers FDE when --fde is set;
       // Friction Learning runs with both SE and FDE analysis lenses.
-      const characterArg = typeof args.character === "string" ? args.character : "default"
+      const characterRaw =
+        typeof args.character === "string" ? args.character : args.character === true ? "" : undefined
+      const characterMode = (await import("@/character/mode")).resolveCharacterCli(characterRaw)
       {
         const { validateCharacterArg } = await import("@/character/mode")
-        const characterError = validateCharacterArg(characterArg)
+        const characterError = validateCharacterArg(characterRaw)
         if (characterError) {
           UI.error(characterError)
           process.exitCode = 1
@@ -351,7 +353,7 @@ export const TuiThreadCommand = cmd({
         process.env.MIMOCODE_FRICTION_SE = "1"
       }
 
-      process.env.MIMOCODE_CHARACTER = characterArg
+      process.env.MIMOCODE_CHARACTER = characterMode
 
       if (spauto) {
         process.env.MIMOCODE_SPAUTO = "1"

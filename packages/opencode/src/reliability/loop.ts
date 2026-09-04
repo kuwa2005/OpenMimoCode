@@ -21,6 +21,6 @@ export function options(
     edit_window: base.edit_window,
     edit_similarity: base.edit_similarity,
     edit_matches: base.edit_matches,
-    action_streak: base.action_streak ?? 3,
+    action_streak: base.action_streak ?? 5,
   }
 }

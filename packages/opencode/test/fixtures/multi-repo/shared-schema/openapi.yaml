@@ -1,0 +1,26 @@
+openapi: 3.0.3
+info:
+  title: Fixture User API
+  version: 0.0.1
+paths:
+  /users:
+    get:
+      summary: List users
+      responses:
+        "200":
+          description: ok
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/User"
+components:
+  schemas:
+    User:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string

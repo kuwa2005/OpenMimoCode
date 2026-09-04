@@ -1,0 +1,7 @@
+{
+  "name": "@local/backend",
+  "private": true,
+  "dependencies": {
+    "@local/shared-schema": "file:../shared-schema"
+  }
+}

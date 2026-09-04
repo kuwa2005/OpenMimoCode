@@ -12,7 +12,7 @@ import { assertMemoryWriteAllowed, assertAgentWriteSandbox } from "./memory-path
 import { AppFileSystem } from "@mimo-ai/shared/filesystem"
 import * as ConfigReliability from "@/config/reliability"
 import * as Scope from "@/reliability/scope"
-import { Runtime as RepoWorkspaceRuntime, resolveWrite } from "@/repo-workspace"
+import { Runtime as RepoWorkspaceRuntime, resolveWrite, Scope as RepoScope, ChangeSet as RepoChangeSet } from "@/repo-workspace"
 
 type Kind = "file" | "directory"
 
@@ -138,6 +138,29 @@ export const assertWriteAllowed = Effect.fn("Tool.assertWriteAllowed")(function*
     if (!hit.ok) {
       if (!(hit.code === "unregistered" && workspace.defaults.allowUnregisteredWrites)) {
         throw new Error(`repo-workspace write denied (${hit.code}): ${hit.message}`)
+      }
+    } else {
+      // Active execution scope (set after cross-repo plan approval) further restricts writes.
+      const scope = RepoScope.getScope(ctx.sessionID)
+      const cs = RepoChangeSet.loadChangeSet(ctx.sessionID)
+      const activeScope = scope ?? (cs && cs.status !== "cancelled" && cs.status !== "planned" ? new Set(cs.executionScope) : undefined)
+      if (activeScope && activeScope.size > 0 && !activeScope.has(hit.repository.id)) {
+        throw new Error(
+          `repo-workspace write denied (outside_scope): "${hit.repository.id}" is not in execution scope [${[...activeScope].join(", ")}]`,
+        )
+      }
+      // Multi-repo write to non-primary without approved plan when requireCrossRepoPlan.
+      if (
+        workspace.defaults.requireCrossRepoPlan &&
+        hit.repository.id !== workspace.primaryRepositoryId &&
+        (!cs || !cs.plan.approvedAt)
+      ) {
+        const hasScope = activeScope && activeScope.has(hit.repository.id)
+        if (!hasScope) {
+          throw new Error(
+            `repo-workspace write denied (plan_required): cross-repo write to "${hit.repository.id}" needs an approved change plan (oimo repos plan / impact)`,
+          )
+        }
       }
     }
   }

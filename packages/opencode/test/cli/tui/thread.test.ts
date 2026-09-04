@@ -64,7 +64,7 @@ describe("tui thread", () => {
       neverAsk: false,
       autonomy: false,
       fde: false,
-      character: "default",
+      character: undefined,
       spauto: false,
       autosp: false,
       trust: true,

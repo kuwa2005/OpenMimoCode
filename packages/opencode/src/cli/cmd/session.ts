@@ -11,6 +11,7 @@ import { Installation } from "../../installation"
 import * as prompts from "@clack/prompts"
 import { EOL } from "os"
 import { AppRuntime } from "@/effect/app-runtime"
+import { CHARACTER_CLI_HELP } from "@/character/mode"
 
 export const SessionCommand = cmd({
   command: "session",
@@ -82,7 +83,7 @@ export const SessionListCommand = cmd({
       })
       .option("continue", {
         alias: "c",
-        describe: "ピッカーを使わず、直近のセッションを TUI で続行する (--auto/--se などの起動フラグと併用可)",
+        describe: "ピッカーを使わず、直近のセッションを TUI で続行する (--auto/--se/--character などの起動フラグと併用可)",
         type: "boolean",
       })
       .option("auto", {
@@ -104,6 +105,11 @@ export const SessionListCommand = cmd({
         describe:
           "選択したセッションを Super Auto で起動する (ヒアリングなし・完全ノンストップ。--autosp も可)",
         type: "boolean",
+      })
+      .option("character", {
+        type: "string",
+        requiresArg: false,
+        describe: CHARACTER_CLI_HELP,
       })
   },
   handler: async (args) => {
@@ -143,13 +149,27 @@ export const SessionListCommand = cmd({
   },
 })
 
-export function launchFlags(args: { auto?: boolean; autonomy?: boolean; fde?: boolean; spauto?: boolean }): string[] {
+export function launchFlags(args: {
+  auto?: boolean
+  autonomy?: boolean
+  fde?: boolean
+  spauto?: boolean
+  character?: string | boolean
+}): string[] {
   const flags: string[] = []
   if (args.auto) flags.push("--auto")
   if (args.autonomy) flags.push("--se")
   if (args.fde) flags.push("--fde")
   if (args.spauto) flags.push("--spauto")
+  const character = characterLaunchFlag(args.character)
+  if (character) flags.push(character)
   return flags
+}
+
+function characterLaunchFlag(raw: string | boolean | undefined): string | undefined {
+  if (raw === true || raw === "") return "--character"
+  if (typeof raw === "string" && raw.length > 0) return `--character=${raw}`
+  return undefined
 }
 
 async function pickAndLaunch(sessions: Session.Info[], flags: string[]) {

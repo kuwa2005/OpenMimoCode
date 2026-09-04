@@ -5,6 +5,7 @@ import { SYSTEM_SPAWNED_AGENT_TYPES } from "@/agent/config"
 import { Bus } from "@/bus"
 import { Metrics } from "@/metrics"
 import { Config } from "@/config"
+import * as ConfigAutonomy from "@/config/autonomy"
 import { Permission } from "@/permission"
 import { Plugin } from "@/plugin"
 import { Snapshot } from "@/snapshot"
@@ -277,9 +278,31 @@ export const layer: Layer.Layer<
         if (ctx.blocked) return
         const incident = tryBest?.consume(part)
         if (!incident) return
+        const detail = describeTryBest(incident)
+        // Multi-file implementation legitimately chains edits before verify. Under
+        // autonomy, nudge instead of hard-pausing the turn (which felt like a stop).
+        if (incident.reason === "action_streak" && ConfigAutonomy.enabled(cfg)) {
+          yield* session.updatePart({
+            id: PartID.ascending(),
+            messageID: ctx.assistantMessage.id,
+            sessionID: ctx.sessionID,
+            type: "text",
+            text: `Try-best note: ${detail} Prefer running verification soon; do not re-apply the same edit unchanged.`,
+            synthetic: true,
+            metadata: {
+              origin: {
+                kind: "try_best_nudge",
+                providerID: input.model.providerID,
+                modelID: input.model.id,
+                incident,
+              },
+            },
+            time: { start: Date.now(), end: Date.now() },
+          })
+          return
+        }
         tryBest?.reset()
         ctx.blocked = true
-        const detail = describeTryBest(incident)
         yield* session.updatePart({
           id: PartID.ascending(),
           messageID: ctx.assistantMessage.id,

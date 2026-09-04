@@ -648,6 +648,7 @@ export const dict: Record<string, string> = {
   // Context rebuild boundary marker (inserted by /rebuild)
   "tui.session.rebuild_boundary.label": "context rebuilt",
   "tui.session.rebuild_boundary.detail": "earlier messages summarized",
+  "tui.session.friction_feedback.label": "friction feedback",
 
   // Workspace trust
   "trust.title": "Accessing workspace:",

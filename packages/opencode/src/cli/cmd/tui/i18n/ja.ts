@@ -610,6 +610,7 @@ export const dict = {
 
   // Session badges
   "tui.session.badge.auto": "自動",
+  "tui.session.friction_feedback.label": "Friction フィードバック",
 
   // Workspace trust
   "trust.title": "ワークスペースにアクセス中：",

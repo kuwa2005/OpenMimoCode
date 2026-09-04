@@ -185,7 +185,7 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 
 **Friction Learning** (no dedicated `--friction-*` flag): when `--se` and/or `--fde` is on, oimo detects corrective feedback (後出し条件、やり直し、否定、差し戻し、検証要求、バグ報告), classifies gaps (Instruction / Interpretation / Implementation / Verification / …), writes rule candidates under `~/.oimo/evolve/<projectID>/friction/` and `.oimo/friction/rules.json`, and injects applicable rules into later similar tasks. Temporary phrases (`今回だけ`) stay Task-scoped. Users can disable bad rules (`今後その確認はいらない`).
 
-**Character (presentation only):** `--character=default|off` (default `default`). Changes wording/tone of Friction feedback only — never responsibility, classification, or what gets learned. `off` keeps learning on with neutral copy. Future modes (e.g. osaka) add a renderer only.
+**Character (presentation only):** 未指定=OFF、`--character`=ON (default 口調)、`--character=off` で明示 OFF。Friction フィードバックの言い回しだけ変える — 責任分類・学習内容・推論は変わらない。将来 `--character=osaka` 等は renderer 追加のみ。
 
 **Mid-session handoff:** `/auto` (none / normal / fde / special), or continue with flags: `oimo -c --fde`, `oimo -c --se`, or `oimo -c --se --fde`.
 

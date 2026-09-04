@@ -24,6 +24,11 @@ import { Access, Defaults, File, Kind, RepositoryConfig } from "./schema"
 import * as SessionFingerprint from "./session-fingerprint"
 import * as Runtime from "./runtime"
 import { formatMatches, searchAcross } from "./search"
+import * as Graph from "./graph"
+import * as ChangeSet from "./change-set"
+import * as Plan from "./plan"
+import * as Verify from "./verify"
+import * as Scope from "./scope"
 import {
   cloneCommands,
   deriveId,
@@ -72,6 +77,11 @@ export {
   resolveWrite,
   rootOf,
   searchAcross,
+  Graph,
+  ChangeSet,
+  Plan,
+  Verify,
+  Scope,
 }
 
 export type {

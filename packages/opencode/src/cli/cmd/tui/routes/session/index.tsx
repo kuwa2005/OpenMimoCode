@@ -120,6 +120,33 @@ const GO_UPSELL_WINDOW = 86_400_000 // 24 hrs
 const QUEUE_TOKEN_PLAN_LAST_SEEN_AT = "queue_token_plan_last_seen_at"
 const QUEUE_TOKEN_PLAN_WINDOW = 86_400_000 // 24 hrs
 
+/** Pure yellow (#ffff00) for Friction feedback — not theme.warning (often orange). */
+const FRICTION_FEEDBACK_YELLOW = RGBA.fromHex("#ffff00")
+
+function FrictionFeedbackBlock(props: { messageID: string; part: TextPart; marginTop?: number }) {
+  const { theme } = useTheme()
+  const t = useLanguage().t
+  return (
+    <box
+      id={`${props.messageID}-friction`}
+      marginTop={props.marginTop ?? 1}
+      paddingLeft={2}
+      flexDirection="column"
+      gap={0}
+    >
+      <text fg={theme.textMuted}>
+        <span style={{ bg: theme.backgroundElement, fg: FRICTION_FEEDBACK_YELLOW, bold: true }}>
+          {" "}
+          💬 {t("tui.session.friction_feedback.label")}{" "}
+        </span>
+      </text>
+      <box paddingLeft={2} paddingTop={0}>
+        <text fg={FRICTION_FEEDBACK_YELLOW}>{sanitizeDisplayText(props.part.text)}</text>
+      </box>
+    </box>
+  )
+}
+
 const context = createContext<{
   width: number
   sessionID: string
@@ -1607,6 +1634,14 @@ function UserMessage(props: {
       return [{ part: x, firedAt: origin.firedAt, kindOfTask: origin.kindOfTask ?? "cron" }]
     })[0]
   })
+  const frictionFeedback = createMemo(() => {
+    return props.parts.flatMap((x) => {
+      if (x.type !== "text" || !x.synthetic) return []
+      const origin = (x.metadata as { origin?: { kind?: string } } | undefined)?.origin
+      if (origin?.kind !== "friction_feedback") return []
+      return [x]
+    })[0]
+  })
   const files = createMemo(() => props.parts.flatMap((x) => (x.type === "file" ? [x] : [])))
   // Orchestrator actor-notifications arrive as a synthetic user text part whose
   // text is the pre-rendered <actor-notification> wrapper (inbox/render.ts).
@@ -1638,6 +1673,9 @@ function UserMessage(props: {
 
   return (
     <>
+      <Show when={frictionFeedback()}>
+        {(part) => <FrictionFeedbackBlock messageID={props.message.id} part={part()} marginTop={props.index === 0 ? 0 : 1} />}
+      </Show>
       <Show when={cronFire()}>
         {(fire) => {
           // Strip the "[cron fire @ ISO] " prefix from part.text to get the
@@ -1871,6 +1909,14 @@ function AssistantMessage(props: {
   // wording.
   const hasActorPart = createMemo(() => props.parts.some((x) => x.type === "tool" && x.tool === "actor"))
   const hasWorkflowPart = createMemo(() => props.parts.some((x) => x.type === "tool" && x.tool === "workflow"))
+  const frictionFeedback = createMemo(() => {
+    return props.parts.flatMap((x) => {
+      if (x.type !== "text" || !x.synthetic) return []
+      const origin = (x.metadata as { origin?: { kind?: string } } | undefined)?.origin
+      if (origin?.kind !== "friction_feedback") return []
+      return [x as TextPart]
+    })[0]
+  })
 
   return (
     <>
@@ -1880,6 +1926,10 @@ function AssistantMessage(props: {
           // message.structured; we render that value as a dedicated colored block
           // below, so skip the redundant gray one-liner tool part here.
           if (part.type === "tool" && part.tool === "StructuredOutput") return null
+          if (part.type === "text" && part.synthetic) {
+            const origin = (part.metadata as { origin?: { kind?: string } } | undefined)?.origin
+            if (origin?.kind === "friction_feedback" || origin?.kind === "friction_pending") return null
+          }
           const component = createMemo(() => PART_MAPPING[part.type as keyof typeof PART_MAPPING])
           return (
             <Show when={component()}>
@@ -1903,6 +1953,9 @@ function AssistantMessage(props: {
             <span style={{ fg: theme.textMuted }}>{hasWorkflowPart() ? " view workflow agents" : " view subagents"}</span>
           </text>
         </box>
+      </Show>
+      <Show when={frictionFeedback()}>
+        {(part) => <FrictionFeedbackBlock messageID={props.message.id} part={part()} />}
       </Show>
       <Show when={props.message.error && props.message.error.name !== "MessageAbortedError"}>
         <ErrorBlock error={props.message.error!} />

@@ -140,6 +140,7 @@ export class TryBestMonitor {
   private failed = new Map<string, number>()
   private action: Action | undefined
   private streak = 0
+  private lastEditPath: string | undefined
   private verify = new Map<string, { success: boolean; result: string }>()
 
   constructor(private options: TryBestOptions = {}) {}
@@ -159,6 +160,7 @@ export class TryBestMonitor {
     this.edits = []
     this.failed.clear()
     this.verify.clear()
+    this.lastEditPath = undefined
     this.resetAction()
   }
 
@@ -192,7 +194,13 @@ export class TryBestMonitor {
         },
       ]
     })[0]
-    return incident ?? this.trackAction({ kind: "edit", progress: false }, part.tool)
+    if (incident) return incident
+    if (records.length) {
+      const editPath = path.normalize(records[0].path)
+      if (this.lastEditPath && editPath !== this.lastEditPath) this.resetAction()
+      this.lastEditPath = editPath
+    }
+    return this.trackAction({ kind: "edit", progress: false }, part.tool)
   }
 
   private bash(part: MessageV2.ToolPart): TryBestIncident | undefined {

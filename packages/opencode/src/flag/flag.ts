@@ -174,7 +174,7 @@ export const Flag = {
   MIMOCODE_FRICTION_FDE: truthy("MIMOCODE_FRICTION_FDE"),
   // Presentation layer for Friction Learning feedback: default | off (future: osaka, …).
   get MIMOCODE_CHARACTER() {
-    return process.env["MIMOCODE_CHARACTER"]?.trim() || "default"
+    return process.env["MIMOCODE_CHARACTER"]?.trim() || "off"
   },
   // Set by `oimo --spauto` (primary) / `oimo --autosp` (alias). Super Auto:
   // autonomy with hearing_first=false — zero user prompts from the first turn.

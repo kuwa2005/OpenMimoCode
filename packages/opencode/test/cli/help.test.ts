@@ -53,6 +53,7 @@ describe("cli help localization", () => {
     expect(stderr).toContain("例:")
     expect(stderr).toContain("セッションを管理する")
     expect(stderr).toContain("ヘルプを表示")
+    expect(stderr).toContain("愚痴モード")
     expect(stderr).not.toContain("Commands:")
   })
 
@@ -101,6 +102,8 @@ describe("session list launch flags", () => {
     expect(launchFlags({ auto: true, fde: true })).toEqual(["--auto", "--fde"])
     expect(launchFlags({ spauto: true })).toEqual(["--spauto"])
     expect(launchFlags({ auto: true, spauto: true })).toEqual(["--auto", "--spauto"])
+    expect(launchFlags({ character: "" })).toEqual(["--character"])
+    expect(launchFlags({ character: "off" })).toEqual(["--character=off"])
     expect(launchFlags({})).toEqual([])
   })
 })

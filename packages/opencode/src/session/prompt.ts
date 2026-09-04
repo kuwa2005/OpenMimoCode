@@ -51,6 +51,7 @@ import PROMPT_AUTONOMY_SE from "../session/prompt/autonomy-se.txt"
 import PROMPT_AUTONOMY_SP from "../session/prompt/autonomy-sp.txt"
 import PROMPT_AUTONOMY_FDE from "../session/prompt/autonomy-fde.txt"
 import * as Friction from "@/friction"
+import { CharacterMode } from "@/character/mode"
 import {
   RECOVERY_PROMPT_MILD,
   RECOVERY_PROMPT_STRONG,
@@ -1108,7 +1109,7 @@ export const layer = Layer.effect(
             )
           }
           if (inject.length) {
-            userMessage.parts.unshift({
+            const part = yield* sessions.updatePart({
               id: PartID.ascending(),
               messageID: userMessage.info.id,
               sessionID: userMessage.info.sessionID,
@@ -1116,6 +1117,29 @@ export const layer = Layer.effect(
               text: inject.join("\n\n"),
               synthetic: true,
             })
+            userMessage.parts.unshift(part)
+          }
+          const showUserFeedback =
+            characterMode !== CharacterMode.Off && (out.friction != null || out.appliedImplicit.length > 0)
+          if (showUserFeedback) {
+            const part = yield* sessions.updatePart({
+              id: PartID.ascending(),
+              messageID: userMessage.info.id,
+              sessionID: userMessage.info.sessionID,
+              type: "text",
+              text: "",
+              synthetic: true,
+              metadata: {
+                origin: {
+                  kind: "friction_pending",
+                  character_mode: characterMode,
+                  user_text: userText,
+                  friction: out.friction ?? undefined,
+                  applied_rules: out.appliedImplicit.map((r) => ({ id: r.id, text: r.text })),
+                },
+              },
+            })
+            userMessage.parts.unshift(part)
           }
         }
       }
@@ -4896,6 +4920,16 @@ NOTE: At any point in time through this workflow you should feel free to ask the
               .pipe(Effect.ignore)
           }
         }
+        yield* Effect.sync(() => {
+          void import("@/effect/app-runtime").then(({ AppRuntime }) =>
+            AppRuntime.runPromise(
+              Friction.FrictionUserFeedback.publishAfterTurn({
+                sessionID,
+                agentID: resolvedAgentID,
+              }),
+            ).catch((err) => log.error("friction user feedback failed", { error: String(err) })),
+          )
+        })
         return final
         }).pipe(Effect.onExit(firePostSession), Effect.orDie)
       },

@@ -4,7 +4,7 @@ import type { StructuredFriction } from "@/friction/types"
 export function renderDefault(f: StructuredFriction): string {
   if (f.friction_type === "rule_correction") {
     return [
-      "了解です。その学習ルールは今後強制しません。",
+      openingLine(f),
       "",
       `対象: ${f.candidate_rule}`,
       f.disable_rule_ids?.length ? `無効化: ${f.disable_rule_ids.join(", ")}` : "",
@@ -15,17 +15,8 @@ export function renderDefault(f: StructuredFriction): string {
       .join("\n")
   }
 
-  const blame =
-    f.responsibility === "agent_verification" || f.responsibility === "agent_implementation"
-      ? "そこはこちらの不足です。"
-      : f.responsibility === "agent_interpretation"
-        ? "解釈がずれていました。"
-        : f.responsibility === "user_instruction"
-          ? "それ、最初の指示には含まれていなかった条件です。"
-          : "認識差がありました。"
-
   const lines = [
-    blame,
+    openingLine(f),
     "",
     `分類: ${labelType(f.friction_type)}`,
     `責任: ${f.responsibility}`,
@@ -49,6 +40,65 @@ export function renderDefault(f: StructuredFriction): string {
   }
 
   return lines.join("\n")
+}
+
+/** User-visible TUI copy — no classification dump; welcoming tone for additive feedback. */
+export function renderDefaultUser(f: StructuredFriction): string {
+  if (f.friction_type === "rule_correction") {
+    return openingLine(f)
+  }
+
+  const lines = [openingLine(f)]
+
+  if (f.instruction_suggestion) {
+    lines.push("", f.instruction_suggestion)
+  } else if (f.improved_instruction) {
+    lines.push("", `次回の指示例: ${f.improved_instruction}`)
+  } else if (f.candidate_rule && f.future_application !== "this_task_only") {
+    lines.push("", `次回から意識すること: ${f.candidate_rule}`)
+  } else if (f.scope === "task") {
+    lines.push("", "今回の作業のみに反映します。")
+  }
+
+  return lines.join("\n")
+}
+
+function openingLine(f: StructuredFriction): string {
+  if (f.friction_type === "rule_correction") {
+    return "了解です。その学習ルールは今後強制しません。"
+  }
+
+  if (f.friction_type === "interpretation_gap" || f.responsibility === "agent_interpretation") {
+    return "解釈がずれていました。"
+  }
+
+  if (
+    (f.friction_type === "verification_gap" || f.friction_type === "implementation_gap") &&
+    (f.responsibility === "agent_verification" || f.responsibility === "agent_implementation")
+  ) {
+    return "そこはこちらの不足です。"
+  }
+
+  if (f.friction_type === "preference_discovery" && f.scope === "task") {
+    return "今回限りの要望として受け付けました。"
+  }
+
+  if (
+    f.friction_type === "instruction_gap" ||
+    f.friction_type === "requirement_discovery" ||
+    f.friction_type === "context_gap" ||
+    f.responsibility === "user_instruction" ||
+    f.responsibility === "shared_ambiguity" ||
+    f.responsibility === "missing_context"
+  ) {
+    return "追加の要望を受け付けました。"
+  }
+
+  if (f.friction_type === "preference_discovery") {
+    return "好みの差分として受け付けました。"
+  }
+
+  return "追加の要望を受け付けました。"
 }
 
 function labelType(t: StructuredFriction["friction_type"]): string {

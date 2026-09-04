@@ -118,10 +118,18 @@ describe("TryBestMonitor", () => {
   test("updates options on a cached session monitor", () => {
     const cached = monitor("session", "agent", { action_streak: 4 })
     expect(cached.consume(edit("a", "-one old\n+one new"))).toBeUndefined()
-    expect(cached.consume(edit("b", "-two old\n+two new"))).toBeUndefined()
+    expect(cached.consume(edit("a", "-two old\n+two new"))).toBeUndefined()
     const configured = monitor("session", "agent", { action_streak: 3 })
     expect(configured).toBe(cached)
-    expect(configured.consume(edit("c", "-three old\n+three new"))?.reason).toBe("action_streak")
+    expect(configured.consume(edit("a", "-three old\n+three new"))?.reason).toBe("action_streak")
+  })
+
+  test("edits to different files reset the action streak", () => {
+    const monitor = new TryBestMonitor({ action_streak: 3 })
+    expect(monitor.consume(edit("a", "-one old\n+one new"))).toBeUndefined()
+    expect(monitor.consume(edit("b", "-two old\n+two new"))).toBeUndefined()
+    expect(monitor.consume(edit("c", "-three old\n+three new"))).toBeUndefined()
+    expect(monitor.consume(edit("d", "-four old\n+four new"))).toBeUndefined()
   })
 
   test("treats a completed bash tool with nonzero exit metadata as failed", () => {
@@ -142,22 +150,22 @@ describe("TryBestMonitor", () => {
     expect(monitor.consume(failed())).toBeUndefined()
   })
 
-  test("detects four edits even when their diffs differ", () => {
+  test("detects four edits to the same file even when their diffs differ", () => {
     const monitor = new TryBestMonitor()
     expect(monitor.consume(edit("a", "-one old\n+one new"))).toBeUndefined()
-    expect(monitor.consume(edit("b", "-two old\n+two new"))).toBeUndefined()
-    expect(monitor.consume(edit("c", "-three old\n+three new"))).toBeUndefined()
-    expect(monitor.consume(edit("d", "-four old\n+four new"))?.reason).toBe("action_streak")
+    expect(monitor.consume(edit("a", "-two old\n+two new"))).toBeUndefined()
+    expect(monitor.consume(edit("a", "-three old\n+three new"))).toBeUndefined()
+    expect(monitor.consume(edit("a", "-four old\n+four new"))?.reason).toBe("action_streak")
   })
 
   test("ignores read/search actions while counting edit structure", () => {
     const monitor = new TryBestMonitor()
     expect(monitor.consume(edit("a", "-one old\n+one new"))).toBeUndefined()
     expect(monitor.consume(tool({ tool: "read", args: { file_path: "a" } }))).toBeUndefined()
-    expect(monitor.consume(edit("b", "-two old\n+two new"))).toBeUndefined()
+    expect(monitor.consume(edit("a", "-two old\n+two new"))).toBeUndefined()
     expect(monitor.consume(tool({ tool: "grep", args: { pattern: "x" } }))).toBeUndefined()
-    expect(monitor.consume(edit("c", "-three old\n+three new"))).toBeUndefined()
-    expect(monitor.consume(edit("d", "-four old\n+four new"))?.reason).toBe("action_streak")
+    expect(monitor.consume(edit("a", "-three old\n+three new"))).toBeUndefined()
+    expect(monitor.consume(edit("a", "-four old\n+four new"))?.reason).toBe("action_streak")
   })
 
   test("changed verify result counts as progress", () => {

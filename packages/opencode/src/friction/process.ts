@@ -3,7 +3,7 @@ import { classify } from "./classifier"
 import { detectSignals, looksLikeFriction } from "./detector"
 import { ruleIdFromText, similarRule, upsertRule } from "./rules"
 import { CharacterMode, parseCharacterMode } from "@/character/mode"
-import { renderFriction } from "@/character/renderer"
+import { renderFriction, renderFrictionUserBody } from "@/character/renderer"
 
 export type ProcessInput = {
   projectID: string
@@ -17,7 +17,10 @@ export type ProcessInput = {
 
 export type ProcessOutput = {
   friction: StructuredFriction | null
+  /** Model inject (<system-reminder> wrapped). Null when character=off. */
   message: string | null
+  /** Plain text for user-visible Friction feedback. Null when character=off. */
+  userFeedback: string | null
   rules: LearnedRule[]
   disabledIds: string[]
   appliedImplicit: LearnedRule[]
@@ -30,11 +33,14 @@ export function processFeedback(input: ProcessInput): ProcessOutput {
   const appliedImplicit = selectApplicableRules(input.existingRules, input.userText)
 
   if (!looksLikeFriction(input.userText, input.priorUserTexts.length)) {
+    const appliedBody =
+      appliedImplicit.length && characterMode !== CharacterMode.Off
+        ? renderAppliedNoticeBody(appliedImplicit, characterMode)
+        : null
     return {
       friction: null,
-      message: appliedImplicit.length
-        ? renderAppliedNotice(appliedImplicit, characterMode)
-        : null,
+      message: appliedBody ? wrapReminder(appliedBody) : null,
+      userFeedback: appliedBody,
       rules: input.existingRules,
       disabledIds: [],
       appliedImplicit,
@@ -115,9 +121,11 @@ export function processFeedback(input: ProcessInput): ProcessOutput {
     })
   }
 
+  const feedbackBody = renderFrictionUserBody(friction, characterMode)
   return {
     friction,
-    message: renderFriction(friction, characterMode),
+    message: characterMode === CharacterMode.Off ? null : renderFriction(friction, characterMode),
+    userFeedback: characterMode === CharacterMode.Off ? null : feedbackBody,
     rules,
     disabledIds,
     appliedImplicit,
@@ -181,21 +189,18 @@ export function selectApplicableRules(rules: LearnedRule[], userText: string): L
   })
 }
 
-function renderAppliedNotice(rules: LearnedRule[], mode: CharacterMode): string {
+function wrapReminder(body: string) {
+  return `<system-reminder>\n${body}\n</system-reminder>`
+}
+
+function renderAppliedNoticeBody(rules: LearnedRule[], mode: CharacterMode): string {
   const lines = rules.map((r) => `- ${r.text}`).join("\n")
   if (mode === CharacterMode.Off) {
-    return [
-      "<system-reminder>",
-      "Applying learned Friction rules for this task:",
-      lines,
-      "</system-reminder>",
-    ].join("\n")
+    return ["Applying learned Friction rules for this task:", lines].join("\n")
   }
   return [
-    "<system-reminder>",
     "前回のFrictionから得た条件を最初から考慮しています:",
     lines,
     "必要ならユーザーに『前回の手戻りを踏まえて最初から確認している』と説明してよい。",
-    "</system-reminder>",
   ].join("\n")
 }

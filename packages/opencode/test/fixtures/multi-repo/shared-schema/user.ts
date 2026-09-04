@@ -1,1 +1,1 @@
-export type User = { id: string }
+export type User = { id: string; displayName?: string }

@@ -1,18 +1,21 @@
 import { describe, expect, test } from "bun:test"
 import { processFeedback } from "../../src/friction/process"
-import { detectSignals, looksLikeFriction } from "../../src/friction/detector"
+import { detectSignals, isHumanUserFeedback, looksLikeFriction } from "../../src/friction/detector"
 import { classify } from "../../src/friction/classifier"
 import { renderFriction } from "../../src/character/renderer"
-import { CharacterMode, parseCharacterMode, validateCharacterArg } from "../../src/character/mode"
+import { CharacterMode, parseCharacterMode, resolveCharacterCli, validateCharacterArg } from "../../src/character/mode"
 import type { LearnedRule, StructuredFriction } from "../../src/friction/types"
 
 describe("Character CLI modes", () => {
-  test("default when empty; rejects unknown and on", () => {
-    expect(parseCharacterMode(undefined)).toBe(CharacterMode.Default)
+  test("unset=off; --character alone=default; rejects unknown and on", () => {
+    expect(resolveCharacterCli(undefined)).toBe(CharacterMode.Off)
+    expect(parseCharacterMode(undefined)).toBe(CharacterMode.Off)
+    expect(resolveCharacterCli("")).toBe(CharacterMode.Default)
     expect(parseCharacterMode("")).toBe(CharacterMode.Default)
     expect(parseCharacterMode("off")).toBe(CharacterMode.Off)
     expect(validateCharacterArg("unknown")).toContain("Unknown character mode: unknown")
-    expect(validateCharacterArg("on")).toContain("Available modes")
+    expect(validateCharacterArg("on")).toContain("Use --character alone")
+    expect(validateCharacterArg("osaka")).toContain("not implemented yet")
   })
 })
 
@@ -214,8 +217,26 @@ describe("Character does not alter structured result", () => {
     }
     expect(strip(base.friction!)).toEqual(strip(off.friction!))
     expect(base.message).not.toEqual(off.message)
-    expect(off.message).toContain("追加要件")
-    expect(base.message).toMatch(/最初の指示|認識差|不足/)
+    expect(base.userFeedback).toBeTruthy()
+    expect(off.message).toBeNull()
+    expect(off.userFeedback).toBeNull()
+    expect(base.userFeedback).toContain("追加の要望を受け付けました")
+    expect(base.message).toMatch(/追加の要望|解釈がずれ|そこはこちら/)
+  })
+
+  test("mobile follow-up uses additive user-facing copy", () => {
+    const out = processFeedback({
+      projectID: "p",
+      sessionID: "s",
+      userText: "スマホでも確認して",
+      priorUserTexts: ["UIを修正して"],
+      existingRules: [],
+      modes: ["se"],
+      characterMode: "default",
+    })
+    expect(out.userFeedback).toContain("追加の要望を受け付けました")
+    expect(out.userFeedback).not.toContain("そこはこちらの不足")
+    expect(out.userFeedback).not.toContain("分類:")
   })
 
   test("renderer never flips responsibility", () => {
@@ -247,5 +268,12 @@ describe("detector helpers", () => {
     expect(looksLikeFriction("今回だけ赤くして", 0)).toBe(true)
     expect(looksLikeFriction("違う", 1)).toBe(true)
     expect(detectSignals("元に戻して").kind).toBe("revert")
+  })
+
+  test("isHumanUserFeedback excludes synthetic system reminders", () => {
+    expect(isHumanUserFeedback("もっと大きく")).toBe(true)
+    expect(isHumanUserFeedback("<system-reminder>\nfoo</system-reminder>")).toBe(false)
+    expect(isHumanUserFeedback("Previous turn was paused by try-best")).toBe(false)
+    expect(looksLikeFriction("<system-reminder>\nfoo</system-reminder>", 2)).toBe(false)
   })
 })

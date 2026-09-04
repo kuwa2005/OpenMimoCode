@@ -64,7 +64,19 @@ export function detectSignals(userText: string): DetectedSignal {
 }
 
 /** True when user message looks like corrective / friction feedback (not first-turn ask). */
+export function isHumanUserFeedback(text: string): boolean {
+  const t = text.trim()
+  if (!t) return false
+  if (t.startsWith("<system-reminder>")) return false
+  if (t.startsWith("<actor-notification>")) return false
+  if (t.startsWith("Previous turn was paused by try-best")) return false
+  if (t.startsWith("Previous turn hit a soft provider rate limit")) return false
+  if (t.startsWith("The previous turn was paused by try-best")) return false
+  return true
+}
+
 export function looksLikeFriction(userText: string, priorUserCount: number): boolean {
+  if (!isHumanUserFeedback(userText)) return false
   if (priorUserCount < 1) {
     // First turn can still be temporary preference ("今回だけ赤くして")
     const signal = detectSignals(userText)

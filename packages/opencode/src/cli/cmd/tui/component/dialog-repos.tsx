@@ -14,8 +14,9 @@ export function DialogRepos() {
   const [bundle] = createResource(root, async (dir) => {
     if (!dir) return undefined
     const info = await RepoWorkspace.Runtime.load(dir)
-    if (!info) return { info: undefined as RepoWorkspace.Info | undefined, report: undefined }
-    return { info, report: RepoWorkspace.doctor(info) }
+    if (!info) return { info: undefined as RepoWorkspace.Info | undefined, report: undefined, edges: 0 }
+    const graph = await RepoWorkspace.Graph.buildGraph(info).catch(() => undefined)
+    return { info, report: RepoWorkspace.doctor(info), edges: graph?.edges.length ?? 0 }
   })
 
   const rows = createMemo(() => {
@@ -28,6 +29,7 @@ export function DialogRepos() {
       { k: "Layout", v: info.layout ?? "siblings" },
       { k: "Config", v: info.configPath },
       { k: "Doctor", v: b.report?.ok ? "OK" : "ISSUES" },
+      { k: "Graph", v: `${b.edges} edges (oimo repos graph)` },
     ]
     for (const repo of info.repositories.values()) {
       lines.push({
