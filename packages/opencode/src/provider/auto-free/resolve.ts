@@ -10,37 +10,19 @@ export type AutoFreeResolveInput = {
 }
 
 /**
- * Preferred try-order among OpenCode Zen free (cost.input === 0) models.
- * Unknown free models are appended alphabetically after these.
- * Zero-config users get this whole set without API keys (Zen public pool).
+ * Preferred try-order among OpenCode Zen free (cost.input === 0, status active) models.
+ * Sync with models.dev `opencode.models` — deprecated free ids are omitted.
+ * Unknown active free models sort alphabetically after these (rank 1000).
+ * Zero-config users get the whole active set without API keys (Zen public pool).
  */
 export const ZEN_FREE_PREFERRED_ORDER = [
   "big-pickle",
-  "grok-code",
-  "nemotron-3-super-free",
   "nemotron-3-ultra-free",
-  "deepseek-v4-flash-free",
-  "qwen3.6-plus-free",
-  "kimi-k2.5-free",
-  "glm-5-free",
-  "glm-4.7-free",
-  "minimax-m3-free",
-  "minimax-m2.5-free",
-  "minimax-m2.1-free",
-  "mimo-v2-pro-free",
+  "nemotron-3.5-lightning-free",
   "mimo-v2.5-free",
-  "mimo-v2-omni-free",
-  "mimo-v2-flash-free",
-  "trinity-large-preview-free",
-  "laguna-s-2.1-free",
-  "north-mini-code-free",
-  "ring-2.6-1t-free",
-  "hy3-free",
-  "hy3-preview-free",
-  "longcat-2.0-free",
-  "ling-3.0-flash-free",
-  "ling-2.6-flash-free",
-  "ling-3.0-tiny-free",
+  "muse-spark-1.3-contributor-free",
+  "muse-spark-1.2-contributor-free",
+  "ling-3.0-flash-fin-free",
 ] as const
 
 function parseRef(ref: string) {

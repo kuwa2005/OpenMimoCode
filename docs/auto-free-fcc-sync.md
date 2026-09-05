@@ -54,7 +54,23 @@ FCC_ROOT=/home/ubuntu/workspace/free-claude-code bun script/sync-auto-free-catal
 
 ## ゼロ設定で使えるもの
 
-キーやログインなしでも、OpenCode Zen の無料プール（`apiKey: "public"`）上の全無料モデルが Auto(無料) の候補になる。設定不要で first-frame フォールバックが効く。
+キーやログインなしでも、OpenCode Zen の無料プール（`apiKey: "public"`）上の **active な無料モデル**（`cost.input === 0` かつ `status !== deprecated`）が Auto(無料) の候補になる。設定不要で first-frame フォールバックが効く。
+
+[`models.dev`](https://models.dev/api.json) の `opencode.models` を正とする。2026-09 時点の active 無料 7 件（試行優先順は [`ZEN_FREE_PREFERRED_ORDER`](../packages/opencode/src/provider/auto-free/resolve.ts)）:
+
+| 試行順 | model id | 表示名 |
+|--------|----------|--------|
+| 1 | `big-pickle` | Big Pickle |
+| 2 | `nemotron-3-ultra-free` | Nemotron 3 Ultra |
+| 3 | `nemotron-3.5-lightning-free` | Nemotron 3.5 Lightning |
+| 4 | `mimo-v2.5-free` | MiMo V2.5 |
+| 5 | `muse-spark-1.3-contributor-free` | Muse Spark 1.3 |
+| 6 | `muse-spark-1.2-contributor-free` | Muse Spark 1.2 |
+| 7 | `ling-3.0-flash-fin-free` | Ling 3.0 Flash Fin |
+
+`big-pickle` は起動時プローブとカタログ prior で先頭を維持。他 6 件は Zen プールから自動追加され、上記順で failover する。
+
+**MiMo について:** Xiaomi 直 API や旧 `mimo-v2-flash-free` 等の無料キャンペーン終了と、OpenCode Zen の `mimo-v2.5-free` は別枠。Zen 上では `cost.input: 0` / `active` のまま（Windows 版 OpenCode で無料応答があるのはこのプール）。`mimo-v2-flash-free` 等は models.dev 上 `deprecated`。
 
 FCC 由来の OpenRouter / NVIDIA / Groq などは、利用者がキーを入れたときだけ候補に乗る（ボーナス）。
 

@@ -95,8 +95,35 @@ describe("auto-free.resolve", () => {
       },
     }
     const resolved = resolveAutoFreeCandidates({ providers })
-    expect(resolved.map((m) => String(m.id))).toEqual(["big-pickle", "grok-code", "glm-5-free"])
+    expect(resolved.map((m) => String(m.id))).toEqual(["big-pickle", "glm-5-free", "grok-code"])
     expect(resolved.every((m) => m.cost.input === 0)).toBe(true)
+  })
+
+  test("orders active OpenCode Zen free models by ZEN_FREE_PREFERRED_ORDER", () => {
+    const active = [
+      "ling-3.0-flash-fin-free",
+      "muse-spark-1.2-contributor-free",
+      "mimo-v2.5-free",
+      "big-pickle",
+      "nemotron-3.5-lightning-free",
+      "muse-spark-1.3-contributor-free",
+      "nemotron-3-ultra-free",
+    ]
+    const providers = {
+      opencode: {
+        models: Object.fromEntries(active.map((id) => [id, model("opencode", id, 0)])),
+      },
+    }
+    const resolved = resolveAutoFreeCandidates({ providers })
+    expect(resolved.map((m) => String(m.id))).toEqual([
+      "big-pickle",
+      "nemotron-3-ultra-free",
+      "nemotron-3.5-lightning-free",
+      "mimo-v2.5-free",
+      "muse-spark-1.3-contributor-free",
+      "muse-spark-1.2-contributor-free",
+      "ling-3.0-flash-fin-free",
+    ])
   })
 
   test("user fallbacks override catalog but still append remaining Zen free", () => {
