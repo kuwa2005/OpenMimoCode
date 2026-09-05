@@ -31,6 +31,7 @@ import { forwardRef } from "@/permission/permission-forward-ref"
 import { Global } from "@/global"
 import { ActorRegistry } from "@/actor/registry"
 import { Effect, Layer, Option, Context } from "effect"
+import { plan as planWarmStart, registerBrief } from "./warm-start"
 
 const log = Log.create({ service: "session" })
 
@@ -193,6 +194,8 @@ export const CreateInput = z
     title: z.string().optional(),
     permission: Info.shape.permission,
     workspaceID: WorkspaceID.zod.optional(),
+    /** Soft-continue: new session with a brief from the latest session in this directory. */
+    warm: z.enum(["summary", "deep"]).optional(),
   })
   .optional()
 export type CreateInput = z.output<typeof CreateInput>
@@ -632,6 +635,7 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
       contextFrom?: SessionID
       contextWatermark?: MessageID
       title?: string
+      warm?: "summary" | "deep"
       // In-process only (deliberately NOT on the public CreateInput / HTTP body,
       // where it would collide with the route's `directory` query selector). Set
       // once at creation by an in-process caller — e.g. spawnPeer placing a child
@@ -642,15 +646,17 @@ export const layer: Layer.Layer<Service, never, Bus.Service | Storage.Service | 
     }) {
       const directory = input?.directory ?? (yield* InstanceState.directory)
       const workspace = yield* InstanceState.workspaceID
+      const warmPlan = input?.warm ? yield* planWarmStart({ mode: input.warm, directory }) : undefined
       const session = yield* createNext({
         parentID: input?.parentID,
-        contextFrom: input?.contextFrom,
-        contextWatermark: input?.contextWatermark,
+        contextFrom: warmPlan?.contextFrom ?? input?.contextFrom,
+        contextWatermark: warmPlan?.contextWatermark ?? input?.contextWatermark,
         directory,
-        title: input?.title,
+        title: warmPlan?.title ?? input?.title,
         permission: input?.permission,
         workspaceID: workspace,
       })
+      if (warmPlan) registerBrief(session.id, warmPlan.brief)
       yield* Effect.tryPromise(() =>
         import("@/repo-workspace").then((m) => m.Runtime.captureSession(session.id, directory)),
       ).pipe(Effect.catch(() => Effect.void))

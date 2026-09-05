@@ -192,6 +192,17 @@ export const TuiThreadCommand = cmd({
         describe: "最後のセッションを続行する",
         type: "boolean",
       })
+      .option("warm", {
+        describe:
+          "ソフト continue: このディレクトリの直近セッションから要約だけ継承した新規セッション (--warm=deep で compaction 境界まで履歴継承)",
+        type: "string",
+        coerce: (value: string | boolean | undefined) => {
+          if (value === undefined || value === false) return undefined
+          if (value === true || value === "") return "summary"
+          if (value === "deep" || value === "summary") return value
+          return "summary"
+        },
+      })
       .option("session", {
         alias: ["s"],
         type: "string",
@@ -266,8 +277,14 @@ export const TuiThreadCommand = cmd({
       // spawn or async work so the OS cannot kill the process group.
       win32DisableProcessedInput()
 
-      if (args.fork && !args.continue && !args.session) {
-        UI.error("--fork requires --continue or --session")
+      if (args.fork && !args.continue && !args.session && !args.warm) {
+        UI.error("--fork requires --continue, --warm, or --session")
+        process.exitCode = 1
+        return
+      }
+
+      if (args.continue && args.warm) {
+        UI.error("--continue and --warm cannot be used together")
         process.exitCode = 1
         return
       }
@@ -463,6 +480,7 @@ export const TuiThreadCommand = cmd({
           events: transport.events,
           args: {
             continue: args.continue,
+            warm: args.warm,
             sessionID: args.session,
             agent: args.agent ?? (autonomy ? "compose" : undefined),
             model: args.model,

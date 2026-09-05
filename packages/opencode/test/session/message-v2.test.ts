@@ -1333,6 +1333,70 @@ describe("session.message-v2.toModelMessage", () => {
       },
     ])
   })
+
+  test("normalizes non-object tool inputs for wire replay (invalid local args)", async () => {
+    const userID = "m-user"
+    const assistantID = "m-assistant"
+
+    const input: MessageV2.WithParts[] = [
+      {
+        info: userInfo(userID),
+        parts: [{ ...basePart(userID, "u1"), type: "text", text: "spawn actor" }] as MessageV2.Part[],
+      },
+      {
+        info: assistantInfo(assistantID, userID),
+        parts: [
+          {
+            ...basePart(assistantID, "a1"),
+            type: "tool",
+            callID: "call-bad",
+            tool: "actor",
+            state: {
+              status: "error",
+              input: 7 as unknown as Record<string, unknown>,
+              error: "Invalid arguments for the actor tool:\n✖ Invalid input: expected object, received number",
+            },
+          },
+        ] as MessageV2.Part[],
+      },
+    ]
+
+    const result = await MessageV2.toModelMessages(input, openAICompatibleModel)
+
+    expect(result).toStrictEqual([
+      {
+        role: "user",
+        content: [{ type: "text", text: "spawn actor" }],
+      },
+      {
+        role: "assistant",
+        content: [
+          {
+            type: "tool-call",
+            toolCallId: "call-bad",
+            toolName: "actor",
+            input: {},
+            providerExecuted: undefined,
+          },
+        ],
+      },
+      {
+        role: "tool",
+        content: [
+          {
+            type: "tool-result",
+            toolCallId: "call-bad",
+            toolName: "actor",
+            output: {
+              type: "error-text",
+              value:
+                "Invalid arguments for the actor tool:\n✖ Invalid input: expected object, received number",
+            },
+          },
+        ],
+      },
+    ])
+  })
 })
 
 describe("session.message-v2.fromError", () => {

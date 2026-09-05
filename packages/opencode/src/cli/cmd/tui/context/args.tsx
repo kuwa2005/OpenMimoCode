@@ -5,6 +5,8 @@ export interface Args {
   agent?: string
   prompt?: string
   continue?: boolean
+  /** Soft-continue: summary (default) or deep compaction inheritance. */
+  warm?: "summary" | "deep"
   sessionID?: string
   fork?: boolean
   neverAsk?: boolean

@@ -122,6 +122,7 @@ import { InstanceState } from "@/effect"
 import { ActorTool, type ActorPromptOps } from "@/tool/actor"
 import { SessionRunState } from "./run-state"
 import { Goal } from "./goal"
+import { consumeBrief, WARM_START_MARKER } from "./warm-start"
 import { TaskRegistry } from "@/task/registry"
 import { EffectBridge } from "@/effect"
 import { Team } from "@/team"
@@ -953,6 +954,19 @@ export const layer = Layer.effect(
     }) {
       const userMessage = input.messages.findLast((msg) => msg.info.role === "user")
       if (!userMessage) return input.messages
+
+      const warmBrief = consumeBrief(input.session.id)
+      if (warmBrief && !userMessage.parts.some((part) => part.type === "text" && part.text.includes(WARM_START_MARKER))) {
+        const part = yield* sessions.updatePart({
+          id: PartID.ascending(),
+          messageID: userMessage.info.id,
+          sessionID: userMessage.info.sessionID,
+          type: "text",
+          text: warmBrief,
+          synthetic: true,
+        })
+        userMessage.parts.push(part)
+      }
 
       const runtimeAgent = {
         ...input.agent,

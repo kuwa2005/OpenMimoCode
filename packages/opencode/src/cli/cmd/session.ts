@@ -86,6 +86,17 @@ export const SessionListCommand = cmd({
         describe: "ピッカーを使わず、直近のセッションを TUI で続行する (--auto/--se/--character などの起動フラグと併用可)",
         type: "boolean",
       })
+      .option("warm", {
+        describe:
+          "ソフト continue: このディレクトリの直近セッションから要約だけ継承した新規セッション (--warm=deep で compaction 境界まで)",
+        type: "string",
+        coerce: (value: string | boolean | undefined) => {
+          if (value === undefined || value === false) return undefined
+          if (value === true || value === "") return "summary"
+          if (value === "deep" || value === "summary") return value
+          return "summary"
+        },
+      })
       .option("auto", {
         alias: ["yolo"],
         describe: "選択したセッションを自動許可 (dangerous) で起動する。ワークスペース信頼プロンプトもスキップ",
@@ -139,9 +150,18 @@ export const SessionListCommand = cmd({
         await Log.exit(1)
         return
       }
+      if (args.continue && args.warm) {
+        UI.error("--continue and --warm cannot be used together")
+        await Log.exit(1)
+        return
+      }
       const flags = launchFlags(args)
       if (args.continue) {
         await launchTui(["--continue", ...flags])
+        return
+      }
+      if (args.warm) {
+        await launchTui([`--warm=${args.warm}`, ...flags])
         return
       }
       await pickAndLaunch(sessions, flags)

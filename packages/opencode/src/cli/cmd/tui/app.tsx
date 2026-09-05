@@ -280,7 +280,7 @@ export function tui(input: {
                 <ToastProvider>
                   <RouteProvider
                     initialRoute={
-                      input.args.continue
+                      input.args.continue || input.args.warm
                         ? {
                             type: "session",
                             sessionID: "dummy",
@@ -557,6 +557,30 @@ function App(props: { onSnapshot?: () => Promise<string[]> }) {
       continued = true
       route.navigate({ type: "home" })
     }
+  })
+
+  let warmed = false
+  createEffect(() => {
+    if (warmed || sync.status === "loading" || !args.warm) return
+    if (Flag.MIMOCODE_EXPERIMENTAL_ORCHESTRATOR && !orchestratorDirResolved()) return
+    warmed = true
+    void sdk.client.session
+      .create({ warm: args.warm })
+      .then((result) => {
+        if (result.data?.id) {
+          route.navigate({ type: "session", sessionID: result.data.id })
+          return
+        }
+        toast.show({ message: "Warm start failed", variant: "error" })
+        route.navigate({ type: "home" })
+      })
+      .catch((error) => {
+        toast.show({
+          message: error instanceof Error ? error.message : "Warm start failed",
+          variant: "error",
+        })
+        route.navigate({ type: "home" })
+      })
   })
 
   // Handle --session with --fork: wait for sync to be fully complete before forking

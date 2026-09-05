@@ -32,6 +32,7 @@ opencode [project]
 | Flag                             | Short | Description                                                             |
 | -------------------------------- | ----- | ----------------------------------------------------------------------- |
 | `--continue`                     | `-c`  | Continue the last session                                               |
+| `--warm`                         |       | Soft continue: new session with a brief from the latest session in this directory (`--warm=deep` inherits up to last compaction boundary) |
 | `--session`                      | `-s`  | Session ID to continue                                                  |
 | `--fork`                         |       | Fork the session when continuing (use with `--continue` or `--session`) |
 | `--prompt`                       |       | Prompt to use                                                           |

@@ -34,7 +34,8 @@ Notable TUI flags:
 
 | Flag | Purpose |
 |------|---------|
-| `--continue` / `-c` | Resume last session (does **not** re-apply `--se`/`--fde`/`--auto` by itself) |
+| `--continue` / `-c` | Resume last session (does **not** re-apply `--se`/`--fde`/`--auto` by itself). Global most-recent root session — not scoped to cwd |
+| `--warm` | Soft continue: **new** session with a brief from the latest root session in **this directory** (summary). `--warm=deep` also inherits parent context up to the last compaction/checkpoint boundary |
 | `--session` / `-s` | Open a specific session |
 | `--model` / `-m` | Model override |
 | `--agent` | Agent override |

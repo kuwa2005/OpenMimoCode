@@ -4220,6 +4220,7 @@ export type SessionCreateData = {
     title?: string
     permission?: PermissionRuleset
     workspaceID?: string
+    warm?: "summary" | "deep"
   }
   path?: never
   query?: {

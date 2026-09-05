@@ -189,6 +189,8 @@ The trigger is the model's prompt capacity (`limit.input` when the provider publ
 
 **Mid-session handoff:** `/auto` (none / normal / fde / special), or continue with flags: `oimo -c --fde`, `oimo -c --se`, or `oimo -c --se --fde`.
 
+**Soft continue (`--warm`):** Starts a **new** session instead of resuming history. Injects a one-turn brief (title, open todos, last assistant snippet, `.oimo/oimo-session-*.md` result tail). Scoped to the **current directory** (unlike `-c`). Use `--warm=deep` to also set `contextFrom` / `contextWatermark` at the last compaction boundary. Mutually exclusive with `-c`.
+
 **`-c` alone does not re-apply CLI flags.** `--se` / `--fde` / `--character` / `--auto` are process env for that launch only (not stored on the session). To keep the persona, pass the flag again or switch with `/auto` (persists mode to global config).
 
 ### Multi-repository workspace files

@@ -983,7 +983,7 @@ export const layer: Layer.Layer<
                 messageID: ctx.assistantMessage.id,
                 sessionID: ctx.sessionID,
                 type: "text",
-                text: `Auto Model (無料) -> ${ref}`,
+                text: `Auto Model (無料) -> ${ref}\n`,
                 synthetic: true,
                 time: { start: Date.now(), end: Date.now() },
               })

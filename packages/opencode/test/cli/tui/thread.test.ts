@@ -59,6 +59,7 @@ describe("tui thread", () => {
       agent: undefined,
       session: undefined,
       continue: false,
+      warm: undefined,
       fork: false,
       "never-ask": false,
       neverAsk: false,
