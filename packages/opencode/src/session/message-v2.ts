@@ -9,7 +9,7 @@ import { SyncEvent } from "../sync"
 import { Database, NotFoundError, and, desc, eq, inArray, lt, or } from "@/storage"
 import { MessageTable, PartTable, SessionTable } from "./session.sql"
 import { ProviderError } from "@/provider"
-import { errorMessage } from "@/util/error"
+import { errorMessage, httpStatusFromMessage } from "@/util/error"
 import { isMedia } from "@/util/media"
 import type { SystemError } from "bun"
 import type { Provider } from "@/provider"
@@ -1204,6 +1204,19 @@ export function fromError(
         { cause: e },
       ).toObject()
     case e instanceof Error:
+      {
+        const msgStatus = httpStatusFromMessage(e.message)
+        if (msgStatus !== undefined && (msgStatus === 429 || msgStatus >= 500)) {
+          return new APIError(
+            {
+              message: errorMessage(e),
+              statusCode: msgStatus,
+              isRetryable: true,
+            },
+            { cause: e },
+          ).toObject()
+        }
+      }
       return new NamedError.Unknown({ message: errorMessage(e) }, { cause: e }).toObject()
     default:
       try {

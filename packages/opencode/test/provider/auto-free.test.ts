@@ -195,6 +195,15 @@ describe("auto-free.failover", () => {
       action: "advance",
       reason: "unavailable-pre-commit",
     })
+
+    const overloaded = new Error(
+      "Streaming response failed: [502] Upstream error from Nvidia: Service temporarily overloaded",
+    )
+    expect(isAutoFreeFailoverAdvanceError(overloaded)).toBe(true)
+    expect(classifyFailoverFailure(overloaded, false, true)).toEqual({
+      action: "advance",
+      reason: "retryable-pre-commit",
+    })
   })
 
   test("runWithFailover advances only pre-commit retryable", async () => {

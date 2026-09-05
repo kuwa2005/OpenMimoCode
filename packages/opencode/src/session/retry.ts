@@ -2,6 +2,7 @@ import type { NamedError } from "@mimo-ai/shared/util/error"
 import { Cause, Clock, Duration, Effect, Schedule } from "effect"
 import { MessageV2 } from "./message-v2"
 import { iife } from "@/util/iife"
+import { httpStatusFromMessage } from "@/util/error"
 
 export type Err = ReturnType<NamedError["toObject"]>
 
@@ -57,6 +58,28 @@ const NETWORK_ERROR_CODES = new Set(["ECONNRESET", "EPIPE", "ETIMEDOUT"])
 const SSE_TIMEOUT_MESSAGE = "SSE read timed out"
 const RETRYABLE_HTTP_STATUS = new Set([429, 500, 502, 503, 504, 529])
 
+function isTransientOverloadMessage(message: string): boolean {
+  const lower = message.toLowerCase()
+  return (
+    lower.includes("temporarily overloaded") ||
+    lower.includes("service temporarily unavailable") ||
+    lower.includes("provider is overloaded") ||
+    (lower.includes("upstream error") &&
+      (lower.includes("overloaded") || lower.includes("unavailable") || lower.includes("temporarily")))
+  )
+}
+
+function retryableHttpStatus(status: number | undefined) {
+  return status !== undefined && RETRYABLE_HTTP_STATUS.has(status)
+}
+
+function messageSignalsTransient(message: string) {
+  if (isRateLimitMessage(message)) return true
+  if (retryableHttpStatus(httpStatusFromMessage(message))) return true
+  if (isTransientOverloadMessage(message)) return true
+  return false
+}
+
 /**
  * Single source of truth for "is this transient and retryable?".
  *
@@ -68,6 +91,11 @@ const RETRYABLE_HTTP_STATUS = new Set([429, 500, 502, 503, 504, 529])
  * SSE timeouts that one path retried but the other dropped. See Spec ③.
  */
 export function isRetryableTransientError(error: unknown): boolean {
+  if (typeof error === "object" && error !== null && "data" in error) {
+    const data = (error as { data?: { statusCode?: number } }).data
+    if (retryableHttpStatus(data?.statusCode)) return true
+  }
+
   if (!(error instanceof Error)) return false
 
   // AI SDK wraps exhausted internal retries as AI_RetryError / RetryError.
@@ -79,8 +107,7 @@ export function isRetryableTransientError(error: unknown): boolean {
     bag.lastError ?? (Array.isArray(bag.errors) ? bag.errors[bag.errors.length - 1] : undefined) ?? bag.cause
   if (nested && nested !== error && isRetryableTransientError(nested)) return true
 
-  // Plaintext rate-limit (common on wrapped RetryError.message after SDK retries).
-  if (isRateLimitMessage(error.message)) return true
+  if (messageSignalsTransient(error.message)) return true
 
   const status =
     (error as { status?: number | string }).status ??
@@ -89,7 +116,8 @@ export function isRetryableTransientError(error: unknown): boolean {
   // Some providers surface the HTTP status as a numeric string (e.g. "429")
   // rather than a number — coerce before matching so the 429 path is not missed.
   const statusNum = typeof status === "string" ? Number.parseInt(status, 10) : status
-  if (typeof statusNum === "number" && !Number.isNaN(statusNum) && RETRYABLE_HTTP_STATUS.has(statusNum)) return true
+  if (retryableHttpStatus(typeof statusNum === "number" && !Number.isNaN(statusNum) ? statusNum : undefined))
+    return true
 
   const code = (error as { code?: string }).code
   if (typeof code === "string" && NETWORK_ERROR_CODES.has(code)) return true
@@ -143,15 +171,6 @@ export function retryable(error: Err) {
   // context overflow errors should not be retried
   if (MessageV2.ContextOverflowError.isInstance(error)) return undefined
 
-  // Catch raw Error / network / SSE-timeout BEFORE APIError narrowing.
-  // SessionRetry.policy unwraps Cause<unknown> via opts.parse, but raw
-  // Error instances slip past the APIError check below. Adding this
-  // branch closes that gap. See Spec ③ P2.
-  if (isRetryableTransientError(error as unknown)) {
-    const msg = (error as unknown as Error).message
-    return msg || "Transient network error"
-  }
-
   if (MessageV2.APIError.isInstance(error)) {
     const status = error.data.statusCode
     // Upstream processing failures (e.g. multimodal data corruption) return 400
@@ -188,6 +207,15 @@ export function retryable(error: Err) {
     // even when the provider SDK doesn't explicitly mark them as retryable.
     if (!error.data.isRetryable && !(status !== undefined && status >= 500)) return undefined
     return error.data.message.includes("Overloaded") ? "Provider is overloaded" : error.data.message
+  }
+
+  // Catch raw Error / network / SSE-timeout BEFORE generic Err JSON parsing.
+  // SessionRetry.policy unwraps Cause<unknown> via opts.parse, but raw
+  // Error instances slip past the APIError check above. See Spec ③ P2.
+  if (isRetryableTransientError(error as unknown)) {
+    if (error instanceof Error) return error.message || "Transient network error"
+    const msg = (error as { data?: { message?: string } }).data?.message
+    return msg || "Transient network error"
   }
 
   const json = iife(() => {

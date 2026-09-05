@@ -558,6 +558,8 @@ bun turbo typecheck      # 型チェック
 
 Open Mimo Code は [OpenCode](https://github.com/anomalyco/opencode) のフォークとして構築されています。OpenCode の全コア機能（複数プロバイダー、TUI、LSP、MCP、プラグイン）を保持しつつ、持続的なメモリ、インテリジェントコンテキスト管理、サブエージェントオーケストレーション、ゴール駆動の自律ループ、compose ワークフロー、dream/distill による自己改善を追加しています。
 
+**他製品との比較**（Cursor / Claude Code / Codex / 一般エージェントを含む）: [docs/oimo-differentiators.ja.md](docs/oimo-differentiators.ja.md)
+
 ---
 
 ## コミュニティ

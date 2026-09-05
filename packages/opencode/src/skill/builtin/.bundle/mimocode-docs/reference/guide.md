@@ -2,6 +2,8 @@
 
 How-to for the features users most often ask about. For config keys see @config.md; for permissions see @permissions.md; for commands see @commands.md.
 
+**Why oimo vs Cursor, Claude Code, Codex, or vanilla OpenCode?** See the repo doc [docs/oimo-differentiators.ja.md](https://github.com/kuwa2005/OpenMimoCode/blob/main/docs/oimo-differentiators.ja.md) (Japanese).
+
 ## Getting started & auth
 
 1. **Sign in** — `oimo account login <url>` runs a device flow: it prints a URL + code and opens your browser. `/connect` does the same from inside the TUI (e.g. to add OpenRouter). OAuth logins are available for Xiaomi MiMo, Codex (ChatGPT Pro/Plus), and xAI (Grok); Claude Code auth can be imported from `~/.claude/settings*.json`. Other account subcommands: `logout`, `switch`, `orgs`, `open`, `console`.

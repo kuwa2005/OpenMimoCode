@@ -76,3 +76,18 @@ function errorFormatted(error: unknown) {
   if (formatted !== "{}") return formatted
   return String(error)
 }
+
+/** Extract HTTP status embedded in provider error text (e.g. OpenCode Console `[502]`). */
+export function httpStatusFromMessage(message: string): number | undefined {
+  const bracket = message.match(/\[(\d{3})\]/)
+  if (bracket) {
+    const parsed = Number.parseInt(bracket[1]!, 10)
+    if (!Number.isNaN(parsed)) return parsed
+  }
+  const leading = message.match(/^(\d{3})\b/)
+  if (leading) {
+    const parsed = Number.parseInt(leading[1]!, 10)
+    if (!Number.isNaN(parsed)) return parsed
+  }
+  return undefined
+}

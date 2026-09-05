@@ -616,6 +616,25 @@ describe("isRetryableTransientError", () => {
     ).toBe(true)
   })
 
+  test("Console streaming 502 in message is transient (Auto Model failover)", () => {
+    expect(
+      isRetryableTransientError(
+        new Error(
+          "Streaming response failed: [502] Upstream error from Nvidia: Service temporarily overloaded",
+        ),
+      ),
+    ).toBe(true)
+  })
+
+  test("UnknownError with bracketed 502 status is transient", () => {
+    const out = MessageV2.fromError(
+      new Error("Streaming response failed: [502] Upstream error from Nvidia: Service temporarily overloaded"),
+      { providerID: ProviderID.make("opencode") },
+    )
+    expect(isRetryableTransientError(out)).toBe(true)
+    expect(SessionRetry.retryable(out as ReturnType<NamedError["toObject"]>)).toBeTruthy()
+  })
+
   test("AI_RetryError unwraps last underlying 429 for Auto Model failover", () => {
     const wrapped = new RetryError({
       message: "Failed after 3 attempts. Last error: Rate limit exceeded",
